@@ -16,15 +16,22 @@ filtration form** (milestone **M10** / layer **L6.1**), stated in Lean as
 
 ## Current phase
 
-**Phase 3 = M1 (maximal ergodic inequality) — COMPLETE (the keystone).**
-`setIntegral_birkhoffSum_pos_nonneg` proved sorry-free via Garsia's argument (~14
-auxiliary lemmas: `maxBirkhoff` + nonneg/succ/measurable/integrable, the constant-pull
-`add_sup'_eq`, the pointwise Garsia inequality `maxBirkhoff_le_add`, `birkhoffSum_congr_ae`,
-the fixed-N crux `setIntegral_maxBirkhoff_pos_nonneg`, monotone/iUnion of the positivity
-sets, and the `f→g` measurable-representative reduction). Build green; main statement
-byte-identical to the QA'd skeleton; axioms `[propext, Classical.choice, Quot.sound]`;
-open `sorry`s 8 → 7. (Phases 0–2 before: skeleton QA-passed; cocycle infra; condExp∘MP.)
-**Next: M3 (Birkhoff) and M4 (Kingman) are now both UNLOCKED by M1.**
+**M3 = pointwise Birkhoff ergodic theorem — COMPLETE.** `tendsto_birkhoffAverage_ae`
+(now `[IsFiniteMeasure μ]`, see correction note) and the ergodic corollary
+`tendsto_birkhoffAverage_ae_integral` proved sorry-free (~20 helper lemmas: a
+Borel–Cantelli orbital tail estimate `n⁻¹·g(Tⁿx)→0`, the maximal-inequality core
+`measure_setOf_lt_limsup_eq_zero`, the limsup/liminf sandwich around `μ[g|I]`, and the
+ergodic a.e.-constant reduction to `∫ g`). Build green; axioms clean; open `sorry`s 7 → 5.
+
+> **Statement correction (M3).** The Phase-0 skeleton stated `tendsto_birkhoffAverage_ae`
+> with NO finiteness hypothesis — which is *false* in general (infinite measure, non-σ-finite
+> trim ⇒ `μ[g|I]=0` but averages need not →0). Corrected to require `[IsFiniteMeasure μ]`,
+> the true/standard statement. The MET target assumes `[IsProbabilityMeasure μ]` (⊂ finite),
+> so the corrected lemma is fully usable downstream — no MET-relevant content lost.
+
+Prior: P0 skeleton (QA-passed); P1 cocycle infra; P2 condExp∘MP (M2); P3 = M1 maximal
+ergodic inequality (the keystone). **Next: M4 (Kingman) via Katznelson–Weiss from M1; then
+M5 (Furstenberg–Kesten), the Lyapunov layers, assembly.**
 
 ## What is done
 
@@ -51,17 +58,16 @@ open `sorry`s 8 → 7. (Phases 0–2 before: skeleton QA-passed; cocycle infra; 
   declarations**; `#print axioms oseledets_filtration` = `[propext, sorryAx,
   Classical.choice, Quot.sound]` (only standard axioms + the intended `sorryAx` gaps).
 
-## Open `sorry`s (7 — all intended planned gaps; the implementation backlog)
+## Open `sorry`s (5 — all intended planned gaps; the implementation backlog)
 
 _Closed so far: `cocycle_add`, `measurable_cocycle` (P1); `condExp_invariants_comp` (P2,
-M2); `setIntegral_birkhoffSum_pos_nonneg` (P3, M1). `Cocycle/Basic` and
-`Ergodic/MaximalErgodic` are sorry-free._
+M2); `setIntegral_birkhoffSum_pos_nonneg` (P3, M1); `tendsto_birkhoffAverage_ae` +
+`tendsto_birkhoffAverage_ae_integral` (M3). `Cocycle/Basic`, `Ergodic/MaximalErgodic`,
+`Ergodic/Birkhoff` are all sorry-free._
 
 | Decl | File | Milestone |
 |---|---|---|
-| `tendsto_birkhoffAverage_ae` | Ergodic/Birkhoff | M3 (now unlocked: M1+M2 ready) |
-| `tendsto_birkhoffAverage_ae_integral` | Ergodic/Birkhoff | M3 (ergodic) |
-| `tendsto_kingman` | Ergodic/Kingman | M4 |
+| `tendsto_kingman` | Ergodic/Kingman | M4 (now unlocked via Katznelson–Weiss from M1) |
 | `tendsto_kingman_ergodic` | Ergodic/Kingman | M4 (ergodic) |
 | `furstenbergKesten_top` | Cocycle/FurstenbergKesten | M5 |
 | `furstenbergKesten_bot` | Cocycle/FurstenbergKesten | M5 |
@@ -77,13 +83,14 @@ stated and `sorry`; these intermediate lemmas are added when their phase begins.
 1. ✅ Phase 0 (skeleton) committed `4ed4225`; blueprints `5b64baa`.
 2. ✅ Phase 1 (cocycle infra) — `cocycle_add`, `measurable_cocycle` proved (`c23b73e`).
 3. ✅ Phase 2 (M2) — `condExp_invariants_comp` proved (`4e5feec`).
-4. ✅ Phase 3 (M1, keystone) — `setIntegral_birkhoffSum_pos_nonneg` proved.
-5. ⏳ **M3 (pointwise Birkhoff)** — now unlocked (= M1 + M2). Use the maximal
-   inequality `setIntegral_birkhoffSum_pos_nonneg` + `condExp_invariants_comp`;
-   blueprint `m3-birkhoff.md`. Prove `tendsto_birkhoffAverage_ae` + the ergodic
-   corollary.
-6. ⏳ **M4 (Kingman)** — also unlocked via Katznelson–Weiss (from M1); blueprint
-   `m4-kingman.md`. Then M5 (Furstenberg–Kesten), the Lyapunov layers, and assembly.
+4. ✅ Phase 3 (M1, keystone) — `setIntegral_birkhoffSum_pos_nonneg` proved (`bbf2ba2`).
+5. ✅ M3 (pointwise Birkhoff) — `tendsto_birkhoffAverage_ae [IsFiniteMeasure]` + ergodic
+   corollary proved (statement corrected; see note above).
+6. ⏳ **M4 (Kingman)** — next; unlocked via Katznelson–Weiss (from M1, `m4-kingman.md`).
+   Prove `tendsto_kingman` + `tendsto_kingman_ergodic`. Work the private lemmas under
+   `[IsFiniteMeasure μ]`; fix the EReal/−∞ convention.
+7. ⏳ Then M5 (Furstenberg–Kesten, `Cocycle/FurstenbergKesten.lean`), the Lyapunov layers
+   (growth fn, ultrametric, flag, measurability, limsup→lim), and assembly into the target.
 
 **Proof blueprints** for the three hard theorems (M1/M3/M4) are in
 `docs/plan/blueprints/` — exact Mathlib lemma maps + auxiliary lemmas + pitfalls.
