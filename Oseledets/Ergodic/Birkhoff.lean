@@ -251,7 +251,7 @@ private theorem ae_tendsto_orbit_div_atTop_zero
 /-- If `h ∘ T =ᵐ[μ] h` then a.e. `h` is constant along the whole forward orbit:
 `∀ j, h (T^[j] x) = h x`. Each step transfers `h ∘ T =ᵐ h` along the
 measure-preserving iterate `T^[j]`, and a countable family of a.e. statements holds a.e. -/
-private theorem ae_forall_orbit_eq (hT : MeasurePreserving T μ μ) {h : X → ℝ}
+theorem ae_forall_orbit_eq (hT : MeasurePreserving T μ μ) {h : X → ℝ}
     (hh : h ∘ T =ᵐ[μ] h) : ∀ᵐ x ∂μ, ∀ j : ℕ, h (T^[j] x) = h x := by
   -- For each `j`, `h (T^[j] x) = h x` a.e. (induction on `j`).
   have hstep : ∀ j : ℕ, (fun x => h (T^[j] x)) =ᵐ[μ] h := by
@@ -295,7 +295,7 @@ private theorem condExp_comp_invariants_eq [IsFiniteMeasure μ]
 /-- The conditional expectation `μ[g | invariants T]` is a.e. `T`-invariant:
 `(μ[g | invariants T]) ∘ T =ᵐ[μ] μ[g | invariants T]`. Combines
 `condExp_invariants_comp` with `condExp_comp_invariants_eq`. -/
-private theorem condExp_invariants_comp_self [IsFiniteMeasure μ]
+theorem condExp_invariants_comp_self [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : X → ℝ} (hg : Integrable g μ) :
     (μ[g | MeasurableSpace.invariants T]) ∘ T =ᵐ[μ] μ[g | MeasurableSpace.invariants T] :=
   ((condExp_invariants_comp hT hTm hg).symm.trans (condExp_comp_invariants_eq hT hg))
@@ -367,7 +367,7 @@ private theorem natCast_mul_measure_maximal_le [IsFiniteMeasure μ]
 /-- Almost every orbit has Birkhoff averages bounded above: the exceptional set where
 `birkhoffAverage ℝ T g (·+1) x` is unbounded above is contained in `⋂ₖ Bₖ`, whose measure
 is `≤ ∫|g| / k → 0`. -/
-private theorem ae_bddAbove_birkhoffAverage [IsFiniteMeasure μ]
+theorem ae_bddAbove_birkhoffAverage [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) :
     ∀ᵐ x ∂μ, BddAbove (Set.range (fun n : ℕ => birkhoffAverage ℝ T g (n + 1) x)) := by
   set B : ℕ → Set X := fun k => {x | ∃ n : ℕ, (k : ℝ) < birkhoffAverage ℝ T g (n + 1) x} with hBdef
@@ -412,7 +412,7 @@ private theorem ae_bddAbove_birkhoffAverage [IsFiniteMeasure μ]
 
 /-- If two bounded real sequences differ by a sequence tending to `0`, their `limsup`s
 (along `atTop`) coincide. Bound `u ≤ v + δ` eventually and use `limsup_add_const`. -/
-private theorem limsup_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
+theorem limsup_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
     (hau : BddAbove (Set.range u)) (hbu : BddBelow (Set.range u))
     (hav : BddAbove (Set.range v)) (hbv : BddBelow (Set.range v))
     (h : Tendsto (fun n => u n - v n) atTop (𝓝 0)) :
@@ -465,7 +465,7 @@ private theorem limsup_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
     simpa using h.neg
 
 /-- Almost every orbit has Birkhoff averages bounded below (apply `ae_bddAbove` to `-g`). -/
-private theorem ae_bddBelow_birkhoffAverage [IsFiniteMeasure μ]
+theorem ae_bddBelow_birkhoffAverage [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) :
     ∀ᵐ x ∂μ, BddBelow (Set.range (fun n : ℕ => birkhoffAverage ℝ T g (n + 1) x)) := by
   filter_upwards [ae_bddAbove_birkhoffAverage hT hg.neg] with x hx
@@ -531,7 +531,7 @@ The set `E = {x | L x + ε < Ls x}` (with `L = μ[g|I]`, `Ls = limsup A_·(g)`) 
 (`exists_preimage_eq_of_preimage_ae`). Applying the maximal ergodic inequality to
 `φ = E'.indicator (g - L - ε)` and showing the maximal set equals `E'`, one gets
 `0 ≤ ∫_{E'} (g - L - ε) = -ε · μ E'` (using `∫_{E'} g = ∫_{E'} L`), forcing `μ E' = 0`. -/
-private theorem measure_setOf_lt_limsup_eq_zero [IsFiniteMeasure μ]
+theorem measure_setOf_lt_limsup_eq_zero [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) {ε : ℝ} (hε : 0 < ε) :
     μ {x | (μ[g | MeasurableSpace.invariants T]) x + ε
       < Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop} = 0 := by
