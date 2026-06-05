@@ -2,6 +2,8 @@ import Oseledets.Ergodic.Birkhoff
 import Mathlib.Analysis.Subadditive
 import Mathlib.MeasureTheory.Integral.Lebesgue.Add
 import Mathlib.MeasureTheory.Function.ConditionalExpectation.Indicator
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.Topology.Instances.EReal.Lemmas
 
 /-!
 # Kingman's subadditive ergodic theorem
@@ -287,6 +289,47 @@ private theorem ae_bddAbove_cdiv [IsFiniteMeasure μ]
   refine ⟨M, ?_⟩
   rintro y ⟨n, rfl⟩
   exact le_trans (cdiv_le_birkhoffAverage hsub n x) (hM (Set.mem_range_self n))
+
+/-! ### EReal envelopes (avoiding the `ℝ` junk value at `−∞`)
+
+The normalized cocycle may a priori tend to `−∞` on a positive-measure set, where the
+`ℝ`-valued `Filter.liminf`/`limsup` return the junk value `0`. To control the relevant
+extrema before finiteness is established we coerce the sequence into `EReal`, a
+`CompleteLinearOrder` where `Filter.limsup`/`liminf` are total and `liminf ≤ limsup` is
+unconditional. The two facts produced here — `limsup < ⊤` (envelope, from A1' + `M3`) and
+`limsup > ⊥` (Fatou) — together with the hard `limsup ≤ liminf` (`ae_ereal_limsup_le_liminf`)
+pin the `EReal` `limsup`/`liminf` to a common finite value, from which the `ℝ` convergence
+follows. -/
+
+/-- The `EReal`-coerced normalized cocycle. -/
+private noncomputable def ecdiv (g : ℕ → X → ℝ) (n : ℕ) (x : X) : EReal := (cdiv g n x : EReal)
+
+/-- **Envelope.** A.e. the `EReal` `limsup` of the normalized cocycle is bounded above by the
+(finite) conditional expectation `μ[g 1 | invariants T]`, hence is `< ⊤`. From A1'
+(`cdiv ≤ birkhoffAverage g₁ (n+1)`) and `M3` (`birkhoffAverage g₁ (n+1) → μ[g₁|I]`). -/
+private theorem ae_ereal_limsup_le_condExp [IsFiniteMeasure μ]
+    (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ) :
+    ∀ᵐ x ∂μ, Filter.limsup (fun n => ecdiv g n x) atTop
+      ≤ ((μ[g 1 | MeasurableSpace.invariants T] x : ℝ) : EReal) := by
+  filter_upwards [tendsto_birkhoffAverage_ae hT (hint 1)] with x hBconv
+  -- `A_{n+1}(g₁) x → B x`, so the shifted `EReal` sequence converges to `↑(B x)`.
+  set B : ℝ := (μ[g 1 | MeasurableSpace.invariants T]) x with hBdef
+  have hshift : Tendsto (fun n : ℕ => birkhoffAverage ℝ T (g 1) (n + 1) x) atTop (𝓝 B) :=
+    hBconv.comp (tendsto_add_atTop_nat 1)
+  have heshift : Tendsto (fun n : ℕ => ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal))
+      atTop (𝓝 ((B : ℝ) : EReal)) :=
+    (continuous_coe_real_ereal.tendsto _).comp hshift
+  -- `limsup (ecdiv) ≤ limsup (↑A_{n+1}) = ↑B`.
+  have hle : Filter.limsup (fun n => ecdiv g n x) atTop
+      ≤ Filter.limsup (fun n : ℕ => ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal)) atTop := by
+    refine Filter.limsup_le_limsup ?_ ?_ ?_
+    · filter_upwards with n
+      exact EReal.coe_le_coe_iff.2 (cdiv_le_birkhoffAverage hsub n x)
+    · exact Filter.isCobounded_le_of_bot
+    · exact Filter.isBounded_le_of_top
+  rw [heshift.limsup_eq] at hle
+  exact hle
 
 /-! ### The Kingman core: a.e. existence of an integrable limit (the single deep gap) -/
 
