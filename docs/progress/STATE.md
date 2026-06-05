@@ -30,8 +30,20 @@ ergodic a.e.-constant reduction to `∫ g`). Build green; axioms clean; open `so
 > so the corrected lemma is fully usable downstream — no MET-relevant content lost.
 
 Prior: P0 skeleton (QA-passed); P1 cocycle infra; P2 condExp∘MP (M2); P3 = M1 maximal
-ergodic inequality (the keystone). **Next: M4 (Kingman) via Katznelson–Weiss from M1; then
-M5 (Furstenberg–Kesten), the Lyapunov layers, assembly.**
+ergodic inequality (the keystone).
+
+**M4 (Kingman) — ATTEMPTED, interrupted by a worker session limit; baseline reverted to
+green.** A lean-worker built genuine Katznelson–Weiss scaffolding but did not finish; its
+partial attempt is preserved at `docs/plan/wip/m4-kingman-attempt.md`. `Kingman.lean` was
+reverted to the green skeleton (the two milestone `sorry` stubs). **Key insight for the
+next attempt:** `IsSubadditiveCocycle` does not force `g 0 = 0`, but subadditivity at
+`(0,0)` gives `g 0 ≥ 0` — so the "`gₙ ≤ birkhoffSum (g 1) n`" domination needs either a
+`g 0 = 0` field added to the predicate (true for `log‖A⁽ⁿ⁾‖`) or to be stated for `n ≥ 1`.
+Also add `[IsFiniteMeasure μ]` to `tendsto_kingman` (as for M3 Birkhoff; the worker did).
+
+**Next: resume M4 (Kingman)** from `docs/plan/blueprints/m4-kingman.md` + the WIP, then M5
+(Furstenberg–Kesten, blueprint `m5-furstenberg-kesten.md`), the Lyapunov layers
+(`lyapunov-to-target.md`), and assembly into the target.
 
 ## What is done
 
