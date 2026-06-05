@@ -19,9 +19,9 @@ The matrix norm is the (scoped) L2 operator norm `Matrix.Norms.L2Operator`, whic
 submultiplicative; vectors live in `EuclideanSpace ℝ (Fin d)` and the action is via
 `Matrix.toEuclideanCLM`.
 
-This module is part of the skeleton: definitions are concrete, but the structural
-lemmas (cocycle identity, measurability) are stated with `sorry` and discharged in the
-cocycle-infrastructure phase.
+This module is part of the skeleton: the definitions are concrete and the structural
+lemmas (cocycle identity, measurability) are proved here in the cocycle-infrastructure
+phase.
 -/
 
 open MeasureTheory
@@ -60,17 +60,39 @@ theorem cocycle_succ (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : �
 /-- The **cocycle identity** `A⁽ᵐ⁺ⁿ⁾(x) = A⁽ᵐ⁾(Tⁿ x) · A⁽ⁿ⁾(x)`. -/
 theorem cocycle_add (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (m n : ℕ) (x : X) :
     cocycle A T (m + n) x = cocycle A T m (T^[n] x) * cocycle A T n x := by
-  sorry
+  induction n generalizing x with
+  | zero => simp
+  | succ n ih =>
+    rw [← Nat.add_assoc, cocycle_succ, cocycle_succ, ih (T x),
+      Function.iterate_succ_apply, mul_assoc]
 
 /-- The one-sided integrability hypothesis: `log⁺‖A‖ ∈ L¹(μ)`. -/
 def IntegrableLogNorm [MeasurableSpace X] (A : X → Matrix (Fin d) (Fin d) ℝ)
     (μ : Measure X) : Prop :=
   Integrable (fun x => Real.posLog ‖A x‖) μ
 
+/-- Matrix multiplication on `Matrix m m α` is measurable in both arguments jointly.
+Each entry of a product is the finite sum `(A * B) i j = ∑ k, A i k * B k j`
+(`Matrix.mul_apply`), and the entry-coordinate projections are measurable because the
+matrix space carries the Pi measurable structure (`instMeasurableSpaceMatrix`). -/
+instance instMeasurableMul₂Matrix {m α : Type*} [Fintype m] [MeasurableSpace α]
+    [NonUnitalNonAssocSemiring α] [MeasurableMul₂ α] [MeasurableAdd₂ α] :
+    MeasurableMul₂ (Matrix m m α) := by
+  have hentry : ∀ i j : m, Measurable fun M : Matrix m m α => M i j := fun i j =>
+    (measurable_pi_apply j).comp (measurable_pi_apply i)
+  refine ⟨measurable_pi_iff.2 fun i => measurable_pi_iff.2 fun j => ?_⟩
+  simp only [Matrix.mul_apply]
+  refine Finset.measurable_sum _ fun k _ => ?_
+  exact ((hentry i k).comp measurable_fst).mul ((hentry k j).comp measurable_snd)
+
 /-- Measurability of each iterate of the cocycle, given a measurable generator. -/
 theorem measurable_cocycle [MeasurableSpace X] {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : Measurable A) {T : X → X} (hT : Measurable T) (n : ℕ) :
     Measurable (fun x => cocycle A T n x) := by
-  sorry
+  induction n with
+  | zero => simpa only [cocycle_zero] using measurable_const
+  | succ n ih =>
+    simp only [cocycle_succ]
+    exact (ih.comp hT).mul hA
 
 end Oseledets

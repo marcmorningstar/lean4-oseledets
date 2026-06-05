@@ -16,10 +16,11 @@ filtration form** (milestone **M10** / layer **L6.1**), stated in Lean as
 
 ## Current phase
 
-**Phase 0 (skeleton) — COMPLETE (QA-passed).** Build green from source; the target
-theorem + the major milestone theorems are stated and typecheck, all proofs are intended
-`sorry`. Independent 3-agent checker review: **PASS** on all dimensions, zero blocking
-issues (see `docs/progress/qa/phase0-skeleton.md`). **Next: Phase 1 (cocycle infra).**
+**Phase 1 (cocycle infrastructure) — COMPLETE.** `cocycle_add` (the cocycle identity)
+and `measurable_cocycle` are now proved (build green, axioms clean), reducing open
+`sorry`s 11 → 9. Phase 0 skeleton before it passed independent 3-agent QA
+(`docs/progress/qa/phase0-skeleton.md`). **Next: Phase 2 (condExp ∘ measure-preserving,
+M2) — self-contained.**
 
 ## What is done
 
@@ -29,10 +30,11 @@ issues (see `docs/progress/qa/phase0-skeleton.md`). **Next: Phase 1 (cocycle inf
 - ✅ Research dossier + Mathlib survey + self-approved target/route/plan (committed in
   `d3922ae` on branch `met-formalization`).
 - ✅ **Phase 0 skeleton written and compiling green.** 7 modules under `Oseledets/`:
-  - `Cocycle/Basic.lean` — `cocycle` def (newest factor left) + `cocycle_zero/_succ/_one`
-    (proved), `cocycle_add` (identity, `sorry`), `IntegrableLogNorm` predicate,
-    `measurable_cocycle` (`sorry`); also the project-wide `instMeasurableSpaceMatrix`
-    (Pi/Borel measurable structure on matrices — not in Mathlib).
+  - `Cocycle/Basic.lean` — `cocycle` def (newest factor left) + `cocycle_zero/_succ/_one`,
+    **`cocycle_add` (identity) and `measurable_cocycle` PROVED (Phase 1)**,
+    `IntegrableLogNorm` predicate; the project-wide `instMeasurableSpaceMatrix`
+    (Pi/Borel measurable structure on matrices) and `instMeasurableMul₂Matrix`
+    (matrix multiplication measurable — added in Phase 1), neither in Mathlib.
   - `Cocycle/FurstenbergKesten.lean` — `furstenbergKesten_top`, `_bot` (`sorry`, M5).
   - `Ergodic/MaximalErgodic.lean` — `setIntegral_birkhoffSum_pos_nonneg` (`sorry`, M1).
   - `Ergodic/Birkhoff.lean` — `condExp_invariants_comp` (M2), `tendsto_birkhoffAverage_ae`
@@ -45,12 +47,12 @@ issues (see `docs/progress/qa/phase0-skeleton.md`). **Next: Phase 1 (cocycle inf
   declarations**; `#print axioms oseledets_filtration` = `[propext, sorryAx,
   Classical.choice, Quot.sound]` (only standard axioms + the intended `sorryAx` gaps).
 
-## Open `sorry`s (11 — all intended skeleton gaps; the implementation backlog)
+## Open `sorry`s (9 — all intended planned gaps; the implementation backlog)
+
+_Phase 1 closed `cocycle_add` + `measurable_cocycle` (Cocycle/Basic now sorry-free)._
 
 | Decl | File | Milestone |
 |---|---|---|
-| `cocycle_add` | Cocycle/Basic | M5-infra (cocycle identity) |
-| `measurable_cocycle` | Cocycle/Basic | M5-infra |
 | `setIntegral_birkhoffSum_pos_nonneg` | Ergodic/MaximalErgodic | M1 |
 | `condExp_invariants_comp` | Ergodic/Birkhoff | M2 |
 | `tendsto_birkhoffAverage_ae` | Ergodic/Birkhoff | M3 |
@@ -68,13 +70,17 @@ stated and `sorry`; these intermediate lemmas are added when their phase begins.
 
 ## What is next (in order)
 
-1. ✅ Phase-0 QA passed → commit the skeleton (this commit).
-2. ⏳ Phase 1 — cocycle infra: prove `cocycle_add`, `measurable_cocycle` + supporting
-   posLog/integrability lemmas (self-contained; closeable).
+1. ✅ Phase 0 (skeleton) committed `4ed4225`; blueprints `5b64baa`.
+2. ✅ Phase 1 (cocycle infra) — `cocycle_add`, `measurable_cocycle` proved.
 3. ⏳ Phase 2 — `condExp_invariants_comp` (M2, self-contained).
 4. ⏳ Phase 3 — ultrametric linear algebra (L4.3, pure LA; add module).
-5. ⏳ Phase 4 — maximal ergodic inequality (M1); Phase 5 — pointwise Birkhoff (M3).
-   Then Kingman (M4), Furstenberg–Kesten (M5), the Lyapunov layers, and assembly.
+5. ⏳ Phase 4 — maximal ergodic inequality (M1, blueprint in
+   `docs/plan/blueprints/m1-maximal-ergodic.md`); Phase 5 — pointwise Birkhoff (M3,
+   blueprint `m3-birkhoff.md`). Then Kingman (M4, `m4-kingman.md`),
+   Furstenberg–Kesten (M5), the Lyapunov layers, and assembly.
+
+**Proof blueprints** for the three hard theorems (M1/M3/M4) are in
+`docs/plan/blueprints/` — exact Mathlib lemma maps + auxiliary lemmas + pitfalls.
 
 ## Conventions (pinned — see decision-record.md / api-notes.md)
 
