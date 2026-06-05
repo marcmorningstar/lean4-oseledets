@@ -69,14 +69,19 @@ DONE (sorry-free, verified). Only step 3 remains.
      `sum_setIntegral_psiCoc_nonpos` (★ telescoped integral ineq), `sum_setIntegral_bcoc_eq`,
      `setIntegral_comp_iterate_of_invariants`, `ASet_mono`/`nullMeasurableSet_ASet`. Imports
      added: `MeasureTheory.Integral.DominatedConvergence`, `Analysis.Asymptotics.SpecificAsymptotics`.
-   - ⏳ **L-D** — `E_{α,β}` two-bound contradiction (Karlsson §3.3). The naive additive mirror
-     FAILS: subadditive cocycles give only *upper* maximal inequalities (reverse-Fatou points
-     the wrong way for the lower bound). Karlsson's fix (roadmap in the `ae_ereal_limsup_le_liminf`
-     docstring, Kingman.lean ~1256–1276): the `T^[M]`-subsequence cocycle
-     `vᴹ_n := v_{nM} − ∑_{i<n} v_M(T^[iM])` (non-positive subadditive for `T^[M]`, where
-     `v n := g n − birkhoffSum T (g 1) n`), apply **L-C with `T := T^[M]`** to `vᴹ`, combine with
-     `T^[M]`-Birkhoff (M3) of the block-additive part, then `M→∞ / ε→0`. Infra in place (L-C +
-     `integral_comp_iterate` + invariant-set idioms); missing = `vᴹ` construction + `T^[M]` M3/L-C plumbing.
+   - ✅ **L-D first half** — the target `ae_ereal_limsup_le_liminf` is now CLOSED, reduced to the
+     non-positive case `ae_ereal_limsup_le_liminf_nonpos`. Reduction infra (all proven): the
+     companion `vcoc g n := g n − birkhoffSum T (g 1) n` with `vcoc_subadditive`/`vcoc_nonpos`/
+     `vcoc_integrable`/`vcoc_bddBelow`/`ecdiv_eq_ecdiv_vcoc_add` (gap-transfer via M3 finite limit),
+     and the `T^[M]`-subsequence cocycle `vM g M n := g(nM) − ∑_{i<n} g M (T^[iM])` with
+     `vM_subadditive` (subadditive for `T^[M]`), `vM_nonpos` (n≥1), `vM_integrable`,
+     `vM_measurePreserving`.
+   - ⏳ **L-D second half** — the lone remaining `sorry`, isolated in `ae_ereal_limsup_le_liminf_nonpos`
+     (Kingman.lean ~1465). The `E_{α}` contradiction: for `α>0`, `E := {liminf(ecdiv g)+α < limsup}`
+     (measurable, `T`-invariant); apply **L-C with `T:=T^[M]`** to `vM g M` on `E`, combine with
+     `T^[M]`-Birkhoff (M3) of `(1/n)∑ g M(T^[iM])` to get `Mα·μ(E) ≤ lim(1/n)∫_E vM(n+1) ≤ Mε`,
+     so `μ(E) ≤ ε/α → 0`; union over `α=1/k`. Full roadmap in the lemma's docstring. All algebra
+     (`vM_*`) + L-A/L-B/L-C now in place; remaining = the `E_{α}` measure-theoretic contradiction.
 4. ✅ **Combine:** `⊥ < limsup ≤ liminf ≤ limsup ≤ B < ⊤` ⇒ finite common value ⇒ `Tendsto`
    to `G := toReal`, integrable — done inside `ae_tendsto_cdiv`.
 

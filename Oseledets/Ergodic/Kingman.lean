@@ -1253,35 +1253,278 @@ private theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
     _ = ((0 : ℝ) : EReal) := hcoe.limsup_eq
     _ = 0 := by norm_num
 
+/-! ### L-D, first half: reduction to the non-positive companion cocycle
+
+Karlsson's §3.3 argument is run on the *non-positive* companion
+`vcoc g n := g n − birkhoffSum T (g 1) n`. Since `birkhoffSum (g 1)` is an additive cocycle,
+`vcoc g` is again subadditive, and A1' (`le_birkhoffSum_one`) gives `vcoc g (n+1) ≤ 0`.
+The normalized gap is unchanged: `cdiv g − cdiv (vcoc g) = birkhoffAverage (g 1) (·+1)`, which
+converges a.e. (M3) to the *finite* `μ[g 1 | invariants T]`, so `liminf = limsup` for `ecdiv g`
+follows from the same statement for `ecdiv (vcoc g)`. -/
+
+/-- The **non-positive companion cocycle** `vcoc g n x := g n x − birkhoffSum T (g 1) n x`. -/
+private noncomputable def vcoc (g : ℕ → X → ℝ) (n : ℕ) (x : X) : ℝ :=
+  g n x - birkhoffSum T (g 1) n x
+
+omit [MeasurableSpace X] in
+/-- `vcoc g` is a subadditive cocycle: subtracting the *additive* cocycle `birkhoffSum (g 1)`
+from the subadditive `g` preserves subadditivity. -/
+private theorem vcoc_subadditive {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) :
+    IsSubadditiveCocycle T (vcoc (T := T) g) := by
+  refine ⟨fun m n x => ?_⟩
+  simp only [vcoc]
+  have hadd : birkhoffSum T (g 1) (m + n) x
+      = birkhoffSum T (g 1) m x + birkhoffSum T (g 1) n (T^[m] x) := birkhoffSum_add T (g 1) m n x
+  have hg := hsub.apply_add_le m n x
+  rw [hadd]
+  linarith
+
+omit [MeasurableSpace X] in
+/-- `vcoc g (n+1) x ≤ 0`: exactly A1' (`le_birkhoffSum_one`). -/
+private theorem vcoc_nonpos {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
+    vcoc (T := T) g (n + 1) x ≤ 0 := by
+  simp only [vcoc, sub_nonpos]
+  exact hsub.le_birkhoffSum_one n x
+
+/-- Each level of `vcoc g` is integrable (a difference of integrable `g n` and `birkhoffSum`). -/
+private theorem vcoc_integrable (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hint : ∀ n, Integrable (g n) μ) (n : ℕ) :
+    Integrable (vcoc (T := T) g n) μ := by
+  have heq : vcoc (T := T) g n = fun x => g n x - birkhoffSum T (g 1) n x := rfl
+  rw [heq]
+  exact (hint n).sub (integrable_birkhoffSum hT (hint 1) n)
+
+/-- The integral of `vcoc g (n+1)` is `(∫ g (n+1)) − (n+1)·(∫ g 1)`: the additive cocycle
+`birkhoffSum (g 1)` integrates to `(n+1)·∫ g 1` by measure preservation. -/
+private theorem integral_vcoc (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hint : ∀ n, Integrable (g n) μ) (n : ℕ) :
+    ∫ x, vcoc (T := T) g (n + 1) x ∂μ
+      = (∫ x, g (n + 1) x ∂μ) - ((n : ℝ) + 1) * ∫ x, g 1 x ∂μ := by
+  simp only [vcoc]
+  rw [integral_sub (hint (n + 1)) (integrable_birkhoffSum hT (hint 1) (n + 1))]
+  congr 1
+  -- `∫ birkhoffSum T (g 1) (n+1) = (n+1) * ∫ g 1`.
+  simp only [birkhoffSum]
+  rw [integral_finsetSum (f := fun k x => g 1 (T^[k] x)) _
+    (fun j _ => (hT.iterate j).integrable_comp_of_integrable (hint 1))]
+  have : ∀ j ∈ Finset.range (n + 1), ∫ x, g 1 (T^[j] x) ∂μ = ∫ x, g 1 x ∂μ :=
+    fun j _ => integral_comp_iterate hT hint j 1
+  rw [Finset.sum_congr rfl this, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  push_cast; ring
+
+/-- The normalized integrals of `vcoc g` are bounded below: `(∫ vcoc(n+1))/(n+1)
+= (∫ g(n+1))/(n+1) − ∫ g 1`, a shift of the bounded-below sequence `hbdd`. -/
+private theorem vcoc_bddBelow (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hint : ∀ n, Integrable (g n) μ)
+    (hbdd : BddBelow (Set.range fun n : ℕ => (∫ x, g (n + 1) x ∂μ) / (n + 1))) :
+    BddBelow (Set.range fun n : ℕ => (∫ x, vcoc (T := T) g (n + 1) x ∂μ) / (n + 1)) := by
+  obtain ⟨c, hc⟩ := hbdd
+  refine ⟨c - ∫ x, g 1 x ∂μ, ?_⟩
+  rintro _ ⟨n, rfl⟩
+  simp only
+  have hpos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  have hcn : c ≤ (∫ x, g (n + 1) x ∂μ) / (n + 1) := hc ⟨n, rfl⟩
+  have hval : (∫ x, vcoc (T := T) g (n + 1) x ∂μ) / ((n : ℝ) + 1)
+      = (∫ x, g (n + 1) x ∂μ) / ((n : ℝ) + 1) - ∫ x, g 1 x ∂μ := by
+    rw [integral_vcoc hT hint n, sub_div]
+    congr 1
+    rw [mul_comm, mul_div_assoc, div_self hpos.ne', mul_one]
+  rw [hval]
+  linarith
+
+omit [MeasurableSpace X] in
+/-- **Gap-transfer identity.** Pointwise in `EReal`, the normalized `g`-cocycle is the
+normalized companion plus the Birkhoff average of `g 1`:
+`ecdiv g n x = ecdiv (vcoc g) n x + ↑(birkhoffAverage ℝ T (g 1) (n+1) x)`. -/
+private theorem ecdiv_eq_ecdiv_vcoc_add {g : ℕ → X → ℝ} (n : ℕ) (x : X) :
+    ecdiv g n x
+      = ecdiv (vcoc (T := T) g) n x + ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal) := by
+  simp only [ecdiv, ← EReal.coe_add]
+  congr 1
+  simp only [cdiv, vcoc, birkhoffAverage, smul_eq_mul, sub_div]
+  have hcast : (((n + 1 : ℕ)) : ℝ) = (n : ℝ) + 1 := by push_cast; ring
+  rw [hcast, div_eq_inv_mul]
+  ring
+
+omit [MeasurableSpace X] in
+/-- **L1b — block subadditivity.** For a subadditive cocycle and any consecutive block
+decomposition of `[0, n)` into `k+1` blocks of lengths `ℓ 0, …, ℓ k` (with
+`n = ∑_{i ≤ k} ℓ i`), the cocycle is dominated by the sum of the block cocycle values along
+the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used by `L9` and by
+the `Tᴹ`-subsequence cocycle algebra below; stated for `k+1` blocks since the empty
+decomposition would force the false `g 0 x ≤ 0`.) -/
+private theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (ℓ : ℕ → ℕ) (k : ℕ) (x : X) :
+    g (∑ i ∈ Finset.range (k + 1), ℓ i) x
+      ≤ ∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x) := by
+  induction k with
+  | zero =>
+      rw [Finset.range_one, Finset.sum_singleton, Finset.sum_singleton, Finset.range_zero,
+        Finset.sum_empty, Function.iterate_zero, id_eq]
+  | succ k ih =>
+      rw [Finset.sum_range_succ (n := k + 1), Finset.sum_range_succ (n := k + 1)]
+      set s : ℕ := ∑ j ∈ Finset.range (k + 1), ℓ j with hs
+      calc g (s + ℓ (k + 1)) x
+          ≤ g s x + g (ℓ (k + 1)) (T^[s] x) := hsub.apply_add_le s (ℓ (k + 1)) x
+        _ ≤ (∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x))
+              + g (ℓ (k + 1)) (T^[s] x) := by linarith [ih]
+
+/-! ### L-D, second half (next worker): the `Tᴹ`-subsequence cocycle algebra
+
+For a non-positive subadditive cocycle `g` over `T` and a block length `M`, the
+`Tᴹ`-subsequence cocycle `vM g M n x := g (n*M) x − ∑_{i<n} g M (T^[i*M] x)` is a non-positive
+subadditive cocycle for `T^[M]`. This is the pure-algebra engine consumed by the second-half
+worker; no measure theory is used. -/
+
+/-- The **`Tᴹ`-subsequence cocycle** `vM g M n x := g (n*M) x − ∑_{i<n} g M (T^[i*M] x)`. -/
+private noncomputable def vM (g : ℕ → X → ℝ) (M n : ℕ) (x : X) : ℝ :=
+  g (n * M) x - ∑ i ∈ Finset.range n, g M (T^[i * M] x)
+
+omit [MeasurableSpace X] in
+/-- `vM g M` is a subadditive cocycle for `T^[M]`. Block subadditivity of `g` over the split
+`(n+p)·M = n·M + p·M` gives the `g`-term bound; the sum splits as `range (n+p) = range n ∪ tail`,
+and reindexing the tail `i = n+j` lines up `T^[i*M] = (T^[M])^[n] (T^[j*M])`. -/
+private theorem vM_subadditive {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (M : ℕ) :
+    IsSubadditiveCocycle (T^[M]) (vM (T := T) g M) := by
+  refine ⟨fun n p x => ?_⟩
+  simp only [vM]
+  -- frontier identity `T^[n*M] x = (T^[M])^[n] x`.
+  have hfront : T^[n * M] x = (T^[M])^[n] x := by
+    rw [← Function.iterate_mul]; congr 1; ring
+  -- `g`-term: `g ((n+p)*M) x ≤ g (n*M) x + g (p*M) ((T^[M])^[n] x)`.
+  have hgsplit : g ((n + p) * M) x ≤ g (n * M) x + g (p * M) ((T^[M])^[n] x) := by
+    have := hsub.apply_add_le (n * M) (p * M) x
+    rw [← Nat.add_mul, hfront] at this
+    exact this
+  -- sum split: `range (n+p) = range n ∪ (shifted range p)`, tail reindexed to the orbit frontier.
+  have hsum : ∑ i ∈ Finset.range (n + p), g M (T^[i * M] x)
+      = (∑ i ∈ Finset.range n, g M (T^[i * M] x))
+        + ∑ i ∈ Finset.range p, g M (T^[i * M] ((T^[M])^[n] x)) := by
+    rw [Finset.sum_range_add]
+    congr 1
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    congr 1
+    rw [← hfront, ← Function.iterate_add_apply]
+    congr 1
+    ring
+  rw [hsum]
+  -- linear arithmetic on the three sums.
+  set Sn := ∑ i ∈ Finset.range n, g M (T^[i * M] x)
+  set Sp := ∑ i ∈ Finset.range p, g M (T^[i * M] ((T^[M])^[n] x))
+  linarith
+
+omit [MeasurableSpace X] in
+/-- `vM g M n ≤ 0` for `n ≥ 1` when `g` is non-positive subadditive: block subadditivity
+(`le_sum_blocks` with all `n` blocks equal to `M`) gives `g (n*M) ≤ ∑_{i<n} g M (T^[i*M])`. -/
+private theorem vM_nonpos {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (M n : ℕ)
+    (hn : 1 ≤ n) (x : X) : vM (T := T) g M n x ≤ 0 := by
+  simp only [vM, sub_nonpos]
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  -- `le_sum_blocks` with constant block-length `ℓ = fun _ => M` and `k+1` blocks.
+  have hblk := hsub.le_sum_blocks (fun _ => M) k x
+  simp only [Finset.sum_const, Finset.card_range, smul_eq_mul] at hblk
+  exact hblk
+
+/-- Each level `vM g M n` is integrable for measure-preserving `T` (a finite difference of
+integrable terms; each `g M (T^[i*M] ·)` is integrable since `T^[i*M]` is measure-preserving). -/
+private theorem vM_integrable (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hint : ∀ n, Integrable (g n) μ) (M n : ℕ) :
+    Integrable (vM (T := T) g M n) μ := by
+  have heq : vM (T := T) g M n
+      = fun x => g (n * M) x - ∑ i ∈ Finset.range n, g M (T^[i * M] x) := rfl
+  rw [heq]
+  refine (hint (n * M)).sub ?_
+  exact integrable_finsetSum _
+    (fun i _ => (hT.iterate (i * M)).integrable_comp_of_integrable (hint M))
+
+/-- `T^[M]` is measure-preserving for measure-preserving `T` (stated for downstream use). -/
+private theorem vM_measurePreserving (hT : MeasurePreserving T μ μ) (M : ℕ) :
+    MeasurePreserving (T^[M]) μ μ := hT.iterate M
+
+/-- **Stopping-time direction (the hard core of Kingman), non-positive case.** A.e. the `EReal`
+`liminf` of the normalized non-positive subadditive cocycle equals its `EReal` `limsup`.
+
+This is the **second half of L-D** (Karlsson §3.3, the `E_{α,β}` contradiction), left as the
+single standing `sorry` of M4. The plan for the next worker, using the algebra assembled above:
+
+* Fix `α > 0`; let `E := {x | liminf (ecdiv g · x) + ↑α < limsup (ecdiv g · x)}`, a measurable
+  `T`-invariant set (both envelopes are a.e. `T`-invariant — see `limsup_div_comp_ae` and its
+  liminf analogue). It suffices to show `μ E = 0` for every `α > 0`.
+* For each block length `M ≥ 1`, apply **L-C (`limsup_setIntegral_div_nonpos`) with `T := T^[M]`**
+  (`vM_measurePreserving`) to the non-positive subadditive `T^[M]`-cocycle `vM g M`
+  (`vM_subadditive`, `vM_nonpos`, `vM_integrable`) on `E`: the per-`x` value
+  `cdiv (vM g M) n x = vM g M (n+1) x / (n+1)` together with the `T^[M]`-Birkhoff convergence
+  (M3, `tendsto_birkhoffAverage_ae` for `T^[M]`) of `(1/n) ∑_{i<n} g M (T^[i*M] x)` yields
+  `liminf (cdiv g · x) = liminf (cdiv (vM g M) · x) + birkhoffLimit`, and likewise for `limsup`.
+* On `E` the `g`-limsup exceeds the `g`-liminf by `> α`, while the `vM`-companion has
+  `limsup ≤ liminf` by L-C on `T^[M]`; combining over the invariant `E` gives
+  `M·α·μ(E) ≤ lim_n (1/n) ∫_E vM g M (n+1) ≤ M·ε` (any `ε > 0`), hence `μ(E) ≤ ε/α`.
+  Letting `ε → 0` forces `μ(E) = 0`. (The `M`-scaling cancels; `M` enters only to make the
+  `T^[M]`-Birkhoff averages of the *single* level `g M` available.)
+* Union over `α = 1/k`, `k → ∞`, gives `liminf = limsup` a.e. -/
+private theorem ae_ereal_limsup_le_liminf_nonpos [IsFiniteMeasure μ]
+    (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0)
+    (hbdd : BddBelow (Set.range fun n : ℕ => (∫ x, g (n + 1) x ∂μ) / (n + 1))) :
+    ∀ᵐ x ∂μ, Filter.liminf (fun n => ecdiv g n x) atTop
+      = Filter.limsup (fun n => ecdiv g n x) atTop := by
+  sorry -- BLOCKED: L-D second half (Karlsson §3.3 `E_{α,β}` contradiction). The `Tᴹ`-subsequence
+  -- cocycle algebra (`vM_*`) and L-A/L-B/L-C are in place; this is the remaining contradiction.
+
 /-- **Stopping-time direction (the hard core of Kingman).** A.e. the `EReal` `liminf` of the
 normalized cocycle equals its `EReal` `limsup`, proved by the Riesz/Derriennic "leaders" route
 (Karlsson, *A proof of the subadditive ergodic theorem*).
 
+Reduced here to the non-positive case `ae_ereal_limsup_le_liminf_nonpos` applied to the
+companion `vcoc g` (`vcoc_subadditive`, `vcoc_nonpos`, `vcoc_integrable`, `vcoc_bddBelow`): the
+normalized gap `ecdiv g − ecdiv (vcoc g) = ↑(birkhoffAverage (g 1) (·+1))` converges a.e. to the
+*finite* `μ[g 1 | invariants T]` (M3), and adding an a.e.-convergent finite-valued real sequence
+preserves the `liminf`/`limsup` (both become `e + ↑(limit)`).
+
 Ingredients now in place sorry-free above:
 * **L-A** `sum_leaders_nonpos` — Riesz's combinatorial leader lemma (Lemma 3.2).
 * **L-B** `sum_leaders_cocycle_nonpos` / `sum_psiCoc_comp_nonpos` — pointwise leader inequality.
-* **L-C** `limsup_setIntegral_div_nonpos` — *Derriennic's maximal inequality* (Lemma 3.4):
-  for a measurable `T`-invariant `B` on which a.e. some level `g (k+1) < 0`,
-  `limsup_n (∫_B g (n+1))/(n+1) ≤ 0` in `EReal`. (This is the substantive measure-theoretic
-  step — the telescoped integral `sum_setIntegral_psiCoc_nonpos`, the per-level positive-part
-  bound, and the Cesàro tail `dseq i → 0`.)
-
-Remaining (**L-D**, Karlsson §3.3, *not yet formalized*): the `E_{α,β}` contradiction. For the
-non-positive companion `v n := g n − birkhoffSum T (g 1) n` (subadditive, `v (n+1) ≤ 0`; and
-`ecdiv g − ecdiv v = birkhoffAverage (g 1) (n+1) → μ[g 1 | I]` by M3, so the gap
-`limsup − liminf` is the same for `g` and `v`), Karlsson shows `μ{f − g > α} = 0` for all
-`α > 0` via the **`Tᴹ`-subsequence cocycle** `vᴹ_n := v_{nM} − ∑_{i<n} v_M(Tⁱᴹ)`:
-applying **L-C with `T := T^[M]`** to `vᴹ` (non-positive subadditive for `T^[M]`) and using
-`f_M = f`, `g_M = g` plus the `T^[M]`-Birkhoff convergence of `(1/n)∑ v_M(Tⁱᴹ)` (M3) gives
-`Mα·μ(E) ≤ lim (1/n)∫_E vᴹ_n ≤ Mε`, hence `μ(E) ≤ ε/α → 0`. -/
+* **L-C** `limsup_setIntegral_div_nonpos` — *Derriennic's maximal inequality* (Lemma 3.4). -/
 private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
     (hbdd : BddBelow (Set.range fun n : ℕ => (∫ x, g (n + 1) x ∂μ) / (n + 1))) :
     ∀ᵐ x ∂μ, Filter.liminf (fun n => ecdiv g n x) atTop
       = Filter.limsup (fun n => ecdiv g n x) atTop := by
-  sorry -- BLOCKED: L-D (Karlsson §3.3 `E_{α,β}` contradiction via the `Tᴹ`-subsequence
-  -- cocycle `vᴹ`). L-A/L-B/L-C are proven above; this is the remaining reduction.
+  -- Non-positive companion `v := vcoc g` and its `liminf = limsup`.
+  set v : ℕ → X → ℝ := vcoc (T := T) g with hvdef
+  have hvsub : IsSubadditiveCocycle T v := vcoc_subadditive hsub
+  have hvint : ∀ n, Integrable (v n) μ := fun n => vcoc_integrable hT hint n
+  have hvnonpos : ∀ n x, v (n + 1) x ≤ 0 := fun n x => vcoc_nonpos hsub n x
+  have hvbdd : BddBelow (Set.range fun n : ℕ => (∫ x, v (n + 1) x ∂μ) / (n + 1)) :=
+    vcoc_bddBelow hT hint hbdd
+  have hveq := ae_ereal_limsup_le_liminf_nonpos hT hTm hvsub hvint hvnonpos hvbdd
+  -- M3: `birkhoffAverage (g 1) (·+1) x → B x := μ[g 1 | I] x` a.e. (reindexed).
+  have hbirk : ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => birkhoffAverage ℝ T (g 1) (n + 1) x) atTop
+      (𝓝 ((μ[g 1 | MeasurableSpace.invariants T]) x)) := by
+    filter_upwards [tendsto_birkhoffAverage_ae hT (hint 1)] with x hx
+    exact hx.comp (tendsto_add_atTop_nat 1)
+  filter_upwards [hveq, hbirk] with x hxeq hxbirk
+  -- Common EReal limit of `ecdiv v`.
+  set e : EReal := Filter.limsup (fun n => ecdiv v n x) atTop with hedef
+  have htend_v : Tendsto (fun n => ecdiv v n x) atTop (𝓝 e) :=
+    tendsto_of_liminf_eq_limsup hxeq rfl
+  -- `↑birkhoffAverage → ↑(B x)` in EReal.
+  set c : ℝ := (μ[g 1 | MeasurableSpace.invariants T]) x with hcdef
+  have htend_b : Tendsto (fun n : ℕ => ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal))
+      atTop (𝓝 ((c : ℝ) : EReal)) := (continuous_coe_real_ereal.tendsto _).comp hxbirk
+  -- Sum tends to `e + ↑c` (addition by a finite EReal is continuous).
+  have hcont : ContinuousAt (fun p : EReal × EReal => p.1 + p.2) (e, ((c : ℝ) : EReal)) :=
+    EReal.continuousAt_add (Or.inr (EReal.coe_ne_bot c)) (Or.inr (EReal.coe_ne_top c))
+  have htend_g : Tendsto (fun n => ecdiv g n x) atTop (𝓝 (e + ((c : ℝ) : EReal))) := by
+    have hsum : Tendsto (fun n => (ecdiv v n x, ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal)))
+        atTop (𝓝 (e, ((c : ℝ) : EReal))) := htend_v.prodMk_nhds htend_b
+    have := hcont.tendsto.comp hsum
+    refine this.congr (fun n => ?_)
+    simp only [Function.comp]
+    exact (ecdiv_eq_ecdiv_vcoc_add n x).symm
+  rw [htend_g.liminf_eq, htend_g.limsup_eq]
 
 /-! ### The Kingman core: a.e. existence of an integrable limit (the single deep gap) -/
 
@@ -1489,30 +1732,6 @@ private theorem int_limsup_div_integrable [IsFiniteMeasure μ]
   refine (integrable_congr ?_).mpr hGint
   filter_upwards [hG] with x hx
   exact hx.limsup_eq
-
-/-! ### L1b: general block subadditivity (for L9) -/
-
-omit [MeasurableSpace X] in
-/-- **L1b — block subadditivity.** For a subadditive cocycle and any consecutive block
-decomposition of `[0, n)` into `k+1` blocks of lengths `ℓ 0, …, ℓ k` (with
-`n = ∑_{i ≤ k} ℓ i`), the cocycle is dominated by the sum of the block cocycle values along
-the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used only by `L9`;
-stated for `k+1` blocks since the empty decomposition would force the false `g 0 x ≤ 0`.) -/
-private theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
-    (hsub : IsSubadditiveCocycle T g) (ℓ : ℕ → ℕ) (k : ℕ) (x : X) :
-    g (∑ i ∈ Finset.range (k + 1), ℓ i) x
-      ≤ ∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x) := by
-  induction k with
-  | zero =>
-      rw [Finset.range_one, Finset.sum_singleton, Finset.sum_singleton, Finset.range_zero,
-        Finset.sum_empty, Function.iterate_zero, id_eq]
-  | succ k ih =>
-      rw [Finset.sum_range_succ (n := k + 1), Finset.sum_range_succ (n := k + 1)]
-      set s : ℕ := ∑ j ∈ Finset.range (k + 1), ℓ j with hs
-      calc g (s + ℓ (k + 1)) x
-          ≤ g s x + g (ℓ (k + 1)) (T^[s] x) := hsub.apply_add_le s (ℓ (k + 1)) x
-        _ ≤ (∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x))
-              + g (ℓ (k + 1)) (T^[s] x) := by linarith [ih]
 
 /-! ### L9: the hard combinatorial direction (stopping-time block partition) -/
 
