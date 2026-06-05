@@ -1,11 +1,30 @@
-import Oseledets.Basic
+import Oseledets.Cocycle.Basic
+import Oseledets.Cocycle.FurstenbergKesten
+import Oseledets.Ergodic.MaximalErgodic
+import Oseledets.Ergodic.Birkhoff
+import Oseledets.Ergodic.Kingman
+import Oseledets.Lyapunov.MeasurableSubspace
+import Oseledets.MultiplicativeErgodic
 
 /-!
 # Oseledets
 
-Root module of the `Oseledets` library. It imports every module of the
-formalization of the Oseledets multiplicative ergodic theorem (MET).
+Root module of the `Oseledets` library: a Lean 4 + Mathlib formalization of the
+**Oseledets multiplicative ergodic theorem (MET)**, one-sided filtration form.
 
-Currently the library is an empty skeleton; modules are added here as the
-development progresses.
+This module imports the whole development. The mathematical and planning context lives
+under `docs/` (research dossier, target & milestone ladder, phased plan, progress).
+
+## Layout
+
+* `Oseledets.Cocycle.Basic` — the iterated linear cocycle and its basic API.
+* `Oseledets.Cocycle.FurstenbergKesten` — extremal Lyapunov exponents (`M5`).
+* `Oseledets.Ergodic.MaximalErgodic` — maximal ergodic inequality (`M1`).
+* `Oseledets.Ergodic.Birkhoff` — pointwise Birkhoff ergodic theorem (`M2`, `M3`).
+* `Oseledets.Ergodic.Kingman` — Kingman's subadditive ergodic theorem (`M4`).
+* `Oseledets.Lyapunov.MeasurableSubspace` — measurably-varying subspaces (`M7` infra).
+* `Oseledets.MultiplicativeErgodic` — the target theorem `oseledets_filtration` (`M10`).
+
+The development is currently a `sorry`-stubbed skeleton; gaps are filled phase by phase
+(see `docs/plan/implementation-plan.md` and `docs/progress/STATE.md`).
 -/

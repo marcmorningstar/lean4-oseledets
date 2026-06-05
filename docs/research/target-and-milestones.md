@@ -29,6 +29,15 @@ splitting) that add the most work without changing the essential content.
 
 ### Lean 4 signature sketch (real types; not yet type-checked)
 
+> **Superseded by the implemented statement.** The sketch below uses `Fin d → ℝ`,
+> `Matrix.toLin'`, and `*ᵥ` (which carry the L∞/sup norm). The actual formalized target
+> `Oseledets.oseledets_filtration` (in `Oseledets/MultiplicativeErgodic.lean`) instead
+> uses `EuclideanSpace ℝ (Fin d)` with the matrix action `Matrix.toEuclideanCLM` and the
+> **L2** operator norm — so that the operator norm is submultiplicative and the
+> spectral/singular-value API applies (see `docs/plan/api-notes.md`). The Lyapunov
+> exponents are norm-independent, so the two are mathematically equivalent; the
+> `EuclideanSpace` framing is the one that compiles and is used downstream.
+
 ```lean
 open scoped Matrix.Norms.L2Operator  -- fix the L2 operator norm on Matrix
 

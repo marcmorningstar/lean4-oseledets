@@ -1,0 +1,67 @@
+import Oseledets.Cocycle.Basic
+import Oseledets.Lyapunov.MeasurableSubspace
+
+/-!
+# The Oseledets multiplicative ergodic theorem (one-sided, filtration form)
+
+This is the **target theorem** of the development (milestone `M10` / layer `L6.1`;
+see `docs/research/target-and-milestones.md`). It is stated here with the proof left
+as `sorry`; the proof is assembled, in the implementation phases, from the milestone
+lemmas in `Oseledets/Ergodic/`, `Oseledets/Cocycle/`, and `Oseledets/Lyapunov/`.
+
+## Statement
+
+For an ergodic measure-preserving `T` on a probability space and a measurable matrix
+cocycle generator `A : X → GL(d, ℝ)` (encoded as `A x : Matrix (Fin d) (Fin d) ℝ` with
+`det (A x) ≠ 0`) satisfying the one-sided integrability `log⁺‖A‖, log⁺‖A⁻¹‖ ∈ L¹(μ)`,
+there exist finitely many distinct **Lyapunov exponents** `λ₁ > ⋯ > λ_k` and, for
+`μ`-a.e. `x`, a strictly decreasing, `A`-equivariant, measurable **filtration** of
+`EuclideanSpace ℝ (Fin d)` along which the cocycle grows at the exact rate `λᵢ`:
+`(1/n) log‖A⁽ⁿ⁾(x) v‖ → λᵢ` for `v ∈ Vⁱₓ ∖ V^{i+1}ₓ`.
+
+The matrices act on `EuclideanSpace ℝ (Fin d)` via `Matrix.toEuclideanCLM`, so all
+norms are the L2 norm and the matrix operator norm is submultiplicative.
+-/
+
+open MeasureTheory Filter Topology
+open scoped Matrix.Norms.L2Operator
+
+namespace Oseledets
+
+variable {X : Type*} [MeasurableSpace X] {d : ℕ}
+
+/-- **Oseledets multiplicative ergodic theorem (one-sided, filtration form).**
+
+Let `μ` be a probability measure, `T : X → X` ergodic measure-preserving, and
+`A : X → Matrix (Fin d) (Fin d) ℝ` a measurable cocycle generator with `det (A x) ≠ 0`
+and `log⁺‖A‖, log⁺‖A⁻¹‖ ∈ L¹(μ)`. Then there are `k` distinct Lyapunov exponents
+`lam : Fin k → ℝ` (strictly decreasing) and a measurable family of subspaces
+`V : Fin (k+1) → X → Submodule ℝ (EuclideanSpace ℝ (Fin d))` forming, `μ`-a.e., a
+strictly decreasing `A`-equivariant flag `⊤ = V 0 ⊋ ⋯ ⊋ V k = ⊥` along which
+`(1/n) log‖A⁽ⁿ⁾(x) v‖ → lam i` for every `v ∈ V iₓ ∖ V (i+1)ₓ`. -/
+theorem oseledets_filtration
+    {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
+    (hT : Ergodic T μ)
+    (A : X → Matrix (Fin d) (Fin d) ℝ)
+    (hA : ∀ x, (A x).det ≠ 0)
+    (hAmeas : Measurable A)
+    (hint : IntegrableLogNorm A μ)
+    (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
+    ∃ (k : ℕ) (lam : Fin k → ℝ)
+      (V : Fin (k + 1) → X → Submodule ℝ (EuclideanSpace ℝ (Fin d))),
+      StrictAnti lam ∧
+      (∀ i, MeasurableSubspace fun x => V i x) ∧
+      ∀ᵐ x ∂μ,
+        V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
+        (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
+        (∀ i : Fin (k + 1),
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+        (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
+            v ∉ V i.succ x →
+            Tendsto
+              (fun n : ℕ => (n : ℝ)⁻¹ *
+                Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖)
+              atTop (𝓝 (lam i))) := by
+  sorry
+
+end Oseledets
