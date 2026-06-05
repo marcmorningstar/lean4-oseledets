@@ -16,11 +16,12 @@ filtration form** (milestone **M10** / layer **L6.1**), stated in Lean as
 
 ## Current phase
 
-**Phase 1 (cocycle infrastructure) — COMPLETE.** `cocycle_add` (the cocycle identity)
-and `measurable_cocycle` are now proved (build green, axioms clean), reducing open
-`sorry`s 11 → 9. Phase 0 skeleton before it passed independent 3-agent QA
-(`docs/progress/qa/phase0-skeleton.md`). **Next: Phase 2 (condExp ∘ measure-preserving,
-M2) — self-contained.**
+**Phase 2 (condExp ∘ measure-preserving, M2) — COMPLETE.** `condExp_invariants_comp`
+proved (via `ae_eq_condExp_of_forall_setIntegral_eq` + a `setIntegral_comp_of_invariants`
+helper + `MeasurableSpace.measurable_invariants_of_semiconj`); build green, axioms clean,
+open `sorry`s 9 → 8. (Phases 0–1 before: skeleton QA-passed; cocycle identity +
+measurability proved.) **Next: Phase 3 = M1 (maximal ergodic inequality) — the keystone
+(see Routing insight below), fully blueprinted in `docs/plan/blueprints/m1-maximal-ergodic.md`.**
 
 ## What is done
 
@@ -47,14 +48,15 @@ M2) — self-contained.**
   declarations**; `#print axioms oseledets_filtration` = `[propext, sorryAx,
   Classical.choice, Quot.sound]` (only standard axioms + the intended `sorryAx` gaps).
 
-## Open `sorry`s (9 — all intended planned gaps; the implementation backlog)
+## Open `sorry`s (8 — all intended planned gaps; the implementation backlog)
 
-_Phase 1 closed `cocycle_add` + `measurable_cocycle` (Cocycle/Basic now sorry-free)._
+_Phase 1 closed `cocycle_add` + `measurable_cocycle`; Phase 2 closed
+`condExp_invariants_comp` (M2). `Cocycle/Basic` is sorry-free; `Ergodic/Birkhoff` has
+only the two Birkhoff theorems left._
 
 | Decl | File | Milestone |
 |---|---|---|
-| `setIntegral_birkhoffSum_pos_nonneg` | Ergodic/MaximalErgodic | M1 |
-| `condExp_invariants_comp` | Ergodic/Birkhoff | M2 |
+| `setIntegral_birkhoffSum_pos_nonneg` | Ergodic/MaximalErgodic | M1 (keystone) |
 | `tendsto_birkhoffAverage_ae` | Ergodic/Birkhoff | M3 |
 | `tendsto_birkhoffAverage_ae_integral` | Ergodic/Birkhoff | M3 (ergodic) |
 | `tendsto_kingman` | Ergodic/Kingman | M4 |
@@ -71,16 +73,27 @@ stated and `sorry`; these intermediate lemmas are added when their phase begins.
 ## What is next (in order)
 
 1. ✅ Phase 0 (skeleton) committed `4ed4225`; blueprints `5b64baa`.
-2. ✅ Phase 1 (cocycle infra) — `cocycle_add`, `measurable_cocycle` proved.
-3. ⏳ Phase 2 — `condExp_invariants_comp` (M2, self-contained).
-4. ⏳ Phase 3 — ultrametric linear algebra (L4.3, pure LA; add module).
-5. ⏳ Phase 4 — maximal ergodic inequality (M1, blueprint in
-   `docs/plan/blueprints/m1-maximal-ergodic.md`); Phase 5 — pointwise Birkhoff (M3,
-   blueprint `m3-birkhoff.md`). Then Kingman (M4, `m4-kingman.md`),
-   Furstenberg–Kesten (M5), the Lyapunov layers, and assembly.
+2. ✅ Phase 1 (cocycle infra) — `cocycle_add`, `measurable_cocycle` proved (`c23b73e`).
+3. ✅ Phase 2 (M2) — `condExp_invariants_comp` proved.
+4. ⏳ **Phase 3 = M1 (maximal ergodic inequality)** — the keystone; blueprint
+   `m1-maximal-ergodic.md`. Unlocks M3 (Birkhoff = M1+M2) and M4 (Kingman via
+   Katznelson–Weiss = M1).
+5. ⏳ Then M3 (Birkhoff, `m3-birkhoff.md`), M4 (Kingman, `m4-kingman.md`), M5
+   (Furstenberg–Kesten), the Lyapunov layers (growth fn, ultrametric, flag,
+   limsup→lim, measurability), and assembly into the target.
 
 **Proof blueprints** for the three hard theorems (M1/M3/M4) are in
 `docs/plan/blueprints/` — exact Mathlib lemma maps + auxiliary lemmas + pitfalls.
+
+**Routing insight (from the blueprints) — M1 is the keystone.** The maximal ergodic
+inequality (M1) unlocks BOTH:
+- M3 (pointwise Birkhoff) = M1 + M2, and
+- M4 (Kingman) via the **Katznelson–Weiss** route (M1 + truncation/stopping argument),
+  which the `m4-kingman.md` blueprint recommends over Steele (Steele needs M3 first and
+  a bespoke greedy-partition lemma with no Mathlib support).
+So after M2, **prove M1 next** — it is the single highest-leverage unlock. Prove the
+Kingman private lemmas under `[IsFiniteMeasure μ]` (the MET only uses probability
+measures); fix the EReal/−∞ convention before M4 (`m4-kingman.md §1`).
 
 ## Conventions (pinned — see decision-record.md / api-notes.md)
 
