@@ -693,15 +693,162 @@ private theorem int_limsup_div_integrable_aux [IsFiniteMeasure μ]
   rw [Integrable, hasFiniteIntegral_iff_ofReal hΔnn]
   exact ⟨hΔm.aestronglyMeasurable, hfin⟩
 
-/-! ### STEP 3: the stopping-time direction (the isolated hard core) -/
+/-! ### STEP 3: the Derriennic "leaders" route to `limsup ≤ liminf` a.e.
+
+We follow Karlsson, *A proof of the subadditive ergodic theorem* (Riesz/Derriennic route).
+The four ingredients are:
+
+* **L-A** (`sum_leaders_nonpos`): Riesz's combinatorial "leader" lemma (Karlsson Lemma 3.2),
+  pure finite induction, no measure theory.
+* **L-B** (`telescope_sub`): the telescoping identity `a n x − a (n−k) (T^[k] x) = ∑ bₙ₋ᵢ(T^[i]x)`.
+* **L-C** (`limsup_setIntegral_div_le`): Derriennic's maximal inequality (Karlsson Lemma 3.4 /
+  Prop 3.5): for a `T`-invariant set `B` on which `liminf (aₙ/n) < α`, one has
+  `limsup (1/n) ∫_B aₙ ≤ α·μ(B)`.
+* **L-D**: the `E_{α,β}` two-bound contradiction (Karlsson §3.3), mirroring the additive
+  `measure_setOf_lt_limsup_eq_zero` in `Birkhoff.lean`. -/
+
+open Classical in
+/-- The set of leaders of length `n` for partial sums `S`. -/
+private noncomputable def leaderSet (S : ℕ → ℝ) (n : ℕ) : Finset ℕ :=
+  (Finset.range n).filter (fun u => ∃ j, u < j ∧ j ≤ n ∧ S j < S u)
+
+/-- A leader `u ≥ s` of length `n` (with `s ≤ n`) is, after shifting indices down by `s`, a
+leader of the shifted partial sums `S (· + s)` of length `n − s`, and conversely. (The leader
+condition only inspects partial sums strictly after `u`, so dropping the prefix `[0, s)` is
+harmless.) This is the reindexing engine of the leader-lemma induction. -/
+private theorem mem_leaderSet_shift (S : ℕ → ℝ) (s n u : ℕ) (hsn : s ≤ n) :
+    (u + s ∈ leaderSet S n ∧ s ≤ u + s) ↔ u ∈ leaderSet (fun j => S (j + s)) (n - s) := by
+  classical
+  simp only [leaderSet, Finset.mem_filter, Finset.mem_range]
+  constructor
+  · rintro ⟨⟨_, j, hj1, hj2, hj3⟩, _⟩
+    refine ⟨by omega, j - s, by omega, by omega, ?_⟩
+    rwa [Nat.sub_add_cancel (by omega)]
+  · rintro ⟨hu, j, hj1, hj2, hj3⟩
+    refine ⟨⟨by omega, j + s, by omega, by omega, hj3⟩, by omega⟩
+
+/-- **L-A — Riesz's leader lemma** (Karlsson, Lemma 3.2), in partial-sum form. Given a
+sequence of partial sums `S : ℕ → ℝ` (think `S j = c 0 + … + c (j−1)`, `S 0 = 0`), call an
+index `u < n` a *leader* (of length `n`) if some later partial sum drops strictly below `S u`,
+i.e. `∃ j, u < j ≤ n ∧ S j < S u`. (This matches Karlsson's "a forward partial sum
+`c u + … + c (j−1) = S j − S u` is negative".) Then the sum of the increments `S (u+1) − S u`
+over the leaders is non-positive. Strong induction on `n`. -/
+private theorem sum_leaders_nonpos :
+    ∀ (n : ℕ) (S : ℕ → ℝ), ∑ u ∈ leaderSet S n, (S (u + 1) - S u) ≤ 0 := by
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    intro S
+    match n with
+    | 0 => simp [leaderSet]
+    | (n + 1) =>
+      classical
+      by_cases h0 : (0 : ℕ) ∈ leaderSet S (n + 1)
+      · -- `0` is a leader: take the least partial-sum index `k` with `S k < S 0`.
+        simp only [leaderSet, Finset.mem_filter, Finset.mem_range] at h0
+        obtain ⟨_, j0, hj01, hj02, hj03⟩ := h0
+        set P : ℕ → Prop := fun j => j ≤ n + 1 ∧ S j < S 0 with hP
+        have hPex : ∃ j, P j := ⟨j0, hj02, hj03⟩
+        set k : ℕ := Nat.find hPex with hk
+        have hkP : P k := Nat.find_spec hPex
+        have hk0 : 0 < k := by
+          rcases Nat.eq_zero_or_pos k with h | h
+          · exfalso; rw [h] at hkP; exact lt_irrefl _ hkP.2
+          · exact h
+        have hkle : k ≤ n + 1 := hkP.1
+        have hkmin : ∀ m, m < k → ¬ P m := fun m hm => Nat.find_min hPex hm
+        -- For each `i < k`, `S k < S i`: `S i ≥ S 0` (minimality) and `S k < S 0`.
+        have hbeat : ∀ i, i < k → S k < S i := by
+          intro i hik
+          rcases Nat.eq_zero_or_pos i with hi0 | _
+          · subst hi0; exact hkP.2
+          · have hSi : S 0 ≤ S i := by
+              by_contra hlt; rw [not_le] at hlt; exact hkmin i hik ⟨by omega, hlt⟩
+            linarith [hkP.2]
+        -- Split the leader set as the prefix `range k` together with the leaders `≥ k`.
+        have hprefix : ∀ i, i < k → i ∈ leaderSet S (n + 1) := by
+          intro i hik
+          simp only [leaderSet, Finset.mem_filter, Finset.mem_range]
+          exact ⟨by omega, k, hik, hkle, hbeat i hik⟩
+        -- Split the leader sum into the prefix `{u < k}` and the tail `{¬ u < k}`.
+        rw [← Finset.sum_filter_add_sum_filter_not (leaderSet S (n + 1)) (fun u => u < k)
+          (fun u => S (u + 1) - S u)]
+        -- The prefix filter is exactly `range k`; its increment sum telescopes to `S k - S 0 < 0`.
+        have hpref_eq : (leaderSet S (n + 1)).filter (fun u => u < k) = Finset.range k := by
+          ext u
+          simp only [Finset.mem_filter, Finset.mem_range, and_iff_right_iff_imp]
+          intro hu; exact hprefix u hu
+        rw [hpref_eq, Finset.sum_range_sub S k]
+        -- The tail filter reindexes to the leaders of the shifted partial sums of length `n+1-k`.
+        have htail : ∑ u ∈ (leaderSet S (n + 1)).filter (fun u => ¬ u < k), (S (u + 1) - S u)
+            ≤ 0 := by
+          set S' : ℕ → ℝ := fun j => S (j + k) with hS'
+          have hmap : (leaderSet S (n + 1)).filter (fun u => ¬ u < k)
+              = (leaderSet S' (n + 1 - k)).map ⟨fun u => u + k, fun a b h => Nat.add_right_cancel h⟩ := by
+            ext u
+            simp only [Finset.mem_filter, Finset.mem_map, Function.Embedding.coeFn_mk, not_lt]
+            constructor
+            · rintro ⟨hmem, hku⟩
+              refine ⟨u - k, ?_, by omega⟩
+              have := (mem_leaderSet_shift S k (n + 1) (u - k) hkle).1
+              rw [Nat.sub_add_cancel hku] at this
+              exact (this ⟨hmem, by omega⟩)
+            · rintro ⟨v, hv, rfl⟩
+              refine ⟨?_, by omega⟩
+              exact ((mem_leaderSet_shift S k (n + 1) v hkle).2 hv).1
+          rw [hmap, Finset.sum_map]
+          simp only [Function.Embedding.coeFn_mk]
+          have hval : ∀ v, S (v + k + 1) - S (v + k) = S' (v + 1) - S' v := by
+            intro v; simp only [hS']; ring_nf
+          simp_rw [hval]
+          exact ih (n + 1 - k) (by omega) S'
+        have := hkP.2; linarith [htail]
+      · -- `0` is not a leader: every leader lies in `{1,…,n}`; shift down by 1 and apply IH.
+        set S' : ℕ → ℝ := fun j => S (j + 1) with hS'
+        have hmap : leaderSet S (n + 1)
+            = (leaderSet S' n).map ⟨fun u => u + 1, fun a b h => Nat.add_right_cancel h⟩ := by
+          ext u
+          simp only [Finset.mem_map, Function.Embedding.coeFn_mk]
+          constructor
+          · intro hmem
+            have hu0 : u ≠ 0 := by rintro rfl; exact h0 hmem
+            refine ⟨u - 1, ?_, by omega⟩
+            have := (mem_leaderSet_shift S 1 (n + 1) (u - 1) (by omega)).1
+            rw [Nat.sub_add_cancel (by omega)] at this
+            exact this ⟨hmem, by omega⟩
+          · rintro ⟨v, hv, rfl⟩
+            exact ((mem_leaderSet_shift S 1 (n + 1) v (by omega)).2 hv).1
+        rw [hmap, Finset.sum_map]
+        simp only [Function.Embedding.coeFn_mk]
+        have hval : ∀ v, S (v + 1 + 1) - S (v + 1) = S' (v + 1) - S' v := fun v => rfl
+        simp_rw [hval]
+        exact ih n (by omega) S'
+
+omit [MeasurableSpace X] in
+/-- **L-B — leader inequality for the cocycle** (Karlsson, §3.2, the pointwise input of his
+Lemma 3.4). Fix `x` and length `n`, and consider the partial sums
+`S j := g n x − g (n−j) (T^[j] x)` (so `S 0 = 0`, and the increment `S (k+1) − S k` equals
+`g (n−k) (T^[k] x) − g (n−k−1) (T^[k+1] x)`). With these partial sums an index `k` is a
+*leader* exactly when `T^[k] x` lies in Karlsson's set `Λ_{n−k}`. The leader lemma `L-A`
+(`sum_leaders_nonpos`) then bounds the sum of the increments over the leaders by `0`. This is
+the purely pointwise/combinatorial heart of Derriennic's maximal inequality (the measure
+theory enters only when one integrates this inequality over a `T`-invariant set). -/
+private theorem sum_leaders_cocycle_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
+    ∑ k ∈ leaderSet (fun j => g n x - g (n - j) (T^[j] x)) n,
+        (g (n - k) (T^[k] x) - g (n - (k + 1)) (T^[k + 1] x)) ≤ 0 := by
+  have h := sum_leaders_nonpos n (fun j => g n x - g (n - j) (T^[j] x))
+  refine le_of_eq_of_le (Finset.sum_congr rfl (fun k _ => ?_)) h
+  ring
 
 /-- **Stopping-time direction (the hard core of Kingman).** A.e. the `EReal` `liminf` of the
-normalized cocycle equals its `EReal` `limsup`. This is the Katznelson–Weiss / Steele
-stopping-time block partition; see `docs/plan/blueprints/m4-kingman-v2.md` §4 and
-`docs/research/scratch/m4-L9-notes.md`. Combined with the unconditional `liminf ≤ limsup`,
-the genuine content is the reverse inequality `limsup ≤ liminf`, obtained by the greedy
-two-type block partition of `[0,n)` (truncation `max (liminf) (−M)`, a frontier walk via
-`le_sum_blocks`, and the three limit passages `n → ∞`, `L → ∞`, `M → ∞ / ε → 0`). -/
+normalized cocycle equals its `EReal` `limsup`. Combined with the unconditional
+`liminf ≤ limsup`, the genuine content is the reverse inequality `limsup ≤ liminf`, proved by
+the **Riesz/Derriennic "leaders" route** (Karlsson, *A proof of the subadditive ergodic
+theorem*); see `docs/research/scratch/m4-step3-derriennic-route.md`. The combinatorial nucleus
+`sum_leaders_nonpos` (L-A) and its pointwise cocycle form `sum_leaders_cocycle_nonpos` (L-B)
+are in place above; the remaining work is Derriennic's maximal inequality (L-C, integrating L-B
+over a `T`-invariant set) and the `E_{α,β}` two-bound contradiction (L-D, mirroring the additive
+`measure_setOf_lt_limsup_eq_zero` in `Birkhoff.lean`). -/
 private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)

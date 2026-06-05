@@ -53,14 +53,21 @@ DONE (sorry-free, verified). Only step 3 remains.
    integrability of `limsup cdiv` (`int_limsup_div_integrable_aux`, pure `ℝ≥0∞` Fatou, no
    circularity, uses only boundedness above). Helpers: `fdefect`, `integral_fdefect`,
    `ae_liminf_ofReal_fdefect_lt_top`, `ae_liminf_fdefect_lt_top`.
-3. ⏳ **Stopping time (EReal):** `limsup (↑cdiv) ≤ liminf (↑cdiv)` a.e. — THE hard core, now
-   the lone `sorry` (`ae_ereal_limsup_le_liminf`, Kingman.lean:705). **ROUTE DECISION: use the
-   Derriennic / Riesz "leaders" proof** (`docs/research/scratch/m4-step3-derriennic-route.md`),
-   NOT the Avila–Bochi truncation in m4-L9-notes.md §A. Its hard core is one finite induction
-   (Riesz leader lemma `sum_leaders_nonpos`, no measure theory), and its a.e.-convergence
-   scaffolding reuses the proven `measure_setOf_lt_limsup_eq_zero` `E_{α,β}` machinery from
-   `Birkhoff.lean`. Sub-lemmas L-A (leader lemma), L-B (telescoping `b n = a n − a(n-1)∘T`),
-   L-C (Derriennic maximal inequality), L-D (`E_{α,β}` two-bound contradiction).
+3. ⏳ **Stopping time (EReal):** `limsup (↑cdiv) ≤ liminf (↑cdiv)` a.e. — THE hard core, the
+   lone Kingman `sorry` (`ae_ereal_limsup_le_liminf`). **ROUTE: Derriennic / Riesz "leaders"**
+   (`docs/research/scratch/m4-step3-derriennic-route.md`), NOT Avila–Bochi truncation.
+   - ✅ **L-A** (`sum_leaders_nonpos`) — Riesz's leader lemma (Karlsson Lemma 3.2), pure finite
+     strong induction, no measure theory. The genuinely novel combinatorial nucleus. PROVEN.
+     Plus `leaderSet` def + `mem_leaderSet_shift` reindexing engine.
+   - ✅ **L-B** (`sum_leaders_cocycle_nonpos`) — pointwise leader inequality for the cocycle
+     (instantiate L-A at `S j = g n x − g(n−j)(T^[j]x)`). PROVEN.
+   - ⏳ **L-C** — Derriennic's maximal inequality (Karlsson Lemma 3.4 / Prop 3.5): integrate L-B
+     over a `T`-invariant set `B`, push `T^[k]` through `μ`, telescope, Cesàro tail → 0 via
+     monotone convergence. ~150–250 lines; Mathlib API exists (`integral_comp_iterate`,
+     `setIntegral_birkhoffSum_pos_nonneg`, `tendsto_setIntegral_of_monotone`-style).
+   - ⏳ **L-D** — `E_{α,β}` two-bound contradiction (Karlsson §3.3). For the subadditive case
+     needs the reduction to `v_n = g_n − birkhoffSum(g 1) n` and the `v^M` subsequence cocycle
+     over `T^M`; heavier than the additive mirror. Reuse `measure_setOf_lt_limsup_eq_zero` idioms.
 4. ✅ **Combine:** `⊥ < limsup ≤ liminf ≤ limsup ≤ B < ⊤` ⇒ finite common value ⇒ `Tendsto`
    to `G := toReal`, integrable — done inside `ae_tendsto_cdiv`.
 
