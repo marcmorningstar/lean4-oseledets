@@ -50,7 +50,17 @@ MISSING (build here): the det-Gram inner product / `hodgeForm` (step 1) and ever
 no compound-matrix API; no "op-norm = top singular value".
 
 ## Status
-Foundation committed `c6e1366`. Bridge is ONE flagged sorry. Steps 1 (det-Gram form) and 5 (SVD
-diagonalization) are the heaviest; 6 is easy. Estimated 1–2 focused passes. Route-I fallback
-(`lyapunov-to-target.md` §5–6) avoids exterior powers for the growth rates but still needs the
-scalar layer for `Λ`; so this kernel is on the critical path.
+**CLOSED — bridge fully proved, ExteriorNorm.lean is sorry-free.** Foundation committed `c6e1366`;
+the det-Gram kernel + bridge landed on top (+483 lines). The whole ladder is now realized:
+- `hodgeForm` (det-Gram bilinear form, step 1) — `hodgeForm_apply`, `innerₗ_eq_coord` (the form
+  agrees with the Euclidean inner product through the o.n.-basis-wedge trivialization, step 2).
+- op-norm invariance across o.n.-basis trivializations (`exteriorOpNorm_onbTriv_eq`, steps 3–4).
+- SVD diagonalization: through the `u`/`wF` wedge trivializations `conjExteriorMap` is diagonal with
+  entries `∏_{j∈S} σⱼ` (step 5), and `prod_le_prod_top` gives `max_{|S|=k} ∏ = ∏ top-k` (step 6).
+- bridge: `exteriorOpNorm_hodge_eq_prod_singularValues` (`‖⋀^k f‖ = ∏_{i<k} σᵢ`), then
+  `prod_singularValues_comp_le` (`∏σ(g∘f) ≤ ∏σ(g)·∏σ(f)`) — the submultiplicativity the scalar
+  Lyapunov layer consumes.
+
+QA gate passed: `lake build` green (exit 0, 2897 jobs); ExteriorNorm.lean has zero `sorry`; both
+bridge theorems depend only on `[propext, Classical.choice, Quot.sound]` (no `sorryAx`, no
+`native_decide`); statements verified non-vacuous. Critical path now advances to `OseledetsLimit.lean`.

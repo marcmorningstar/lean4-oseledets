@@ -117,22 +117,23 @@ Subbundle → Limit`):
   **demoted to the Route-I fallback** (`lyapunov-to-target.md` §5–6), used only if eigenspace
   convergence (§3.3) stalls. The committed L4.1–4.4 limsup flag is RETAINED to name exponents and as
   the a.e. bridge target (`Vᵢ = lambdaSublevel` a.e.).
-  - 🔄 **`ExteriorNorm.lean`** (NEW, pure multilinear algebra, no dynamics, upstreamable; namespace
-    `ExteriorNorm`) — **foundation DONE & committed, ONE flagged sorry remains.** Diamond-safe approach:
+  - ✅ **`ExteriorNorm.lean`** (NEW, pure multilinear algebra, no dynamics, upstreamable; namespace
+    `ExteriorNorm`) — **COMPLETE, fully `sorry`-free.** Diamond-safe approach:
     NO inner-product instance on `⋀^k E` (it unfolds to a submodule with an existing `AddCommGroup`;
     a fresh `NormedAddCommGroup` breaks `IsTopologicalAddGroup` synthesis — verified). Instead the
     Hodge structure is carried as DATA via `hodgeTrivialization : ⋀^k E ≃ₗ EuclideanSpace` (the wedge
     o.n. basis of `stdOrthonormalBasis ℝ E` → standard Euclidean basis); all metric reasoning happens
     in the Euclidean target. Sorry-free & axiom-clean: `exteriorTrivialization`, `wedgeBasis`,
     `hodgeTrivialization`, `exteriorOpNorm`, the **submultiplicativity engine `exteriorOpNorm_comp_le`**
-    (via `exteriorPower.map_comp` + `opNorm_comp_le`), and the **SVD orthogonality core**
-    `inner_apply_eigenvectorBasis_eq` (`⟪f uᵢ, f uⱼ⟫ = δᵢⱼ σᵢ²`). ONE flagged `sorry`
-    (`exteriorOpNorm_hodge_eq_prod_singularValues`, the `‖⋀^k f‖ = ∏σ` bridge — the SVD
-    diagonalization: `⋀^k f` diagonal on wedge bases + diagonal op-norm = max = ∏ top-k, via orthogonal
-    basis-change invariance of `exteriorOpNorm`). The crux `prod_singularValues_comp_le` is assembled
-    (engine + bridge), depends transitively on that one sorry. NOTE: the spike's bridge was stated for
-    ARBITRARY trivializations (scale-dependent ⇒ false); the worker correctly restated it for the Hodge
-    isometry. Repo now holds 2 sorries (target + this flagged bridge).
+    (via `exteriorPower.map_comp` + `opNorm_comp_le`), the **SVD orthogonality core**
+    `inner_apply_eigenvectorBasis_eq` (`⟪f uᵢ, f uⱼ⟫ = δᵢⱼ σᵢ²`), the **det-Gram kernel**
+    (`hodgeForm` + `innerₗ_eq_coord`: the det-Gram form agrees with the Euclidean inner product through
+    the o.n.-basis-wedge trivialization ⟹ o.n.-basis-change invariance `exteriorOpNorm_onbTriv_eq`),
+    the **bridge** `exteriorOpNorm_hodge_eq_prod_singularValues` (`‖⋀^k f‖ = ∏_{i<k} σᵢ(f)`, via SVD
+    diagonalization of `conjExteriorMap` on wedge bases + `prod_le_prod_top` max-product), and the crux
+    `prod_singularValues_comp_le` (`∏σ(g∘f) ≤ ∏σ(g)·∏σ(f)`). QA gate PASS: `lake build` green (2897
+    jobs); zero `sorry`; both bridge theorems depend only on `[propext, Classical.choice, Quot.sound]`
+    (no `sorryAx`/`native_decide`); statements verified non-vacuous. Repo now holds 1 sorry (the target).
   - **`OseledetsLimit.lean`**: (§3.1) scalar exponents via `tendsto_kingman_ergodic` on
     `log‖⋀^k(cocycle)‖` (REUSES Kingman) → `lamSing`/`Γ`; (§3.3, THE crux, highest risk, no Mathlib
     Davis–Kahan) eigenspace/projection convergence `Qₙ^{1/2n} → Λ`; (§3.4) bridge `Vᵢ = lambdaSublevel`;
