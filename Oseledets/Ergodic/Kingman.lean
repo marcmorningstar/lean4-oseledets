@@ -1539,11 +1539,500 @@ private theorem vM_integrable (hT : MeasurePreserving T μ μ) {g : ℕ → X �
 private theorem vM_measurePreserving (hT : MeasurePreserving T μ μ) (M : ℕ) :
     MeasurePreserving (T^[M]) μ μ := hT.iterate M
 
+omit [MeasurableSpace X] in
+/-- **Block sandwich (non-positive case).** For a non-positive subadditive cocycle and a block
+length `M`, when `k*M ≤ m ≤ (k+1)*M` the cocycle value `g m x` is sandwiched:
+`g ((k+1)*M) x ≤ g m x ≤ g (k*M) x`. (Upper bound: `g m = g (kM + (m−kM)) ≤ g (kM) + g (m−kM)(…) ≤
+g (kM)` since `g (m−kM) ≤ 0`; the offset `0` case is equality. Lower bound symmetric using
+`(k+1)M = m + ((k+1)M − m)`.) -/
+private theorem block_sandwich {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0) (M k m : ℕ) (hkm : k * M ≤ m) (hmk : m ≤ (k + 1) * M)
+    (x : X) : g ((k + 1) * M) x ≤ g m x ∧ g m x ≤ g (k * M) x := by
+  have hnp : ∀ j, 1 ≤ j → ∀ y, g j y ≤ 0 := by
+    intro j hj y; obtain ⟨i, rfl⟩ : ∃ i, j = i + 1 := ⟨j - 1, by omega⟩; exact hnonpos i y
+  constructor
+  · -- `g ((k+1)*M) x ≤ g m x`: split `(k+1)*M = m + s`, `s = (k+1)*M − m`.
+    set s : ℕ := (k + 1) * M - m with hs
+    rcases Nat.eq_zero_or_pos s with hs0 | hspos
+    · have : (k + 1) * M = m := by omega
+      rw [this]
+    · have hsplit : (k + 1) * M = m + s := by omega
+      calc g ((k + 1) * M) x = g (m + s) x := by rw [hsplit]
+        _ ≤ g m x + g s (T^[m] x) := hsub.apply_add_le m s x
+        _ ≤ g m x := by linarith [hnp s hspos (T^[m] x)]
+  · -- `g m x ≤ g (k*M) x`: split `m = k*M + r`, `r = m − k*M`.
+    set r : ℕ := m - k * M with hr
+    rcases Nat.eq_zero_or_pos r with hr0 | hrpos
+    · have : m = k * M := by omega
+      rw [this]
+    · have hsplit : m = k * M + r := by omega
+      calc g m x = g (k * M + r) x := by rw [hsplit]
+        _ ≤ g (k * M) x + g r (T^[k * M] x) := hsub.apply_add_le (k * M) r x
+        _ ≤ g (k * M) x := by linarith [hnp r hrpos (T^[k * M] x)]
+
+omit [MeasurableSpace X] in
+/-- The pointwise subadditivity bound, normalized: `cdiv g n x ≤ g 1 x / (n+1) + g n (T x)/(n+1)`. -/
+private theorem cdiv_le_shift {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
+    cdiv g n x ≤ g 1 x / (n + 1) + g n (T x) / (n + 1) := by
+  have h := hsub.apply_add_le 1 n x
+  rw [show (1 + n) = n + 1 from by ring] at h
+  rw [cdiv, ← add_div]
+  apply div_le_div_of_nonneg_right h (by positivity) |>.trans_eq
+  simp only [Function.iterate_one]
+
+/-! ### Piece 1: `EReal`-envelope `T`-invariance (non-positive case)
+
+The `ℝ`-valued envelope invariance (`liminf_div_comp_ae`) requires the normalized cocycle to be
+bounded below a.e. — a fact available only *after* `ae_tendsto_cdiv`. For the non-positive case
+we need the envelope invariance *before* convergence, so we work directly in `EReal`, where the
+`liminf`/`limsup` are total and no boundedness is needed. -/
+
+omit [MeasurableSpace X] in
+/-- **EReal `liminf` of a finite shift.** Liminf analogue of `ereal_limsup_add_coe`. -/
+private theorem ereal_liminf_add_coe (u : ℕ → ℝ) (c : ℝ) :
+    Filter.liminf (fun n => ((u n : ℝ) : EReal) + (c : EReal)) atTop
+      = Filter.liminf (fun n => ((u n : ℝ) : EReal)) atTop + (c : EReal) := by
+  have h := (erealAddCoeIso c).liminf_apply (u := fun n => ((u n : ℝ) : EReal))
+    (f := atTop) (by isBoundedDefault) (by isBoundedDefault)
+    (by isBoundedDefault) (by isBoundedDefault)
+  simp only [erealAddCoeIso, RelIso.coe_fn_mk, Equiv.coe_fn_mk] at h
+  exact h.symm
+
+omit [MeasurableSpace X] in
+/-- **EReal perturbation (`liminf`), one-sided.** If `a n − b n → 0` then
+`liminf ↑b ≤ liminf ↑a` in `EReal`. Via `EReal.le_liminf_add` with the vanishing perturbation
+`↑(a − b)`, whose `liminf` is `0`. No boundedness is required (`EReal` is a complete lattice). -/
+private theorem ereal_liminf_le_of_sub_tendsto_zero {a b : ℕ → ℝ}
+    (hab : Tendsto (fun n => a n - b n) atTop (𝓝 0)) :
+    Filter.liminf (fun n => ((b n : ℝ) : EReal)) atTop
+      ≤ Filter.liminf (fun n => ((a n : ℝ) : EReal)) atTop := by
+  -- The perturbation `e n := ↑(a n − b n)` tends to `0`, so `liminf e = 0`.
+  have hetend : Tendsto (fun n => ((a n - b n : ℝ) : EReal)) atTop (𝓝 ((0 : ℝ) : EReal)) :=
+    (continuous_coe_real_ereal.tendsto _).comp hab
+  have heliminf : Filter.liminf (fun n => ((a n - b n : ℝ) : EReal)) atTop = 0 := by
+    rw [hetend.liminf_eq]; norm_num
+  -- `↑a = ↑b + ↑(a − b)` pointwise.
+  have hsplit : (fun n => ((a n : ℝ) : EReal))
+      = (fun n => ((b n : ℝ) : EReal)) + (fun n => ((a n - b n : ℝ) : EReal)) := by
+    funext n
+    simp only [Pi.add_apply]
+    rw [← EReal.coe_add]
+    congr 1
+    ring
+  -- `liminf ↑b + liminf e ≤ liminf (↑b + e) = liminf ↑a`.
+  have hadd := EReal.le_liminf_add (f := atTop)
+    (u := fun n => ((b n : ℝ) : EReal)) (v := fun n => ((a n - b n : ℝ) : EReal))
+  rw [heliminf, add_zero] at hadd
+  rwa [hsplit]
+
+omit [MeasurableSpace X] in
+/-- **EReal perturbation (`liminf`).** If two real sequences differ by a sequence tending to `0`,
+their `EReal`-coerced `liminf`s coincide. -/
+private theorem ereal_liminf_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
+    (h : Tendsto (fun n => u n - v n) atTop (𝓝 0)) :
+    Filter.liminf (fun n => ((u n : ℝ) : EReal)) atTop
+      = Filter.liminf (fun n => ((v n : ℝ) : EReal)) atTop := by
+  refine le_antisymm ?_ (ereal_liminf_le_of_sub_tendsto_zero h)
+  refine ereal_liminf_le_of_sub_tendsto_zero ?_
+  have : (fun n => v n - u n) = (fun n => -(u n - v n)) := by funext n; ring
+  rw [this]; simpa using h.neg
+
+omit [MeasurableSpace X] in
+/-- **EReal perturbation (`limsup`).** If two real sequences differ by a sequence tending to `0`,
+their `EReal`-coerced `limsup`s coincide. Via `limsup_neg` and `ereal_liminf_eq_of_sub_tendsto_zero`
+on the negated sequences. -/
+private theorem ereal_limsup_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
+    (h : Tendsto (fun n => u n - v n) atTop (𝓝 0)) :
+    Filter.limsup (fun n => ((u n : ℝ) : EReal)) atTop
+      = Filter.limsup (fun n => ((v n : ℝ) : EReal)) atTop := by
+  -- `limsup ↑u = -liminf (-↑u) = -liminf ↑(-u)`, and `(-u) − (-v) = -(u − v) → 0`.
+  have hneg : Tendsto (fun n => (-u n) - (-v n)) atTop (𝓝 0) := by
+    have : (fun n => (-u n) - (-v n)) = (fun n => -(u n - v n)) := by funext n; ring
+    rw [this]; simpa using h.neg
+  have key := ereal_liminf_eq_of_sub_tendsto_zero hneg
+  have hrw : ∀ w : ℕ → ℝ, Filter.limsup (fun n => ((w n : ℝ) : EReal)) atTop
+      = -Filter.liminf (fun n => ((-w n : ℝ) : EReal)) atTop := by
+    intro w
+    have hfun : (fun n => ((-w n : ℝ) : EReal)) = -(fun n => ((w n : ℝ) : EReal)) := by
+      funext n; rw [Pi.neg_apply, EReal.coe_neg]
+    rw [hfun, EReal.liminf_neg, neg_neg]
+  rw [hrw u, hrw v, key]
+
+omit [MeasurableSpace X] in
+/-- **EReal ratio squeeze (`liminf`), one-sided.** If `z n ≤ 0`, `c n → 1`, `1 ≤ c n`, then the
+nonpositive `EReal`-coerced products `↑(c n · z n)` (which are `≤ ↑(z n)`) have `liminf` no smaller
+than that of `↑z`: `liminf ↑z ≤ liminf ↑(c · z)`. (The reverse is monotonicity.) For each `ε > 0`,
+eventually `(1+ε)·z n ≤ c n · z n` (as `z ≤ 0`), and `liminf ↑((1+ε)·z) = (1+ε)·liminf ↑z → liminf ↑z`
+as `ε → 0`; the `EReal` scalar law `EReal.liminf_const_mul_of_nonneg_of_ne_top` handles the `−∞`
+case uniformly. -/
+private theorem ereal_liminf_le_ratio {c z : ℕ → ℝ} (hz : ∀ n, z n ≤ 0)
+    (_hc1 : ∀ n, 1 ≤ c n) (hctend : Tendsto c atTop (𝓝 1)) :
+    Filter.liminf (fun n => ((z n : ℝ) : EReal)) atTop
+      ≤ Filter.liminf (fun n => ((c n * z n : ℝ) : EReal)) atTop := by
+  set Lz : EReal := Filter.liminf (fun n => ((z n : ℝ) : EReal)) atTop with hLz
+  set Lcz : EReal := Filter.liminf (fun n => ((c n * z n : ℝ) : EReal)) atTop with hLcz
+  -- `Lz ≤ 0`.
+  have hLz0 : Lz ≤ 0 := by
+    rw [hLz]
+    refine le_trans (Filter.liminf_le_liminf (Eventually.of_forall fun n =>
+      (EReal.coe_le_coe_iff.2 (hz n) : ((z n : ℝ) : EReal) ≤ ((0 : ℝ) : EReal)))) ?_
+    simp [Filter.liminf_const]
+  -- For every real `ε > 0`: `↑(1+ε) * Lz ≤ Lcz`.
+  have hkey : ∀ ε : ℝ, 0 < ε → (((1 + ε : ℝ) : EReal)) * Lz ≤ Lcz := by
+    intro ε hε
+    -- eventually `c n ≤ 1 + ε`, hence `(1+ε) * z n ≤ c n * z n` (as `z n ≤ 0`).
+    have hev : ∀ᶠ n in atTop, ((((1 + ε) * z n : ℝ)) : EReal) ≤ ((c n * z n : ℝ) : EReal) := by
+      have : ∀ᶠ n in atTop, c n ≤ 1 + ε := by
+        have := (Metric.tendsto_atTop.1 hctend) ε hε
+        obtain ⟨N, hN⟩ := this
+        filter_upwards [eventually_ge_atTop N] with n hn
+        have := hN n hn
+        rw [Real.dist_eq, abs_lt] at this
+        linarith [this.2]
+      filter_upwards [this] with n hcn
+      refine EReal.coe_le_coe_iff.2 ?_
+      exact mul_le_mul_of_nonpos_right hcn (hz n)
+    have hmono : Filter.liminf (fun n => ((((1 + ε) * z n : ℝ)) : EReal)) atTop ≤ Lcz :=
+      Filter.liminf_le_liminf hev
+    -- `liminf ↑((1+ε)·z) = ↑(1+ε) * liminf ↑z = ↑(1+ε) * Lz`.
+    have hscalar : Filter.liminf (fun n => ((((1 + ε) * z n : ℝ)) : EReal)) atTop
+        = (((1 + ε : ℝ) : EReal)) * Lz := by
+      have hfun : (fun n => ((((1 + ε) * z n : ℝ)) : EReal))
+          = fun n => (((1 + ε : ℝ) : EReal)) * ((z n : ℝ) : EReal) := by
+        funext n; rw [EReal.coe_mul]
+      rw [hfun, hLz, EReal.liminf_const_mul_of_nonneg_of_ne_top (by positivity)
+        (EReal.coe_ne_top _)]
+    rwa [hscalar] at hmono
+  -- Pass `ε → 0⁺`.  `Lz ≤ 0`, so either `Lz = ⊥` or `Lz` is finite.
+  rcases eq_bot_or_bot_lt Lz with hbot | hfin
+  · rw [hbot]; exact bot_le
+  · -- finite case: `Lz = ↑a` with `a := Lz.toReal`.
+    have hne_bot : Lz ≠ ⊥ := hfin.ne'
+    have hne_top : Lz ≠ ⊤ := (hLz0.trans_lt (by norm_num : (0 : EReal) < ⊤)).ne
+    set a : ℝ := Lz.toReal with hadef
+    have ha : ((a : ℝ) : EReal) = Lz := EReal.coe_toReal hne_top hne_bot
+    rw [← ha]
+    -- `↑((1+ε)·a) ≤ Lcz` for all `ε > 0`; `(1+ε)·a → a`; conclude `↑a ≤ Lcz`.
+    have hreal : ∀ ε : ℝ, 0 < ε → ((((1 + ε) * a : ℝ)) : EReal) ≤ Lcz := by
+      intro ε hε
+      have := hkey ε hε
+      rw [← ha, ← EReal.coe_mul] at this
+      exact this
+    -- `Tendsto (fun ε => ↑((1+ε)·a)) (𝓝[>] 0) (𝓝 ↑a)`, and `Lcz` closed-above bound.
+    have htend : Tendsto (fun ε : ℝ => ((((1 + ε) * a : ℝ)) : EReal)) (𝓝[>] 0)
+        (𝓝 ((a : ℝ) : EReal)) := by
+      apply (continuous_coe_real_ereal.tendsto _).comp
+      have : Tendsto (fun ε : ℝ => (1 + ε) * a) (𝓝 0) (𝓝 ((1 + 0) * a)) :=
+        ((continuous_const.add continuous_id).mul continuous_const).tendsto 0
+      simp only [add_zero, one_mul] at this
+      exact this.mono_left nhdsWithin_le_nhds
+    refine le_of_tendsto htend ?_
+    filter_upwards [self_mem_nhdsWithin] with ε hε
+    exact hreal ε hε
+
+omit [MeasurableSpace X] in
+/-- **EReal ratio squeeze (`limsup`), one-sided.** Dual of `ereal_liminf_le_ratio`:
+`limsup ↑z ≤ limsup ↑(c · z)` when `z n ≤ 0`, `c n → 1`, `1 ≤ c n`. -/
+private theorem ereal_limsup_le_ratio {c z : ℕ → ℝ} (hz : ∀ n, z n ≤ 0)
+    (_hc1 : ∀ n, 1 ≤ c n) (hctend : Tendsto c atTop (𝓝 1)) :
+    Filter.limsup (fun n => ((z n : ℝ) : EReal)) atTop
+      ≤ Filter.limsup (fun n => ((c n * z n : ℝ) : EReal)) atTop := by
+  set Lz : EReal := Filter.limsup (fun n => ((z n : ℝ) : EReal)) atTop with hLz
+  set Lcz : EReal := Filter.limsup (fun n => ((c n * z n : ℝ) : EReal)) atTop with hLcz
+  have hLz0 : Lz ≤ 0 := by
+    rw [hLz]
+    refine le_trans (Filter.limsup_le_limsup (Eventually.of_forall fun n =>
+      (EReal.coe_le_coe_iff.2 (hz n) : ((z n : ℝ) : EReal) ≤ ((0 : ℝ) : EReal)))) ?_
+    simp [Filter.limsup_const]
+  have hkey : ∀ ε : ℝ, 0 < ε → (((1 + ε : ℝ) : EReal)) * Lz ≤ Lcz := by
+    intro ε hε
+    have hev : ∀ᶠ n in atTop, ((((1 + ε) * z n : ℝ)) : EReal) ≤ ((c n * z n : ℝ) : EReal) := by
+      have : ∀ᶠ n in atTop, c n ≤ 1 + ε := by
+        obtain ⟨N, hN⟩ := (Metric.tendsto_atTop.1 hctend) ε hε
+        filter_upwards [eventually_ge_atTop N] with n hn
+        have := hN n hn
+        rw [Real.dist_eq, abs_lt] at this
+        linarith [this.2]
+      filter_upwards [this] with n hcn
+      exact EReal.coe_le_coe_iff.2 (mul_le_mul_of_nonpos_right hcn (hz n))
+    have hmono : Filter.limsup (fun n => ((((1 + ε) * z n : ℝ)) : EReal)) atTop ≤ Lcz :=
+      Filter.limsup_le_limsup hev
+    have hscalar : Filter.limsup (fun n => ((((1 + ε) * z n : ℝ)) : EReal)) atTop
+        = (((1 + ε : ℝ) : EReal)) * Lz := by
+      have hfun : (fun n => ((((1 + ε) * z n : ℝ)) : EReal))
+          = fun n => (((1 + ε : ℝ) : EReal)) * ((z n : ℝ) : EReal) := by
+        funext n; rw [EReal.coe_mul]
+      rw [hfun, hLz, EReal.limsup_const_mul_of_nonneg_of_ne_top (by positivity)
+        (EReal.coe_ne_top _)]
+    rwa [hscalar] at hmono
+  rcases eq_bot_or_bot_lt Lz with hbot | hfin
+  · rw [hbot]; exact bot_le
+  · have hne_bot : Lz ≠ ⊥ := hfin.ne'
+    have hne_top : Lz ≠ ⊤ := (hLz0.trans_lt (by norm_num : (0 : EReal) < ⊤)).ne
+    set a : ℝ := Lz.toReal with hadef
+    have ha : ((a : ℝ) : EReal) = Lz := EReal.coe_toReal hne_top hne_bot
+    rw [← ha]
+    have hreal : ∀ ε : ℝ, 0 < ε → ((((1 + ε) * a : ℝ)) : EReal) ≤ Lcz := by
+      intro ε hε
+      have := hkey ε hε
+      rw [← ha, ← EReal.coe_mul] at this
+      exact this
+    have htend : Tendsto (fun ε : ℝ => ((((1 + ε) * a : ℝ)) : EReal)) (𝓝[>] 0)
+        (𝓝 ((a : ℝ) : EReal)) := by
+      apply (continuous_coe_real_ereal.tendsto _).comp
+      have : Tendsto (fun ε : ℝ => (1 + ε) * a) (𝓝 0) (𝓝 ((1 + 0) * a)) :=
+        ((continuous_const.add continuous_id).mul continuous_const).tendsto 0
+      simp only [add_zero, one_mul] at this
+      exact this.mono_left nhdsWithin_le_nhds
+    refine le_of_tendsto htend ?_
+    filter_upwards [self_mem_nhdsWithin] with ε hε
+    exact hreal ε hε
+
+/-- The `EReal` `liminf` envelope `x ↦ liminf (ecdiv g · x)` is a.e. measurable: it agrees a.e.
+with the `EReal` liminf of measurable representatives of each level. -/
+private theorem aemeasurable_ereal_liminf {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) :
+    AEMeasurable (fun x => Filter.liminf (fun n => ecdiv g n x) atTop) μ := by
+  set g₀ : ℕ → X → ℝ := fun n => (hint n).1.mk with hg₀def
+  have hg₀m : ∀ n, Measurable (g₀ n) := fun n => (hint n).1.measurable_mk
+  have hgg₀ : ∀ n, g n =ᵐ[μ] g₀ n := fun n => (hint n).1.ae_eq_mk
+  refine ⟨fun x => Filter.liminf (fun n => ((g₀ (n + 1) x / (n + 1) : ℝ) : EReal)) atTop, ?_, ?_⟩
+  · exact Measurable.liminf (fun n => ((hg₀m (n + 1)).div_const _).coe_real_ereal)
+  · have hall : ∀ᵐ x ∂μ, ∀ n : ℕ, g (n + 1) x = g₀ (n + 1) x :=
+      ae_all_iff.2 (fun n => hgg₀ (n + 1))
+    filter_upwards [hall] with x hx
+    simp only [ecdiv, cdiv]
+    congr 1
+    funext n
+    rw [hx n]
+
+/-- The `EReal` `limsup` envelope `x ↦ limsup (ecdiv g · x)` is a.e. measurable. -/
+private theorem aemeasurable_ereal_limsup {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) :
+    AEMeasurable (fun x => Filter.limsup (fun n => ecdiv g n x) atTop) μ := by
+  set g₀ : ℕ → X → ℝ := fun n => (hint n).1.mk with hg₀def
+  have hg₀m : ∀ n, Measurable (g₀ n) := fun n => (hint n).1.measurable_mk
+  have hgg₀ : ∀ n, g n =ᵐ[μ] g₀ n := fun n => (hint n).1.ae_eq_mk
+  refine ⟨fun x => Filter.limsup (fun n => ((g₀ (n + 1) x / (n + 1) : ℝ) : EReal)) atTop, ?_, ?_⟩
+  · exact Measurable.limsup (fun n => ((hg₀m (n + 1)).div_const _).coe_real_ereal)
+  · have hall : ∀ᵐ x ∂μ, ∀ n : ℕ, g (n + 1) x = g₀ (n + 1) x :=
+      ae_all_iff.2 (fun n => hgg₀ (n + 1))
+    filter_upwards [hall] with x hx
+    simp only [ecdiv, cdiv]
+    congr 1
+    funext n
+    rw [hx n]
+
+omit [MeasurableSpace X] in
+/-- The shift-and-ratio lower bound on the cocycle at `T x` (non-positive case): for every `k`,
+`cdiv g k (T x) ≥ c k · z k − g 1 x/(k+1)`, where `z k := cdiv g (k+1) x ≤ 0` and
+`c k := (k+2)/(k+1) ≥ 1`. From `g (k+2) x ≤ g 1 x + g (k+1) (T x)` (subadditivity, first block of
+length `1`), so `g (k+1) (T x) ≥ g (k+2) x − g 1 x`; dividing by `k+1` and rewriting
+`g (k+2) x/(k+1) = (k+2)/(k+1) · cdiv g (k+1) x`. -/
+private theorem cdiv_comp_ge_ratio {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (k : ℕ)
+    (x : X) :
+    ((k : ℝ) + 2) / ((k : ℝ) + 1) * cdiv g (k + 1) x - g 1 x / ((k : ℝ) + 1)
+      ≤ cdiv g k (T x) := by
+  have h := hsub.apply_add_le 1 (k + 1) x
+  rw [show (1 + (k + 1)) = k + 2 from by ring, Function.iterate_one] at h
+  -- `g (k+2) x ≤ g 1 x + g (k+1) (T x)`, so `g (k+1) (T x) ≥ g (k+2) x − g 1 x`.
+  have hge : g (k + 2) x - g 1 x ≤ g (k + 1) (T x) := by linarith
+  have hk1 : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  have hk2 : ((k : ℝ) + 2) ≠ 0 := by positivity
+  -- Divide by `k+1`.
+  have hdiv : (g (k + 2) x - g 1 x) / ((k : ℝ) + 1) ≤ g (k + 1) (T x) / ((k : ℝ) + 1) :=
+    div_le_div_of_nonneg_right hge hk1.le
+  -- Rewrite both sides to the target form.
+  have hlhs : ((k : ℝ) + 2) / ((k : ℝ) + 1) * cdiv g (k + 1) x - g 1 x / ((k : ℝ) + 1)
+      = (g (k + 2) x - g 1 x) / ((k : ℝ) + 1) := by
+    simp only [cdiv]
+    rw [show (((k : ℕ) + 1 : ℕ) : ℝ) + 1 = (k : ℝ) + 2 by push_cast; ring]
+    field_simp
+  rw [hlhs]
+  show (g (k + 2) x - g 1 x) / ((k : ℝ) + 1) ≤ g (k + 1) (T x) / ((k : ℝ) + 1)
+  exact hdiv
+
+omit [MeasurableSpace X] in
+/-- The ratio sequence `c k := (k+2)/(k+1)` is `≥ 1` and tends to `1`. -/
+private theorem ratio_succ_tendsto_one :
+    Tendsto (fun k : ℕ => ((k : ℝ) + 2) / ((k : ℝ) + 1)) atTop (𝓝 1) := by
+  have hform : (fun k : ℕ => ((k : ℝ) + 2) / ((k : ℝ) + 1))
+      = fun k : ℕ => 1 + ((k : ℝ) + 1)⁻¹ := by
+    funext k
+    have hk1 : ((k : ℝ) + 1) ≠ 0 := by positivity
+    field_simp
+    ring
+  rw [hform]
+  have hinv : Tendsto (fun k : ℕ => ((k : ℝ) + 1)⁻¹) atTop (𝓝 0) := by
+    have : Tendsto (fun k : ℕ => (k : ℝ) + 1) atTop atTop :=
+      tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop
+    exact tendsto_inv_atTop_zero.comp this
+  simpa using tendsto_const_nhds.add hinv
+
+omit [MeasurableSpace X] in
+/-- **EReal `liminf` comparison (non-positive case).** For every `x`,
+`liminf (ecdiv g · x) ≤ liminf (ecdiv g · (T x))`. From the shift-and-ratio lower bound
+`cdiv_comp_ge_ratio`, the ratio squeeze `ereal_liminf_le_ratio` (using `cdiv g (k+1) x ≤ 0`), the
+vanishing perturbation `g 1 x/(k+1) → 0`, and the index shift `liminf (cdiv g · x) =
+liminf (cdiv g (·+1) x)`. -/
+private theorem ereal_liminf_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0) (x : X) :
+    Filter.liminf (fun n => ecdiv g n x) atTop
+      ≤ Filter.liminf (fun n => ecdiv g n (T x)) atTop := by
+  -- `z k := cdiv g (k+1) x ≤ 0`, `c k := (k+2)/(k+1)`, lower bound `y k := c k · z k − g1x/(k+1)`.
+  set z : ℕ → ℝ := fun k => cdiv g (k + 1) x with hzdef
+  set c : ℕ → ℝ := fun k => ((k : ℝ) + 2) / ((k : ℝ) + 1) with hcdef
+  have hz : ∀ k, z k ≤ 0 := fun k => by
+    simp only [hzdef, cdiv]
+    apply div_nonpos_of_nonpos_of_nonneg _ (by positivity)
+    rw [show (k + 1 + 1) = (k + 1) + 1 from rfl]; exact hnonpos (k + 1) x
+  have hc1 : ∀ k, 1 ≤ c k := fun k => by
+    simp only [hcdef]
+    rw [le_div_iff₀ (by positivity)]; linarith
+  -- bound `cdiv g k (T x) ≥ c k · z k − g1x/(k+1)`.
+  have hbound : ∀ k, c k * z k - g 1 x / ((k : ℝ) + 1) ≤ cdiv g k (T x) :=
+    fun k => cdiv_comp_ge_ratio hsub k x
+  -- chain of EReal inequalities.
+  calc Filter.liminf (fun n => ecdiv g n x) atTop
+      = Filter.liminf (fun k => ((z k : ℝ) : EReal)) atTop := by
+        rw [hzdef]
+        exact (Filter.liminf_nat_add (fun n => ((cdiv g n x : ℝ) : EReal)) 1).symm
+    _ ≤ Filter.liminf (fun k => ((c k * z k : ℝ) : EReal)) atTop := by
+        have hct : Tendsto c atTop (𝓝 1) := by rw [hcdef]; exact ratio_succ_tendsto_one
+        exact ereal_liminf_le_ratio hz hc1 hct
+    _ = Filter.liminf (fun k => ((c k * z k - g 1 x / ((k : ℝ) + 1) : ℝ) : EReal)) atTop := by
+        refine ereal_liminf_eq_of_sub_tendsto_zero ?_
+        have : (fun k => c k * z k - (c k * z k - g 1 x / ((k : ℝ) + 1)))
+            = fun k : ℕ => g 1 x / ((k : ℝ) + 1) := by funext k; ring
+        rw [this]
+        simp only [div_eq_mul_inv]
+        have hinv : Tendsto (fun k : ℕ => ((k : ℝ) + 1)⁻¹) atTop (𝓝 0) := by
+          have : Tendsto (fun k : ℕ => (k : ℝ) + 1) atTop atTop :=
+            tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop
+          exact tendsto_inv_atTop_zero.comp this
+        simpa using hinv.const_mul (g 1 x)
+    _ ≤ Filter.liminf (fun k => ((cdiv g k (T x) : ℝ) : EReal)) atTop := by
+        refine Filter.liminf_le_liminf (Eventually.of_forall fun k =>
+          EReal.coe_le_coe_iff.2 (hbound k)) ?_ ?_
+        · exact Filter.isBounded_ge_of_bot
+        · exact Filter.isCobounded_ge_of_top
+    _ = Filter.liminf (fun n => ecdiv g n (T x)) atTop := rfl
+
+omit [MeasurableSpace X] in
+/-- **EReal `limsup` comparison (non-positive case).** For every `x`,
+`limsup (ecdiv g · x) ≤ limsup (ecdiv g · (T x))`. Same route as `ereal_liminf_le_comp` with
+`ereal_limsup_le_ratio` and `ereal_limsup_eq_of_sub_tendsto_zero`. -/
+private theorem ereal_limsup_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0) (x : X) :
+    Filter.limsup (fun n => ecdiv g n x) atTop
+      ≤ Filter.limsup (fun n => ecdiv g n (T x)) atTop := by
+  set z : ℕ → ℝ := fun k => cdiv g (k + 1) x with hzdef
+  set c : ℕ → ℝ := fun k => ((k : ℝ) + 2) / ((k : ℝ) + 1) with hcdef
+  have hz : ∀ k, z k ≤ 0 := fun k => by
+    simp only [hzdef, cdiv]
+    apply div_nonpos_of_nonpos_of_nonneg _ (by positivity)
+    rw [show (k + 1 + 1) = (k + 1) + 1 from rfl]; exact hnonpos (k + 1) x
+  have hc1 : ∀ k, 1 ≤ c k := fun k => by
+    simp only [hcdef]
+    rw [le_div_iff₀ (by positivity)]; linarith
+  have hbound : ∀ k, c k * z k - g 1 x / ((k : ℝ) + 1) ≤ cdiv g k (T x) :=
+    fun k => cdiv_comp_ge_ratio hsub k x
+  calc Filter.limsup (fun n => ecdiv g n x) atTop
+      = Filter.limsup (fun k => ((z k : ℝ) : EReal)) atTop := by
+        rw [hzdef]
+        exact (Filter.limsup_nat_add (fun n => ((cdiv g n x : ℝ) : EReal)) 1).symm
+    _ ≤ Filter.limsup (fun k => ((c k * z k : ℝ) : EReal)) atTop := by
+        have hct : Tendsto c atTop (𝓝 1) := by rw [hcdef]; exact ratio_succ_tendsto_one
+        exact ereal_limsup_le_ratio hz hc1 hct
+    _ = Filter.limsup (fun k => ((c k * z k - g 1 x / ((k : ℝ) + 1) : ℝ) : EReal)) atTop := by
+        refine ereal_limsup_eq_of_sub_tendsto_zero ?_
+        have : (fun k => c k * z k - (c k * z k - g 1 x / ((k : ℝ) + 1)))
+            = fun k : ℕ => g 1 x / ((k : ℝ) + 1) := by funext k; ring
+        rw [this]
+        simp only [div_eq_mul_inv]
+        have hinv : Tendsto (fun k : ℕ => ((k : ℝ) + 1)⁻¹) atTop (𝓝 0) := by
+          have : Tendsto (fun k : ℕ => (k : ℝ) + 1) atTop atTop :=
+            tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop
+          exact tendsto_inv_atTop_zero.comp this
+        simpa using hinv.const_mul (g 1 x)
+    _ ≤ Filter.limsup (fun k => ((cdiv g k (T x) : ℝ) : EReal)) atTop := by
+        refine Filter.limsup_le_limsup (Eventually.of_forall fun k =>
+          EReal.coe_le_coe_iff.2 (hbound k)) ?_ ?_
+        · exact Filter.isCobounded_le_of_bot
+        · exact Filter.isBounded_le_of_top
+    _ = Filter.limsup (fun n => ecdiv g n (T x)) atTop := rfl
+
+/-- **EReal version of `ae_eq_comp_of_le_comp` (L5).** For an a.e.-measurable `EReal`-valued `F`
+with `F x ≤ F (T x)` a.e., `F ∘ T =ᵐ[μ] F`. Verbatim adaptation of the `ℝ` proof, with rational
+levels `↑(c : ℚ) : EReal` and `EReal.exists_rat_btwn_of_lt` for the separation step. -/
+private theorem ereal_ae_eq_comp_of_le_comp [IsFiniteMeasure μ]
+    (hT : MeasurePreserving T μ μ) {F : X → EReal} (hF : AEMeasurable F μ)
+    (hle : ∀ᵐ x ∂μ, F x ≤ F (T x)) : F ∘ T =ᵐ[μ] F := by
+  set F0 : X → EReal := hF.mk F with hF0def
+  have hF0m : Measurable F0 := hF.measurable_mk
+  have hFF0 : F =ᵐ[μ] F0 := hF.ae_eq_mk
+  have hkey : ∀ c : ℚ, T ⁻¹' {x | (((c : ℝ) : EReal)) ≤ F x} =ᵐ[μ] {x | (((c : ℝ) : EReal)) ≤ F x} := by
+    intro c
+    set s : Set X := {x | (((c : ℝ) : EReal)) ≤ F x} with hs
+    have hsmeas : NullMeasurableSet s μ := by
+      have hseq : s =ᵐ[μ] {x | (((c : ℝ) : EReal)) ≤ F0 x} := by
+        rw [Filter.eventuallyEq_set]
+        filter_upwards [hFF0] with x hx
+        simp only [hs, Set.mem_setOf_eq, hx]
+      exact (measurableSet_le measurable_const hF0m).nullMeasurableSet.congr hseq.symm
+    have hsub : s ≤ᵐ[μ] T ⁻¹' s := by
+      filter_upwards [hle] with x hx hxs
+      have hxs' : (((c : ℝ) : EReal)) ≤ F x := hxs
+      exact le_trans hxs' hx
+    have hmeq : μ (T ⁻¹' s) = μ s := hT.measure_preimage hsmeas
+    have : s =ᵐ[μ] T ⁻¹' s :=
+      ae_eq_of_ae_subset_of_measure_ge hsub (le_of_eq hmeq) hsmeas (measure_ne_top μ _)
+    exact this.symm
+  have hall : ∀ᵐ x ∂μ, ∀ c : ℚ,
+      (x ∈ T ⁻¹' {x | (((c : ℝ) : EReal)) ≤ F x}) ↔ (x ∈ {x | (((c : ℝ) : EReal)) ≤ F x}) := by
+    rw [ae_all_iff]
+    intro c
+    exact Filter.eventuallyEq_set.1 (hkey c)
+  filter_upwards [hall] with x hx
+  show F (T x) = F x
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with hlt | hgt
+  · -- `F (T x) < F x`: pick rational `c` with `F (T x) < ↑c < F x`.
+    obtain ⟨c, hc1, hc2⟩ := EReal.exists_rat_btwn_of_lt hlt
+    have := (hx c).symm
+    simp only [Set.mem_preimage, Set.mem_setOf_eq] at this
+    exact absurd (this.1 hc2.le) (not_le.2 hc1)
+  · -- `F x < F (T x)`: pick rational `c` with `F x < ↑c < F (T x)`.
+    obtain ⟨c, hc1, hc2⟩ := EReal.exists_rat_btwn_of_lt hgt
+    have := hx c
+    simp only [Set.mem_preimage, Set.mem_setOf_eq] at this
+    exact absurd (this.1 hc2.le) (not_le.2 hc1)
+
+/-- **EReal `liminf`-envelope `T`-invariance (non-positive case).**
+`(fun x => liminf (ecdiv g · x)) ∘ T =ᵐ[μ] …`. -/
+private theorem liminf_ecdiv_comp_ae [IsFiniteMeasure μ]
+    (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0) :
+    (fun x => Filter.liminf (fun n => ecdiv g n x) atTop) ∘ T
+      =ᵐ[μ] fun x => Filter.liminf (fun n => ecdiv g n x) atTop :=
+  ereal_ae_eq_comp_of_le_comp hT (aemeasurable_ereal_liminf hint)
+    (Eventually.of_forall (fun x => ereal_liminf_le_comp hsub hnonpos x))
+
+/-- **EReal `limsup`-envelope `T`-invariance (non-positive case).**
+`(fun x => limsup (ecdiv g · x)) ∘ T =ᵐ[μ] …`. -/
+private theorem limsup_ecdiv_comp_ae [IsFiniteMeasure μ]
+    (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
+    (hnonpos : ∀ n x, g (n + 1) x ≤ 0) :
+    (fun x => Filter.limsup (fun n => ecdiv g n x) atTop) ∘ T
+      =ᵐ[μ] fun x => Filter.limsup (fun n => ecdiv g n x) atTop :=
+  ereal_ae_eq_comp_of_le_comp hT (aemeasurable_ereal_limsup hint)
+    (Eventually.of_forall (fun x => ereal_limsup_le_comp hsub hnonpos x))
+
 /-- **Stopping-time direction (the hard core of Kingman), non-positive case.** A.e. the `EReal`
 `liminf` of the normalized non-positive subadditive cocycle equals its `EReal` `limsup`.
 
-This is the **second half of L-D** (Karlsson §3.3, the `E_{α,β}` contradiction), left as the
-single standing `sorry` of M4. The plan for the next worker, using the algebra assembled above:
+This is the **second half of L-D** (Karlsson §3.3, the `E_{α,β}` contradiction).
+The plan, using the algebra assembled above:
 
 * Fix `α > 0`; let `E := {x | liminf (ecdiv g · x) + ↑α < limsup (ecdiv g · x)}`, a measurable
   `T`-invariant set (both envelopes are a.e. `T`-invariant — see `limsup_div_comp_ae` and its
@@ -1562,10 +2051,21 @@ single standing `sorry` of M4. The plan for the next worker, using the algebra a
 * Union over `α = 1/k`, `k → ∞`, gives `liminf = limsup` a.e.
 
 Infrastructure now in place for the next worker (all sorry-free above):
+* **Piece 1 — `EReal`-envelope `T`-invariance** (`liminf_ecdiv_comp_ae` / `limsup_ecdiv_comp_ae`):
+  the non-positive-case `EReal` analogue of LD-a (needed because the `liminf` may be `⊥`, where the
+  `ℝ` version returns junk). Built from the per-`x` monotonicity `ereal_liminf_le_comp` /
+  `ereal_limsup_le_comp` (shift-and-ratio lower bound `cdiv_comp_ge_ratio` + ratio squeeze
+  `ereal_liminf_le_ratio` / `ereal_limsup_le_ratio`) fed through the `EReal` level-set invariance
+  `ereal_ae_eq_comp_of_le_comp` (EReal `L5`, using `EReal.exists_rat_btwn_of_lt`). The supporting
+  `EReal` perturbation lemmas `ereal_liminf_eq_of_sub_tendsto_zero` /
+  `ereal_limsup_eq_of_sub_tendsto_zero` (vanishing real shift) and `ereal_liminf_add_coe` are also
+  available, as is a.e.-measurability `aemeasurable_ereal_liminf` / `aemeasurable_ereal_limsup`.
+* **Piece 2 partial — `block_sandwich`**: for `k*M ≤ m ≤ (k+1)*M`,
+  `g ((k+1)*M) x ≤ g m x ≤ g (k*M) x` (the pointwise input to the LD-c subsequence squeeze
+  `f_M = f̄`, `g_M = f`). The remaining LD-c step relates `limsup`/`liminf` over `m` to the
+  `M`-subsequence via the ratio squeeze (`ratio_succ_tendsto_one`-style `kM/m → 1`, `(k+1)M/m → 1`).
 * **LD-a** `liminf_div_comp_ae` / `liminf_cdiv_le_comp` — `ℝ`-valued `T`-invariance of the
-  `liminf` envelope (mirror of `limsup_div_comp_ae`). For the non-positive `EReal` envelopes an
-  analogous argument is still needed (the `liminf` may be `⊥`, so the `ℝ` version does not apply
-  verbatim — but `cdiv ≤ 0` bounds the `limsup` above by `0`).
+  `liminf` envelope (mirror of `limsup_div_comp_ae`; superseded by Piece 1 in the `EReal` regime).
 * **LD-b** `setIntegral_div_le_level` — the `β`-version of the maximal inequality (Prop 3.5):
   `limsup_n ↑((∫_B a(n+1))/(n+1)) ≤ ↑(β · (μ B).toReal)` whenever `∀ᵐ x∈B, ∃k, a(k+1)x < (k+1)β`.
   Directly usable in step 5 with `a := vM g M`, `B := E`, `β := −M·α`.
@@ -1579,10 +2079,11 @@ private theorem ae_ereal_limsup_le_liminf_nonpos [IsFiniteMeasure μ]
       = Filter.limsup (fun n => ecdiv g n x) atTop := by
   sorry -- BLOCKED: L-D second half (Karlsson §3.3 `E_{α,β}` contradiction). Now in place
   -- sorry-free: the `Tᴹ` cocycle algebra (`vM_*`), L-A/L-B/L-C, the `β`-maximal inequality
-  -- `setIntegral_div_le_level` (step 5), the `EReal` constant-shift `ereal_limsup_add_coe`, and
-  -- the `ℝ`-`liminf` invariance `liminf_div_comp_ae`. Residual: the `EReal`-envelope `T`-invariance
-  -- of `E` (LD-a in `EReal`, since the `liminf` may be `⊥`), the subsequence squeeze
-  -- `f_M = f̄`, `g_M = f` (LD-c), the additive `Tᴹ`-Birkhoff assembly (LD-d), and the final
+  -- `setIntegral_div_le_level` (step 5), the `EReal` constant-shift `ereal_limsup_add_coe`,
+  -- **Piece 1** (`EReal`-envelope `T`-invariance of `E`: `liminf_ecdiv_comp_ae` /
+  -- `limsup_ecdiv_comp_ae`), and the **Piece 2** pointwise `block_sandwich`. Residual: the LD-c
+  -- subsequence squeeze `f_M = f̄`, `g_M = f` (assemble `block_sandwich` + the `kM/m → 1` ratio
+  -- squeeze), the additive `Tᴹ`-Birkhoff assembly (LD-d), and the final
   -- `μ(E) ≤ ε/α` contradiction (LD-e) closing on `setIntegral_div_le_level`.
 
 /-- **Stopping-time direction (the hard core of Kingman).** A.e. the `EReal` `liminf` of the
@@ -1703,16 +2204,6 @@ private theorem ae_bddBelow_cdiv [IsFiniteMeasure μ]
   exact hx.bddBelow_range
 
 /-! ### L7: a.e. `T`-invariance of the limsup/liminf envelopes -/
-
-omit [MeasurableSpace X] in
-/-- The pointwise subadditivity bound, normalized: `cdiv g n x ≤ g 1 x / (n+1) + g n (T x)/(n+1)`. -/
-private theorem cdiv_le_shift {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
-    cdiv g n x ≤ g 1 x / (n + 1) + g n (T x) / (n + 1) := by
-  have h := hsub.apply_add_le 1 n x
-  rw [show (1 + n) = n + 1 from by ring] at h
-  rw [cdiv, ← add_div]
-  apply div_le_div_of_nonneg_right h (by positivity) |>.trans_eq
-  simp only [Function.iterate_one]
 
 omit [MeasurableSpace X] in
 /-- **Key limsup comparison.** For a fixed `x` at which the normalized cocycle is bounded

@@ -86,10 +86,17 @@ DONE (sorry-free, verified). Only step 3 remains.
      - ✅ **LD-b** `setIntegral_div_le_level` (Karlsson Prop 3.5, β-version of L-C): for invariant
        `B`, real `β`, `∀ᵐ x∈B ∃k, a(k+1)x<(k+1)β` ⟹ `limsup (∫_B a(n+1))/(n+1) ≤ β·μ(B)`. Plus
        EReal helpers `erealAddCoeIso`, `ereal_limsup_add_coe`.
-     - ⏳ **LD-c** subsequence squeeze `f_M=f̄`, `g_M=f` (non-positivity+subadditivity, ratios
-       `(n+1)M/(nM+k)→1`) — the hardest analytic piece, unwritten.
+     - ✅ **EReal envelope invariance** (`liminf_ecdiv_comp_ae`/`limsup_ecdiv_comp_ae` via
+       `ereal_ae_eq_comp_of_le_comp`, the EReal L5 with rational/±∞ levels) — the blocker the ℝ
+       LD-a couldn't cover (non-positive cocycle's `liminf` may be `⊥`). PROVEN. Plus the squeeze
+       toolkit: `block_sandwich` (`g((k+1)M)x ≤ g m x ≤ g(kM)x` for `kM≤m≤(k+1)M`),
+       `ereal_liminf_le_ratio`/`ereal_limsup_le_ratio` (ratio squeeze for `z≤0`, `c→1`),
+       `ereal_{liminf,limsup}_eq_of_sub_tendsto_zero`, `aemeasurable_ereal_{liminf,limsup}`.
+     - ⏳ **LD-c** subsequence squeeze `f_M=f̄`, `g_M=f` — assemble `block_sandwich` + the ratio
+       squeeze via the `k=⌊m/M⌋` reindexing (Direction A = `Tendsto.limsup_comp_le_limsup` along
+       `k↦kM`; Direction B = divide sandwich by `m`, `kM/m→1`). The one fiddly analytic step left.
      - ⏳ **LD-d** additive `T^[M]`-Birkhoff assembly (M3 on level `g M`), **LD-e** final
-       contradiction (LD-b on `E`, β=−Mα; Fekete lower bound; `μ(E)≤ε/α→0`; union over `α=1/k`).
+       contradiction (LD-b on `E_α`, β=−Mα; Fekete lower bound; `μ(E_α)≤ε/α→0`; union over `α=1/k`).
 4. ✅ **Combine:** `⊥ < limsup ≤ liminf ≤ limsup ≤ B < ⊤` ⇒ finite common value ⇒ `Tendsto`
    to `G := toReal`, integrable — done inside `ae_tendsto_cdiv`.
 
