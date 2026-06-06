@@ -1,0 +1,214 @@
+import Oseledets.Lyapunov.Filtration
+import Oseledets.Lyapunov.MeasurableSubspace
+import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.LinearAlgebra.Matrix.Polynomial
+
+/-!
+# Measurability infrastructure for the Lyapunov filtration (M7)
+
+This module assembles the measurability tools for milestone `M7`. The strategy (see
+`docs/plan/blueprints/m7-measurable-strategy-v2.md`, crux verified by compilation) routes the
+measurability of the Oseledets flag **through the concrete continuous-functional-calculus
+spectral projections of the Oseledets limit operator** `Λ x = lim_n ((A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾)^{1/(2n)}`,
+rather than through a measurable selection of an orthonormal frame for the abstract sublevel
+subspace (which would need a Kuratowski–Ryll-Nardzewski selection theorem absent from Mathlib).
+
+Defining the `i`-th flag projection as the CFC element `Pᵢ x := cfc gᵢ (Λ x)` (with `gᵢ` a
+continuous gap function) makes `orthProjMatrix (range (toEuclideanCLM (Pᵢ x))) = Pᵢ x`
+definitionally — a self-adjoint idempotent equals the orthogonal projection onto its range — so
+`MeasurableSubspace` reduces to measurability of `x ↦ cfc gᵢ (Λ x)`.
+
+## What this module provides
+
+* `measurable_lambdaBar_apply` — for fixed `v`, `x ↦ lambdaBar A T x v` is measurable (the scalar
+  scaffolding, reused throughout the arc).
+* `orthProjMatrix_apply` / `measurable_orthProjMatrix_iff` — the projection matrix's entry formula
+  and the resulting reduction of matrix measurability to projecting the fixed standard basis
+  vectors.
+* `instMeasurableAdd₂Matrix`, `measurable_matrix_pow`, `measurable_aeval_matrix` — matrix-algebra
+  measurability (a polynomial in a measurable matrix is measurable).
+* `measurable_cfc_eqOn_polynomial` — **the make-or-break crux**: if a fixed polynomial `q` agrees
+  with `g` on the spectrum of every (self-adjoint) `M x`, then `x ↦ cfc g (M x)` is measurable.
+  This is the polynomial bypass: it uses only the bare Hermitian CFC instance, not the (absent for
+  real matrices) `IsometricContinuousFunctionalCalculus`.
+
+The terminal `MeasurableSubspace` lemma for the concrete flag is assembled once the Oseledets
+limit `Λ` is available (the Limit module), since it needs `Measurable Λ` and the fixed Lyapunov
+spectrum on which the gap function is interpolated by a polynomial.
+-/
+
+open MeasureTheory Filter Topology Matrix
+open scoped Matrix.Norms.L2Operator RealInnerProductSpace
+
+namespace Oseledets
+
+set_option linter.unusedSectionVars false
+
+variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X} {d : ℕ}
+
+/-- The Borel measurable structure on `EuclideanSpace ℝ (Fin d)` (a metric space). Used to make
+sense of `EuclideanSpace`-valued measurable maps below. -/
+instance instMeasurableSpaceEuclideanSpace :
+    MeasurableSpace (EuclideanSpace ℝ (Fin d)) := borel _
+
+instance instBorelSpaceEuclideanSpace :
+    BorelSpace (EuclideanSpace ℝ (Fin d)) := ⟨rfl⟩
+
+/-! ### Scalar measurability scaffolding -/
+
+/-- For a fixed vector `v`, the upper Lyapunov growth `x ↦ lambdaBar A T x v` is measurable: it is
+the `limsup` of the measurable sequence `x ↦ n⁻¹ · log ‖toEuclideanCLM (cocycle A T n x) v‖`. -/
+theorem measurable_lambdaBar_apply [IsProbabilityMeasure μ] (hT : Ergodic T μ)
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A)
+    (v : EuclideanSpace ℝ (Fin d)) :
+    Measurable fun x => lambdaBar A T x v := by
+  have hTmeas : Measurable T := hT.toMeasurePreserving.measurable
+  -- `lambdaBar A T x v = limsup_n (fun n => n⁻¹ · log ‖toEuclideanCLM (cocycle A T n x) v‖)`.
+  refine Measurable.limsup (fun n => ?_)
+  -- Each term is measurable: `cocycle` is measurable in `x`, and
+  -- `M ↦ log ‖toEuclideanCLM M v‖` is continuous in the matrix `M`.
+  have hcoc : Measurable fun x => cocycle A T n x := measurable_cocycle hAmeas hTmeas n
+  -- `M ↦ ‖toEuclideanCLM M v‖` is continuous in `M`.
+  have hcontNorm : Continuous fun M : Matrix (Fin d) (Fin d) ℝ =>
+      ‖Matrix.toEuclideanCLM (𝕜 := ℝ) M v‖ := by
+    -- `M ↦ toEuclideanCLM M v` is ℝ-linear in `M`, hence continuous (finite dimensional).
+    have hlin : Continuous fun M : Matrix (Fin d) (Fin d) ℝ =>
+        Matrix.toEuclideanCLM (𝕜 := ℝ) M v := by
+      let L : Matrix (Fin d) (Fin d) ℝ →ₗ[ℝ] EuclideanSpace ℝ (Fin d) :=
+        { toFun := fun M => Matrix.toEuclideanCLM (𝕜 := ℝ) M v
+          map_add' := fun M N => by simp [map_add]
+          map_smul' := fun c M => by simp [map_smul] }
+      exact (L.continuous_of_finiteDimensional)
+    exact continuous_norm.comp hlin
+  have hnorm : Measurable fun x =>
+      ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖ :=
+    hcontNorm.measurable.comp hcoc
+  have hlog : Measurable fun x =>
+      Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖ :=
+    Real.measurable_log.comp hnorm
+  exact measurable_const.mul hlog
+
+/-! ### The projection-matrix entry formula and reduction -/
+
+/-- **Entry formula for the projection matrix.** The `(i, j)` entry of `orthProjMatrix K`
+equals the `i`-th coordinate of the orthogonal projection `K.starProjection` applied to the
+standard basis vector `EuclideanSpace.single j 1`. -/
+theorem orthProjMatrix_apply (K : Submodule ℝ (EuclideanSpace ℝ (Fin d)))
+    (i j : Fin d) :
+    orthProjMatrix K i j = K.starProjection (EuclideanSpace.single j (1 : ℝ)) i := by
+  -- `M := orthProjMatrix K` satisfies `toEuclideanCLM M = K.starProjection`.
+  have hM : Matrix.toEuclideanCLM (𝕜 := ℝ) (orthProjMatrix K) = K.starProjection := by
+    rw [orthProjMatrix, StarAlgEquiv.apply_symm_apply]
+  -- Apply both sides to `single j 1` and read coordinate `i`.
+  have hcongr := congrArg
+    (fun L : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d) =>
+      (L (EuclideanSpace.single j (1 : ℝ))) i) hM
+  simp only at hcongr
+  rw [← hcongr]
+  -- LHS: `(toEuclideanCLM M (single j 1)) i = (M *ᵥ Pi.single j 1) i = M i j`.
+  have hofLp : (Matrix.toEuclideanCLM (𝕜 := ℝ) (orthProjMatrix K)
+      (EuclideanSpace.single j (1 : ℝ))) i
+      = ((orthProjMatrix K) *ᵥ (WithLp.ofLp (EuclideanSpace.single j (1 : ℝ)))) i := by
+    rw [← Matrix.ofLp_toEuclideanCLM]
+  rw [hofLp, show WithLp.ofLp (EuclideanSpace.single j (1 : ℝ)) = Pi.single j (1 : ℝ) from rfl,
+    Matrix.mulVec_single_one]
+  simp [Matrix.col_apply]
+
+/-- **The reduction.** `x ↦ orthProjMatrix (V x)` is measurable iff for every standard basis
+index `j`, the `EuclideanSpace`-valued map `x ↦ (V x).starProjection (single j 1)` is
+measurable. -/
+theorem measurable_orthProjMatrix_iff
+    {V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))} :
+    (Measurable fun x => orthProjMatrix (V x)) ↔
+      ∀ j : Fin d, Measurable fun x => (V x).starProjection (EuclideanSpace.single j (1 : ℝ)) := by
+  constructor
+  · intro hmeas j
+    -- Each coordinate `i` of `x ↦ starProjection (single j 1)` equals entry `(i, j)` of the
+    -- matrix, hence is measurable; the map into `Fin d → ℝ` is then measurable, and post-
+    -- composing with the continuous `toLp : (Fin d → ℝ) → EuclideanSpace` recovers it.
+    have hpi : Measurable fun x =>
+        WithLp.ofLp ((V x).starProjection (EuclideanSpace.single j (1 : ℝ))) := by
+      refine measurable_pi_iff.2 fun i => ?_
+      have hentry : Measurable fun x => orthProjMatrix (V x) i j :=
+        (measurable_pi_apply j).comp ((measurable_pi_apply i).comp hmeas)
+      have : (fun x => WithLp.ofLp ((V x).starProjection (EuclideanSpace.single j (1 : ℝ))) i)
+          = fun x => orthProjMatrix (V x) i j := by
+        funext x; rw [orthProjMatrix_apply]
+      rw [this]; exact hentry
+    -- `starProjection (single j 1) = toLp (ofLp (starProjection (single j 1)))`.
+    have hcont : Continuous (WithLp.toLp 2 : (Fin d → ℝ) → EuclideanSpace ℝ (Fin d)) :=
+      PiLp.continuous_toLp 2 (fun _ : Fin d => ℝ)
+    have := (hcont.measurable).comp hpi
+    simpa only [WithLp.toLp_ofLp] using this
+  · intro hcol
+    -- assemble the matrix entrywise: entry `(i, j)` is coordinate `i` of column `j`.
+    refine measurable_pi_iff.2 fun i => measurable_pi_iff.2 fun j => ?_
+    simp only [orthProjMatrix_apply]
+    have hcoord : Continuous fun w : EuclideanSpace ℝ (Fin d) => w i :=
+      PiLp.continuous_apply (β := fun _ : Fin d => ℝ) 2 i
+    exact hcoord.measurable.comp (hcol j)
+
+/-! ### Matrix-algebra measurability (a polynomial in a measurable matrix is measurable) -/
+
+/-- Matrix addition is measurable in both arguments (entrywise Pi addition); the additive
+counterpart of `Oseledets.instMeasurableMul₂Matrix`. -/
+instance instMeasurableAdd₂Matrix {m α : Type*} [MeasurableSpace α]
+    [Add α] [MeasurableAdd₂ α] : MeasurableAdd₂ (Matrix m m α) := by
+  have hentry : ∀ i j : m, Measurable fun M : Matrix m m α => M i j := fun i j =>
+    (measurable_pi_apply j).comp (measurable_pi_apply i)
+  refine ⟨measurable_pi_iff.2 fun i => measurable_pi_iff.2 fun j => ?_⟩
+  simp only [Matrix.add_apply]
+  exact ((hentry i j).comp measurable_fst).add ((hentry i j).comp measurable_snd)
+
+/-- `a ↦ a ^ n` is measurable in the matrix `a` (iterated measurable multiplication). -/
+theorem measurable_matrix_pow (n : ℕ) :
+    Measurable (fun a : Matrix (Fin d) (Fin d) ℝ => a ^ n) := by
+  induction n with
+  | zero => simp only [pow_zero]; exact measurable_const
+  | succ k ih => simpa [pow_succ] using ih.mul measurable_id
+
+/-- `a ↦ aeval a q` is measurable in the matrix `a`: a polynomial built from `+`, `•`, `*` of the
+(measurable) identity, using the matrix `MeasurableMul₂`/`MeasurableAdd₂` instances. -/
+theorem measurable_aeval_matrix (q : Polynomial ℝ) :
+    Measurable (fun a : Matrix (Fin d) (Fin d) ℝ => (Polynomial.aeval a) q) := by
+  induction q using Polynomial.induction_on with
+  | C r => simp only [Polynomial.aeval_C]; exact measurable_const
+  | add p q hp hq => simpa [map_add] using hp.add hq
+  | monomial n r _ =>
+      have : (fun a : Matrix (Fin d) (Fin d) ℝ =>
+            (Polynomial.aeval a) (Polynomial.C r * Polynomial.X ^ (n + 1)))
+          = fun a => algebraMap ℝ (Matrix (Fin d) (Fin d) ℝ) r * a ^ (n + 1) := by
+        funext a
+        rw [map_mul, Polynomial.aeval_C, map_pow, Polynomial.aeval_X]
+      rw [this]
+      exact (measurable_matrix_pow (n + 1)).const_mul _
+
+/-! ### The make-or-break crux (CFC polynomial bypass) -/
+
+/-- **THE MAKE-OR-BREAK CRUX.** Let `M : X → Matrix (Fin d) (Fin d) ℝ` be measurable with each
+`M x` self-adjoint (Hermitian). Suppose a *fixed* polynomial `q` agrees with `g : ℝ → ℝ` on the
+spectrum of every `M x`. Then `x ↦ cfc g (M x)` is measurable.
+
+This is the situation in the measurability route: `M x = Λ x` (the a.e.-existing Oseledets limit
+matrix, measurable as a limit of measurable matrices), `g = gᵢ` the continuous gap function, and
+on the a.e. good set the spectrum is the fixed gapped Lyapunov set, on which `gᵢ` equals an
+interpolating polynomial `q`. It uses only the bare Hermitian CFC instance — no
+`IsometricContinuousFunctionalCalculus` (which does not synthesize for real matrices), no
+`continuousOn_cfc`, no measurable selection, no analytic sets. -/
+theorem measurable_cfc_eqOn_polynomial
+    (g : ℝ → ℝ) (q : Polynomial ℝ)
+    (M : X → Matrix (Fin d) (Fin d) ℝ)
+    (hM : Measurable M)
+    (hMsa : ∀ x, IsSelfAdjoint (M x))
+    (hagree : ∀ x, (_root_.spectrum ℝ (M x)).EqOn g q.eval) :
+    Measurable (fun x => cfc g (M x)) := by
+  have hpt : ∀ x, cfc g (M x) = (Polynomial.aeval (M x)) q := by
+    intro x
+    rw [cfc_congr (a := M x) (f := g) (g := q.eval) (hagree x), cfc_polynomial q (M x) (hMsa x)]
+  simp only [hpt]
+  exact (measurable_aeval_matrix q).comp hM
+
+end Oseledets

@@ -92,7 +92,27 @@ Subbundle → Limit`):
   (lambdaBar A T x)`; equivariance carries the full FK hypothesis set. Needed one public bridge
   lemma `lambdaBar_equivariant_ae` added to `GrowthFunction.lean` (a.e. ∀v equivariance, boundedness
   pulled back along `T` measure-preserving). Sorry-free, axioms clean. Imported from `Oseledets.lean`.
-- ⏳ `Measurable.lean` (HARD, M7), `Subbundle.lean`, `Limit.lean`. M7 scout: `docs/research/scratch/m7-measurable-scout.md`.
+- 🔄 **`Measurable.lean`** (M7) — **measurability route RESOLVED & re-architected** (Lean-verified;
+  see `docs/plan/blueprints/m7-measurable-strategy-v2.md`). The abstract-flag route hit a genuine
+  Mathlib gap (no Kuratowski–Ryll-Nardzewski / Castaing measurable selection; a fixed countable
+  family cannot span an arbitrary subspace — the "dense family" idea is FALSE). **User directive:
+  build missing Mathlib infra properly, no shortcuts, will upstream** ([[measurability-build-infra]]).
+  Resolution: route measurability through the **concrete CFC spectral projections** of the Oseledets
+  limit `Λ x = lim ((A⁽ⁿ⁾)ᵀA⁽ⁿ⁾)^{1/2n}`. Define `Vᵢ x := range (toEuclideanCLM (cfc gᵢ (Λ x)))`
+  (gap fn `gᵢ`); then `orthProjMatrix (Vᵢ x) = cfc gᵢ (Λ x)` definitionally, and that is measurable
+  via the **polynomial bypass** (`cfc gᵢ (Λ x) = aeval (Λ x) q`, fixed Lagrange interpolant on the
+  a.e.-constant spectrum) — full Borel, NO selection/analytic-sets. The CFC-continuity route is
+  blocked by a non-synthesizing `IsometricContinuousFunctionalCalculus ℝ (Matrix..ℝ)` instance, so
+  the polynomial bypass is essential (verified by compilation). **Banked sorry-free so far:**
+  `measurable_lambdaBar_apply`, `orthProjMatrix_apply`, `measurable_orthProjMatrix_iff` (reduction),
+  `instMeasurableAdd₂Matrix`, `measurable_matrix_pow`, `measurable_aeval_matrix`, and the crux
+  `measurable_cfc_eqOn_polynomial`. The eliminable BLOCKED `measurable_starProjection_apply` was
+  REMOVED (abstract route abandoned). Terminal `MeasurableSubspace Vᵢ` is gated on `Λ` (Limit module).
+- ⏳ `Subbundle.lean`, `Limit.lean`. **Build-order change:** the Limit module (building `Λ` and the
+  concrete `Vᵢ`) now precedes terminal M7 measurability; v1's frame-selection sub-arc is deleted.
+  The remaining critical path is the **Oseledets limit theorem (L5.x)** — the analytic heart —
+  which delivers both the growth rates AND `Λ`; measurability is then a ~250-line corollary.
+  M7 scout: `docs/research/scratch/m7-measurable-scout.md`; corrected plan: `m7-measurable-strategy-v2.md`.
 
 ## What is done
 
