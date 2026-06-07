@@ -8,6 +8,10 @@ import Oseledets.Cocycle.FurstenbergKesten
 import Oseledets.Ergodic.Kingman
 import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.Analysis.Matrix.Order
+import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.Topology.UniformSpace.Cauchy
 
 /-!
 # The Oseledets singular-value (scalar) layer
@@ -41,7 +45,7 @@ cocycle and fed to Kingman's ergodic theorem (`tendsto_kingman_ergodic`).
 -/
 
 open Module InnerProductSpace MeasureTheory Filter Topology
-open scoped Matrix.Norms.L2Operator Matrix
+open scoped Matrix.Norms.L2Operator Matrix MatrixOrder
 
 noncomputable section
 
@@ -480,6 +484,212 @@ theorem antitone_log_singularValue (A : X → Matrix (Fin d) (Fin d) ℝ) (n : �
     Antitone fun i : ℕ =>
       (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i :=
   (Matrix.toEuclideanLin (cocycle A T n x)).singularValues_antitone
+
+/-! ## L7a: the Gram matrix is PosSemidef / self-adjoint, and the matrix root `qpow`
+
+The Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` is positive semidefinite and self-adjoint, so the
+continuous functional calculus applies to it. The candidate Oseledets limit at level `n` is the
+matrix `(Qₙ)^{1/(2n)} = cfc (·^{1/(2n)}) Qₙ`, whose eigenvalues are the `1/n`-th powers of the
+singular values of `A⁽ⁿ⁾`. -/
+
+/-- **L7a.** The Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` is positive semidefinite. -/
+theorem gram_posSemidef (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
+    (gram A T n x).PosSemidef := by
+  unfold gram
+  have h : (cocycle A T n x)ᴴ * cocycle A T n x = (cocycle A T n x)ᵀ * cocycle A T n x := by
+    rw [Matrix.conjTranspose_eq_transpose_of_trivial]
+  rw [← h]
+  exact Matrix.posSemidef_conjTranspose_mul_self _
+
+/-- **L7a.** The Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` is self-adjoint, hence the continuous
+functional calculus applies to it. -/
+theorem gram_isSelfAdjoint (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
+    IsSelfAdjoint (gram A T n x) :=
+  (gram_posSemidef A T n x).isHermitian.isSelfAdjoint
+
+/-- **L7a.** The candidate Oseledets limit at level `n`: the matrix `1/(2n)`-th power
+`(Qₙ)^{1/(2n)} = cfc (·^{1/(2n)}) Qₙ` of the Gram matrix, defined via the continuous functional
+calculus on the (self-adjoint, positive semidefinite) Gram matrix `Qₙ`. Its eigenvalues are the
+`1/n`-th powers of the singular values of `A⁽ⁿ⁾`, which converge to `e^{λᵢ}`
+(see `eigenvalues_qpow_tendsto`). -/
+def qpow (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
+    Matrix (Fin d) (Fin d) ℝ :=
+  cfc (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹)) (gram A T n x)
+
+/-- `qpow A T n x` is self-adjoint (a CFC of a real-valued function is always self-adjoint). -/
+theorem qpow_isSelfAdjoint (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
+    IsSelfAdjoint (qpow A T n x) :=
+  cfc_predicate _ _
+
+/-! ## L7b: the eigenvalues of `qpow` converge to `e^{λᵢ}`
+
+The eigenvalues of `qpow A T n x = (Qₙ)^{1/(2n)}` are the `1/n`-th powers of the singular values
+of `A⁽ⁿ⁾`. Since `(1/n) log σᵢ → λᵢ` a.e. (`tendsto_log_singularValue`), these converge to
+`e^{λᵢ}`. The CFC of a monotone function applied to a Hermitian matrix has, as its sorted
+eigenvalues, that function applied to the sorted eigenvalues of the matrix; we package this as a
+helper and then chain it with the singular-value layer. -/
+
+/-- The roots of the characteristic polynomial of `cfc f A` (for Hermitian `A`) are `f` applied to
+the eigenvalues of `A` (cast into `𝕜`). The matrix analogue of
+`Matrix.IsHermitian.roots_charpoly_eq_eigenvalues`. -/
+theorem roots_charpoly_cfc_eq {n : Type*} [Fintype n] [DecidableEq n] {𝕜 : Type*} [RCLike 𝕜]
+    {A : Matrix n n 𝕜} (hA : A.IsHermitian) (f : ℝ → ℝ) :
+    (cfc f A).charpoly.roots
+      = Multiset.map (RCLike.ofReal ∘ (f ∘ hA.eigenvalues)) Finset.univ.val := by
+  rw [Matrix.IsHermitian.charpoly_cfc_eq hA f, Polynomial.roots_prod]
+  · simp [Function.comp_def]
+  · simp [Finset.prod_ne_zero_iff, Polynomial.X_sub_C_ne_zero]
+
+/-- For a Hermitian matrix `A` with nonnegative eigenvalues and a function `f` that is monotone on
+`[0, ∞)` (hence preserves the descending order of the eigenvalues), the sorted eigenvalues
+`eigenvalues₀` of `cfc f A` are `f` applied to the sorted eigenvalues of `A`. The matrix analogue
+(with a monotonicity-on-the-spectrum hypothesis) of
+`Matrix.IsHermitian.sort_roots_charpoly_eq_eigenvalues₀`. The `MonotoneOn` form is needed because
+the relevant function `t ↦ t^{1/(2n)}` is `Real.rpow`, which is monotone only on `[0, ∞)`. -/
+theorem eigenvalues₀_cfc_of_monotoneOn {n : Type*} [Fintype n] [DecidableEq n] {𝕜 : Type*}
+    [RCLike 𝕜] {A : Matrix n n 𝕜} (hA : A.IsHermitian) {f : ℝ → ℝ}
+    (hf : MonotoneOn f (Set.Ici 0)) (hpos : ∀ i, 0 ≤ hA.eigenvalues₀ i) :
+    ((cfc_predicate f A : IsSelfAdjoint (cfc f A)).isHermitian).eigenvalues₀
+      = f ∘ hA.eigenvalues₀ := by
+  -- `f ∘ eigenvalues₀` is antitone, because `eigenvalues₀` is antitone into `[0, ∞)` and `f` is
+  -- monotone there.
+  have hanti : Antitone (f ∘ hA.eigenvalues₀) := by
+    intro i j hij
+    exact hf (hpos j) (hpos i) (Matrix.IsHermitian.eigenvalues₀_antitone hA hij)
+  -- Both sides, sorted descending, agree as lists.
+  rw [← List.ofFn_inj,
+    ← Matrix.IsHermitian.sort_roots_charpoly_eq_eigenvalues₀]
+  -- The real parts of the roots of `(cfc f A).charpoly` are `f ∘ eigenvalues₀` over `univ`.
+  have hroots : (cfc f A).charpoly.roots.map RCLike.re
+      = Multiset.map (f ∘ hA.eigenvalues₀) Finset.univ.val := by
+    rw [roots_charpoly_cfc_eq hA f, Multiset.map_map]
+    simp only [Matrix.IsHermitian.eigenvalues, Function.comp_def, RCLike.ofReal_re]
+    -- Reindex `univ` by the bijection `(equivOfCardEq).symm`.
+    have hmap : Multiset.map
+        (fun i => f (hA.eigenvalues₀ ((Fintype.equivOfCardEq (Fintype.card_fin _)).symm i)))
+        Finset.univ.val
+        = Multiset.map (fun j => f (hA.eigenvalues₀ j))
+          (Finset.univ.map (Fintype.equivOfCardEq (Fintype.card_fin _)).symm.toEmbedding).val := by
+      rw [Finset.map_val, Multiset.map_map]; rfl
+    rw [hmap, Finset.map_univ_equiv]
+  rw [hroots]
+  -- Sorting an already-antitone tuple is the identity.
+  simp only [Fin.univ_val_map, Function.comp_def, Multiset.coe_sort]
+  refine List.mergeSort_of_pairwise ?_
+  simp_rw [decide_eq_true_eq, ← List.sortedGE_iff_pairwise]
+  exact hanti.sortedGE_ofFn
+
+/-- The sorted eigenvalues `eigenvalues₀` of the Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` are the squared
+singular values of `A⁽ⁿ⁾`: `eigenvalues₀ (Qₙ) i = σᵢ(A⁽ⁿ⁾)²`. This bridges the matrix-eigenvalue
+layer (`Matrix.IsHermitian.eigenvalues₀`) to the committed singular-value layer
+(`sq_singularValues_eq_gram_eigenvalue`). -/
+theorem gram_eigenvalues₀_eq_sq_singularValues (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    (n : ℕ) (x : X) (i : Fin (Fintype.card (Fin d))) :
+    (gram_posSemidef A T n x).isHermitian.eigenvalues₀ i
+      = (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i ^ 2 := by
+  set M := cocycle A T n x with hM
+  -- `eigenvalues₀` of the Gram matrix = eigenvalues of `toEuclideanLin (gram)` (linear-map layer).
+  have hsym₁ : (Matrix.toEuclideanLin (gram A T n x)).IsSymmetric :=
+    Matrix.isSymmetric_toEuclideanLin_iff.mpr (gram_posSemidef A T n x).isHermitian
+  -- The committed `adjoint ∘ self` operator equals `toEuclideanLin (gram)`.
+  have hop : (Matrix.toEuclideanLin M).adjoint ∘ₗ (Matrix.toEuclideanLin M)
+      = Matrix.toEuclideanLin (gram A T n x) := by
+    rw [gram, ← hM]; exact adjoint_comp_self_eq_gram M
+  have hsym₂ : ((Matrix.toEuclideanLin M).adjoint ∘ₗ (Matrix.toEuclideanLin M)).IsSymmetric :=
+    (Matrix.toEuclideanLin M).isSymmetric_adjoint_comp_self
+  have hfr : Module.finrank ℝ (EuclideanSpace ℝ (Fin d)) = Fintype.card (Fin d) :=
+    finrank_euclideanSpace
+  -- The two symmetric operators are equal, hence have equal eigenvalue functions.
+  have heig : hsym₂.eigenvalues hfr = hsym₁.eigenvalues hfr := by
+    rw [LinearMap.IsSymmetric.eigenvalues_eq_eigenvalues_iff hsym₂ hfr hsym₁ hfr, hop]
+  -- `eigenvalues₀` of the Gram matrix is by definition the linear-map eigenvalues.
+  have hdef : (gram_posSemidef A T n x).isHermitian.eigenvalues₀ i = hsym₁.eigenvalues hfr i := by
+    rfl
+  rw [hdef, ← heig]
+  -- The committed bridge: `σᵢ² = eigenvalues (adjoint ∘ self)`.
+  exact (sq_singularValues_eq_gram_eigenvalue M hfr i).symm
+
+/-- **L7b — the eigenvalues of `qpow` are the `1/n`-th powers of the singular values.** The sorted
+eigenvalues of `qpow A T n x = (Qₙ)^{1/(2n)}` are `σᵢ(A⁽ⁿ⁾)^{1/n}`. -/
+theorem eigenvalues₀_qpow_eq (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X)
+    (i : Fin (Fintype.card (Fin d))) :
+    (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i
+      = (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i ^ ((n : ℝ)⁻¹) := by
+  -- The function `t ↦ t^{1/(2n)}` is monotone on `[0, ∞)` and the Gram eigenvalues are nonneg.
+  have hmono : MonotoneOn (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹)) (Set.Ici 0) :=
+    Real.monotoneOn_rpow_Ici_of_exponent_nonneg (by positivity)
+  have hpos : ∀ j, 0 ≤ (gram_posSemidef A T n x).isHermitian.eigenvalues₀ j := by
+    intro j
+    rw [gram_eigenvalues₀_eq_sq_singularValues]; positivity
+  -- The eigenvalues of `qpow = cfc (·^{1/(2n)}) (gram)` are `(·^{1/(2n)})` of the Gram eigenvalues.
+  have hcfc := eigenvalues₀_cfc_of_monotoneOn (gram_posSemidef A T n x).isHermitian hmono hpos
+  -- `qpow_isSelfAdjoint` is definitionally `cfc_predicate (·^{1/(2n)}) (gram)`.
+  have hi : (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i
+      = (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹))
+          ((gram_posSemidef A T n x).isHermitian.eigenvalues₀ i) := by
+    rw [show (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i
+        = ((cfc_predicate (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹))
+            (gram A T n x) : IsSelfAdjoint _).isHermitian).eigenvalues₀ i from rfl, hcfc]
+    rfl
+  rw [hi, gram_eigenvalues₀_eq_sq_singularValues]
+  -- `(σᵢ²)^{1/(2n)} = σᵢ^{1/n}` via `rpow` rules (`σᵢ ≥ 0`).
+  set σ := (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i with hσ
+  have hσnn : 0 ≤ σ := (Matrix.toEuclideanLin (cocycle A T n x)).singularValues_nonneg i
+  simp only
+  rw [← Real.rpow_natCast σ 2, ← Real.rpow_mul hσnn]
+  congr 1
+  push_cast
+  field_simp
+
+/-- **L7b — the eigenvalues of `qpow` converge to `e^{λᵢ}`.** If, at a point `x`, the normalized log
+of the `i`-th singular value of `A⁽ⁿ⁾` converges to `λᵢ` (which holds `μ`-a.e. by
+`tendsto_log_singularValue`), then the `i`-th sorted eigenvalue of `qpow A T n x = (Qₙ)^{1/(2n)}`
+converges to `e^{λᵢ}`. This is the eigenvalue layer of the Oseledets limit: the eigenvalues of the
+candidate matrix limit are the exponentials of the Lyapunov exponents. Stated per eigenvalue-index
+`i` (eigenvalues may repeat across distinct exponents — that is harmless here; the
+per-distinct-exponent constraint only bites for the spectral projectors in L7c). -/
+theorem eigenvalues_qpow_tendsto {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X}
+    (hA : ∀ x, (A x).det ≠ 0) {x : X} (i : Fin (Fintype.card (Fin d))) {lam : ℝ}
+    (hlam : Tendsto
+      (fun n : ℕ => (n : ℝ)⁻¹ *
+        Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i))
+      atTop (𝓝 lam)) :
+    Tendsto (fun n : ℕ => (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i)
+      atTop (𝓝 (Real.exp lam)) := by
+  have hid : (i : ℕ) < d := lt_of_lt_of_eq i.isLt (Fintype.card_fin d)
+  -- For each `n ≥ 1`, the eigenvalue `σᵢ^{1/n} = exp((1/n) log σᵢ)` (using `σᵢ > 0`).
+  have hev : ∀ n : ℕ, 1 ≤ n →
+      (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i
+        = Real.exp ((n : ℝ)⁻¹ *
+            Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i)) := by
+    intro n hn
+    have hσpos : 0 < (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i :=
+      singularValues_cocycle_pos hA n x hid
+    rw [eigenvalues₀_qpow_eq, Real.rpow_def_of_pos hσpos]
+    ring_nf
+  -- The exponent sequence converges to `lam`, so its exponential converges to `e^{lam}`.
+  have hexp : Tendsto
+      (fun n : ℕ => Real.exp ((n : ℝ)⁻¹ *
+        Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i)))
+      atTop (𝓝 (Real.exp lam)) :=
+    (Real.continuous_exp.tendsto lam).comp hlam
+  -- The eigenvalue sequence agrees with the exponential sequence eventually (for `n ≥ 1`).
+  refine hexp.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with n hn using (hev n hn).symm
+
+/-! ## The L7 statement (`oseledetsLimit` existence)
+
+The Prop that downstream tasks (L7c onward) discharge: a.e., the matrix sequence
+`(Qₙ)^{1/(2n)} = qpow A T n x` converges, in the (complete, finite-dimensional) matrix metric, to
+a single matrix `Λ x`. -/
+
+/-- **L7 statement.** A.e. the `1/(2n)`-th matrix power of the Gram matrix converges (in the
+finite-dimensional matrix metric) to a single matrix `Λ x`. This is the existence statement of the
+Oseledets limit; it is proved jointly with its eigen-data conclusions downstream (the hard
+gapped-projection-Cauchy estimate, L7c). -/
+def L7_statement (μ : Measure X) (T : X → X) (A : X → Matrix (Fin d) (Fin d) ℝ) : Prop :=
+  ∃ Λ : X → Matrix (Fin d) (Fin d) ℝ,
+    ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => qpow A T n x) atTop (𝓝 (Λ x))
 
 end Oseledets
 

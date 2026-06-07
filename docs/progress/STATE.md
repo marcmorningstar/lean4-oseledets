@@ -149,10 +149,19 @@ Subbundle → Limit`):
     `Sprod` is measurable via measurable minors + continuous L2 op-norm. QA gate PASS: `lake build`
     green (2898 jobs); only the target `sorry` remains; all scalar-layer + compound-bridge decls
     depend only on `[propext, Classical.choice, Quot.sound]`.
-  - **`OseledetsLimit.lean` REMAINING (L7+, task #19, the crux):** (§3.3, highest risk, no Mathlib
-    Davis–Kahan) eigenspace/projection convergence `Qₙ^{1/2n} → Λ` via a from-scratch gapped
-    self-adjoint Cauchy-projection argument; (§3.4) bridge `Vᵢ = lambdaSublevel` a.e.; the forward
-    limit on each stratum; measurability hookup (CFC polynomial bypass); assemble target. ~4–8 sessions.
+  - **L7 scaffolding (L7a/L7b) DONE, `sorry`-free** (plan: `oseledets-l7-crux.md`). `gram_posSemidef`/
+    `gram_isSelfAdjoint`; `qpow A T n x := cfc (·^(1/(2n))) (gram A T n x)` (the matrix `(Qₙ)^{1/2n}`)
+    + `qpow_isSelfAdjoint`; the `L7_statement` Λ-existence Prop (stated, not proved); and the eigenvalue
+    layer: new infra `roots_charpoly_cfc_eq` + `eigenvalues₀_cfc_of_monotoneOn` (sorted eigenvalues of
+    `cfc f A` = `f ∘ eigenvalues`, `MonotoneOn (Ici 0)` form), `gram_eigenvalues₀_eq_sq_singularValues`,
+    `eigenvalues₀_qpow_eq` (`= σᵢ^{1/n}`), and **L7b** `eigenvalues_qpow_tendsto` (eigenvalues of `qpow`
+    → `e^{λᵢ}` a.e., from `tendsto_log_singularValue`). All axiom-clean.
+  - **`OseledetsLimit.lean` REMAINING (L7c+, task #19, the crux):** (§3.3, highest risk, NEW infra
+    M-2′, no Mathlib Davis–Kahan) the gapped self-adjoint **projection-Cauchy** estimate (per-distinct-λ,
+    NOT per-index) ⟹ `oseledetsLimit Λ` exists (L7d, closure compiled); then (§3.4) bridge
+    `Vᵢ = lambdaSublevel` a.e. (L11), forward limit on each stratum (L12), measurability hookup via the
+    committed CFC polynomial bypass (L8/L10), assemble target (L13). Critical path L7c → L7d → {L10,L11}
+    → L12 → L13. ~4–8 sessions; L7c is the single irreducible hard node.
   - Build order NOW: `… → Measurable` (done) → `ExteriorNorm` (done) → `OseledetsLimit` (scalar done;
     crux next) → `MultiplicativeErgodic`.
   - Mathlib HAS (verified): real Hermitian CFC, `posSemidef_conjTranspose_mul_self`, sorted Hermitian
