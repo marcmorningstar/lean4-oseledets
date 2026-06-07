@@ -1149,6 +1149,215 @@ theorem summable_of_logLimit_neg (a : ℕ → ℝ) (hnn : ∀ n, 0 ≤ a n) (hpo
     exact le_of_lt this
   exact summable_of_eventually_le_geometric a hnn (le_of_lt hρ0) hρ1 hev
 
+/-! ## L7c.3c: the band-projector increment bound (assembly)
+
+The single-step band-projector increment bound `norm_bandProjector_succ_sub_le` — the convergence
+point of the corrected §J route. It threads:
+
+* the Frobenius back-transport `ExteriorNorm.norm_proj_sub_le_wedge`
+  (`‖UUᵀ − VVᵀ‖² ≤ 2k(1 − det(UᵀV)²)`),
+* the Plücker det-Gram identity `ExteriorNorm.inner_hodgeTrivialization_ιMulti`
+  (`det(UᵀV) = ⟪wedge U, wedge V⟫`),
+* the refined off-diagonal sin-Θ core `offdiag_sin_le_residual_div_gap`
+  (`‖vt − ⟪vt,v₀⟫v₀‖ ≤ residual/(μ₀ − ν)`),
+* the cocycle off-diagonal numerator `ExteriorNorm.norm_offdiag_residual_compound_le` and the
+  `ν`-ceiling `ExteriorNorm.perturbed_compound_gram_ceiling`,
+* the Plücker eigenpair `ExteriorNorm.plucker_eigenpair_ceiling_standard`.
+
+We first record the abstract Pythagoras-to-sin glue and the abstract assembly of steps 1–4
+(`norm_proj_sub_le_residual_div_gap`), then wire in the cocycle data. -/
+
+open scoped RealInnerProductSpace in
+/-- **Pythagoras gap, unit form.** For unit vectors `vt`, `v₀` in a real inner product space, the
+squared sine of the angle equals one minus the squared cosine:
+`‖vt − ⟪vt, v₀⟫ v₀‖² = 1 − ⟪vt, v₀⟫²`. -/
+theorem norm_sub_proj_sq_eq_one_sub_inner_sq {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] {v₀ vt : E} (hv₀ : ‖v₀‖ = 1) (hvt : ‖vt‖ = 1) :
+    ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ^ 2 = 1 - (⟪vt, v₀⟫_ℝ) ^ 2 := by
+  set p : ℝ := ⟪vt, v₀⟫_ℝ with hp
+  have hv₀v₀ : ⟪v₀, v₀⟫_ℝ = (1 : ℝ) := by rw [real_inner_self_eq_norm_sq, hv₀]; norm_num
+  have hvtvt : ⟪vt, vt⟫_ℝ = (1 : ℝ) := by rw [real_inner_self_eq_norm_sq, hvt]; norm_num
+  have hexp : ‖vt - p • v₀‖ ^ 2
+      = ⟪vt, vt⟫_ℝ - 2 * p * ⟪vt, v₀⟫_ℝ + p ^ 2 * ⟪v₀, v₀⟫_ℝ := by
+    rw [← real_inner_self_eq_norm_sq]
+    simp only [inner_sub_left, inner_sub_right, real_inner_smul_left, real_inner_smul_right]
+    rw [real_inner_comm v₀ vt]
+    ring
+  rw [hexp, hvtvt, hv₀v₀, ← hp]; ring
+
+open scoped RealInnerProductSpace in
+/-- **L7c.3c (abstract assembly, steps 1–4).** Combines the Frobenius back-transport, the Plücker
+det-Gram identity, the Pythagoras gap, and the refined off-diagonal sin-Θ core into a single
+per-step projector-increment bound. Given orthonormal frames `U`, `V` (`UᵀU = VᵀV = 1`), an
+abstract symmetric operator `C` (the perturbed compound Gram) with top unit eigenvector `vt`
+(eigenvalue `μ₀`) and `ν`-ceiling on `v₀^⊥`, a reference unit eigenline `v₀`, and the
+det-Gram/wedge identification `det(UᵀV) = ⟪vt, v₀⟫`, the band-projector increment obeys
+`‖UUᵀ − VVᵀ‖ ≤ √(2k) · ‖C v₀ − ⟪C v₀, v₀⟫ v₀‖ / (μ₀ − ν)`. -/
+theorem norm_proj_sub_le_residual_div_gap {k : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ)
+    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    {C : E →ₗ[ℝ] E} {μ₀ ν : ℝ} {v₀ vt : E} (hv₀ : ‖v₀‖ = 1) (hvtnorm : ‖vt‖ = 1)
+    (hev : C vt = μ₀ • vt) (hgap : ν < μ₀)
+    (hν : ∀ w : E, ⟪w, v₀⟫_ℝ = 0 → ⟪C w, w⟫_ℝ ≤ ν * ‖w‖ ^ 2)
+    (hdet : (Uᵀ * V).det = ⟪vt, v₀⟫_ℝ) :
+    ‖U * Uᵀ - V * Vᵀ‖ ≤ Real.sqrt (2 * k) * (‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν)) := by
+  -- step 4: the refined off-diagonal sin-Θ bound on the wedge angle
+  have hsin := offdiag_sin_le_residual_div_gap hv₀ hvtnorm hev hgap hν
+  set res : ℝ := ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν) with hresdef
+  have hresnn : 0 ≤ res := by
+    rw [hresdef]; apply div_nonneg (norm_nonneg _); linarith
+  -- step 3: Pythagoras turns `1 − det²` into the squared sine `‖vt − ⟪vt,v₀⟫v₀‖²`
+  have hpyth := norm_sub_proj_sq_eq_one_sub_inner_sq hv₀ hvtnorm
+  -- step 1–2: the Frobenius back-transport bound
+  have hwedge := ExteriorNorm.norm_proj_sub_le_wedge U V hU hV
+  rw [hdet, ← hpyth] at hwedge
+  -- combine: `‖UUᵀ − VVᵀ‖² ≤ 2k · sin² ≤ 2k · res²`
+  have hsin' : ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ≤ res := hsin
+  have hsinnn : 0 ≤ ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ := norm_nonneg _
+  have hsq : ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ^ 2 ≤ res ^ 2 := by
+    apply sq_le_sq'
+    · linarith
+    · exact hsin'
+  have hk2 : (0 : ℝ) ≤ 2 * (k : ℝ) := by positivity
+  have hbound : ‖U * Uᵀ - V * Vᵀ‖ ^ 2 ≤ (Real.sqrt (2 * k) * res) ^ 2 := by
+    calc ‖U * Uᵀ - V * Vᵀ‖ ^ 2
+        ≤ 2 * (k : ℝ) * ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ^ 2 := hwedge
+      _ ≤ 2 * (k : ℝ) * res ^ 2 := by
+          apply mul_le_mul_of_nonneg_left hsq hk2
+      _ = (Real.sqrt (2 * k) * res) ^ 2 := by
+          rw [mul_pow, Real.sq_sqrt hk2]
+  have hlhsnn : 0 ≤ ‖U * Uᵀ - V * Vᵀ‖ := norm_nonneg _
+  have hrhsnn : 0 ≤ Real.sqrt (2 * k) * res := by positivity
+  nlinarith [hbound, hlhsnn, hrhsnn, sq_nonneg (‖U * Uᵀ - V * Vᵀ‖ - Real.sqrt (2 * k) * res)]
+
+/-- **L7c.3c (scalar simplification).** The off-diagonal numerator over the gap denominator collapses
+to the `κ²·r/(1 − κ²r²)` shape that drives the root test. With the compound-norm abbreviations
+`cM = ‖compound k Mₙ‖`, `cB = ‖compound k B‖`, `cBi = ‖compound k B⁻¹‖`, `κ = cB·cBi`, `r = σₖ/σₖ₋₁`,
+the off-diagonal numerator is `cM·√μ₁·cB²` with `μ₁ = cM²·r²` (so `√μ₁ = cM·r`, using `cM ≥ 0`,
+`r ≥ 0`), and a lower bound on the gap `μ̃₀ − ν ≥ cM²/cBi² · (1 − κ²r²)`. When `κ²r² < 1` the ratio
+`numerator / (μ̃₀ − ν) ≤ κ²·r / (1 − κ²r²)`. This is the constant whose `(1/n)·log` limit is
+`λₖ − λₖ₋₁ < 0`. -/
+theorem numerator_div_gap_le {cM cB cBi r denom : ℝ}
+    (hcM : 0 ≤ cM) (hcB : 0 ≤ cB) (hcBi : 0 ≤ cBi) (hr : 0 ≤ r)
+    (hκr : (cB * cBi) ^ 2 * r ^ 2 < 1)
+    (hdenom : cM ^ 2 / cBi ^ 2 * (1 - (cB * cBi) ^ 2 * r ^ 2) ≤ denom)
+    (hdenompos : 0 < denom) (hcBipos : 0 < cBi) :
+    cM * (cM * r) * cB ^ 2 / denom
+      ≤ (cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2) := by
+  set κ2 : ℝ := (cB * cBi) ^ 2 with hκ2
+  have hgapfac : 0 < 1 - κ2 * r ^ 2 := by rw [hκ2]; linarith
+  -- the lower bound on `denom` is itself positive, and the numerator nonneg.
+  have hnumnn : 0 ≤ cM * (cM * r) * cB ^ 2 := by positivity
+  -- `numerator / denom ≤ numerator / lowerbound` since `lowerbound ≤ denom` and both positive.
+  set lb : ℝ := cM ^ 2 / cBi ^ 2 * (1 - κ2 * r ^ 2) with hlb
+  have hcM2 : (0 : ℝ) ≤ cM ^ 2 := by positivity
+  rcases eq_or_lt_of_le hcM with hcM0 | hcMpos
+  · -- `cM = 0`: numerator is 0, RHS nonneg.
+    rw [← hcM0]; simp only [zero_mul, mul_zero, zero_div]
+    positivity
+  · have hlbpos : 0 < lb := by
+      rw [hlb]; apply mul_pos; · positivity
+      · exact hgapfac
+    -- `numerator / denom ≤ numerator / lb`
+    have hstep1 : cM * (cM * r) * cB ^ 2 / denom ≤ cM * (cM * r) * cB ^ 2 / lb := by
+      apply div_le_div_of_nonneg_left hnumnn hlbpos
+      rw [hlb, hκ2]; exact hdenom
+    -- `numerator / lb = κ² r / (1 − κ²r²)`
+    have hcMne : cM ≠ 0 := ne_of_gt hcMpos
+    have hcBine : cBi ≠ 0 := ne_of_gt hcBipos
+    have hgapne : (1 - κ2 * r ^ 2) ≠ 0 := ne_of_gt hgapfac
+    have hlbne : lb ≠ 0 := ne_of_gt hlbpos
+    have hstep2 : cM * (cM * r) * cB ^ 2 / lb = κ2 * r / (1 - κ2 * r ^ 2) := by
+      rw [div_eq_div_iff hlbne hgapne, hlb, hκ2]
+      field_simp <;> ring
+    rw [hstep2] at hstep1
+    rw [hκ2]; exact hstep1
+
+/-! ### The per-step band-projector increment bound (cocycle target)
+
+The convergence point of the corrected §J route. With `Mₙ = cocycle A T n x`, `B = A(T^[n] x)`
+the one-step left factor (so `cocycle A T (n+1) x = B * Mₙ`), `σ = (toEuclideanLin Mₙ).singularValues`,
+`r = σₖ/σₖ₋₁`, and `κ = ‖compound k B‖·‖compound k B⁻¹‖`, the band projectors at consecutive steps
+satisfy `‖Pₙ₊₁ − Pₙ‖ ≤ √(2k)·κ²r/(1 − κ²r²)` in the EVENTUAL regime `κ²r² < 1`.
+
+The proof composes the committed pieces:
+* `bandProjector_indicator_eq_frame` (n, n+1) → `Pₙ = UUᵀ`, `Pₙ₊₁ = VVᵀ`, `UᵀU = VᵀV = 1`;
+* `ExteriorNorm.norm_offdiag_residual_compound_le` → off-diagonal numerator
+  `‖C v₀ − ⟪C v₀,v₀⟫v₀‖ ≤ cM·√μ₁·cB²`;
+* `ExteriorNorm.perturbed_compound_gram_ceiling` → the `ν = μ₁·cB²` ceiling on `v₀^⊥`;
+* `offdiag_sin_le_residual_div_gap` (via the abstract assembly `norm_proj_sub_le_residual_div_gap`)
+  → `‖Pₙ₊₁ − Pₙ‖ ≤ √(2k)·(numerator/(μ̃₀ − ν))`;
+* `numerator_div_gap_le` → the final `κ²r/(1 − κ²r²)` shape.
+
+**EVENTUAL caveat (§J.8.1).** The denominator positivity `μ̃₀ − ν > 0` holds only for `r < 1/κ`,
+which is a tail property along the orbit (since `r → 0` geometrically while `κ` is tempered); hence
+the bound is stated under the explicit regime hypothesis `hev`.
+
+**Threaded gap hypotheses (§J.8.3, the one MED wiring node).** To keep the statement's elaboration
+cheap (the `⋀^k`-finrank-indexed Euclidean types are extremely costly to `whnf` repeatedly), the
+perturbed compound Gram operator is kept ABSTRACT here: `C : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] _` with
+`N` the wedge dimension, `v₀`/`vt` the reference / perturbed top eigenvectors, and `cM, cB, cBi` the
+abstract compound operator norms `‖compound k Mₙ‖`, `‖compound k B‖`, `‖compound k B⁻¹‖`. The
+cocycle instantiation — `N = finrank(⋀^k ℝᵈ)`, `C = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁`, the eigenpair/ceiling
+data from `ExteriorNorm.plucker_eigenpair_ceiling_standard` (at `gram A T n x`, `gram A T (n+1) x`,
+identified with the compound Gram via `ExteriorNorm.compoundMatrix_gram`), the off-diagonal numerator
+`ExteriorNorm.norm_offdiag_residual_compound_le`, the `ν = μ₁·cB²` ceiling
+`ExteriorNorm.perturbed_compound_gram_ceiling`, and the det-Gram / wedge↔frame identification
+`det(UᵀV) = ⟪vt, v₀⟫` (via `ExteriorNorm.inner_hodgeTrivialization_ιMulti`) — is pure bookkeeping
+with no further analytic content, FLAGGED as the remaining MED wiring node (§J.8.3) because the
+band-projector frame ↔ Plücker eigenvector bridge and the rank-1 lower bound `μ̃₀ ≥ cM²/cBi²` are not
+yet committed, and the `⋀^k`-type instantiation times out the elaborator at this granularity.
+
+**EVENTUAL caveat (§J.8.1).** The denominator positivity `μ̃₀ − ν > 0` holds only for `r < 1/κ`,
+which is a tail property along the orbit (since `r → 0` geometrically while `κ` is tempered); hence
+the bound is stated under the explicit regime hypotheses `hgap`/`hκr`. -/
+open scoped RealInnerProductSpace in
+theorem norm_bandProjector_succ_sub_le {c : ℝ} (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    {k : ℕ} (n : ℕ) (x : X)
+    (U V : Matrix (Fin d) (Fin k) ℝ) (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1)
+    (hPn : bandProjector A T (Set.indicator (Set.Ioi c) 1) n x = U * Uᵀ)
+    (hPn1 : bandProjector A T (Set.indicator (Set.Ioi c) 1) (n + 1) x = V * Vᵀ)
+    -- the abstract perturbed compound Gram operator `Cₙ₊₁` and its top eigenpair / reference line:
+    {N : ℕ} {C : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] EuclideanSpace ℝ (Fin N)}
+    {v₀ vt : EuclideanSpace ℝ (Fin N)} (hv₀ : ‖v₀‖ = 1) (hvt : ‖vt‖ = 1)
+    {μ₀ μ₁ : ℝ} (hev : C vt = μ₀ • vt)
+    -- the off-diagonal numerator and `ν = μ₁·cB²` ceiling (committed cocycle lemmas):
+    {cM cB cBi r : ℝ} (hcM : 0 ≤ cM) (hcB : 0 ≤ cB) (hr : 0 ≤ r)
+    (hnum : ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ ≤ cM * (cM * r) * cB ^ 2)
+    (hceil : ∀ z, (inner ℝ z v₀ : ℝ) = 0 → ⟪C z, z⟫_ℝ ≤ (μ₁ * cB ^ 2) * ‖z‖ ^ 2)
+    -- the det-Gram / wedge identification (the Plücker bridge):
+    (hdet : (Uᵀ * V).det = ⟪vt, v₀⟫_ℝ)
+    -- the scalar linkages (§J.4): the gap denominator lower bound, gap positivity, the regime:
+    (hμ₀lb : cM ^ 2 / cBi ^ 2 * (1 - (cB * cBi) ^ 2 * r ^ 2) ≤ μ₀ - μ₁ * cB ^ 2)
+    (hgap : μ₁ * cB ^ 2 < μ₀) (hκr : (cB * cBi) ^ 2 * r ^ 2 < 1)
+    (hcBipos : 0 < cBi) :
+    ‖bandProjector A T (Set.indicator (Set.Ioi c) 1) (n + 1) x
+        - bandProjector A T (Set.indicator (Set.Ioi c) 1) n x‖
+      ≤ Real.sqrt (2 * k)
+        * ((cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2)) := by
+  set ν : ℝ := μ₁ * cB ^ 2 with hν
+  have hgap' : ν < μ₀ := by rw [hν]; exact hgap
+  have hgappos : 0 < μ₀ - ν := by linarith
+  -- abstract assembly (steps 1–4): `‖UUᵀ − VVᵀ‖ ≤ √(2k)·(numerator/(μ₀ − ν))`.
+  have hassembly := norm_proj_sub_le_residual_div_gap U V hU hV hv₀ hvt
+    (C := C) (μ₀ := μ₀) (ν := ν) hev hgap' hceil hdet
+  -- bound the numerator/gap by the scalar `κ²r/(1−κ²r²)` shape.
+  have hnumgap : ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν)
+      ≤ (cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2) := by
+    calc ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν)
+        ≤ cM * (cM * r) * cB ^ 2 / (μ₀ - ν) :=
+          div_le_div_of_nonneg_right hnum (le_of_lt hgappos)
+      _ ≤ (cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2) := by
+          have hμ₀lb' : cM ^ 2 / cBi ^ 2 * (1 - (cB * cBi) ^ 2 * r ^ 2) ≤ μ₀ - ν := by
+            rw [hν]; exact hμ₀lb
+          exact numerator_div_gap_le hcM hcB (le_of_lt hcBipos) hr hκr hμ₀lb' hgappos hcBipos
+  -- assemble.
+  rw [hPn, hPn1, ← norm_sub_rev]
+  calc ‖U * Uᵀ - V * Vᵀ‖
+      ≤ Real.sqrt (2 * k) * (‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν)) := hassembly
+    _ ≤ Real.sqrt (2 * k) * ((cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2)) := by
+        apply mul_le_mul_of_nonneg_left hnumgap (Real.sqrt_nonneg _)
+
 end Oseledets
 
 end
