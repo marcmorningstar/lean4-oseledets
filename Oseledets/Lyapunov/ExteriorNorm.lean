@@ -1517,6 +1517,225 @@ theorem rayleigh_deficit_le (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.d
 
 end Rayleigh
 
+/-! ## L7c.3b (corrected §J) — the off-diagonal residual estimate and the perturbed Gram ceiling
+
+The corrected route (§J of `oseledets-l7c-route.md`) replaces the circular Rayleigh-deficit bound by
+the refined Davis–Kahan sin-Θ in **off-diagonal/residual form** (`offdiag_sin_le_residual_div_gap`,
+committed in `OseledetsLimit.lean`). That sin-Θ core needs two cocycle-specific inputs:
+
+* the **off-diagonal residual numerator** `‖Cₙ₊₁ v₀ − ⟪Cₙ₊₁ v₀, v₀⟫ v₀‖ ≤ τ₀ τ₁ ‖H‖²`, where
+  `Cₙ₊₁ = adjoint G' ∘ₗ G'`, `G' = H ∘ₗ G`, and `v₀` is the top eigenvector of `Cₙ = adjoint G ∘ₗ G`
+  (`offdiag_residual_norm_le`);
+* the **`ν`-ceiling** `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖H‖²) ‖z‖²` transported from the `Cₙ`-ceiling
+  `∀ z ⊥ v₀, ⟪Cₙ z, z⟫ ≤ μ₁ ‖z‖²` (`perturbed_gram_ceiling`).
+
+Both are abstract operator facts (no compound/exterior structure); the cocycle specialisation in
+standard coordinates (where `G = toEuclideanLin (compoundMatrix k ·)`) follows by
+`toEuclideanLin_compoundMatrix_mul` (functoriality `G' = H ∘ₗ G`) and the per-vector operator-norm
+bound `norm_toEuclideanLin_apply_le`. These pieces feed the band-projector increment bound (L7c.3c)
+together with the committed back-transport `norm_proj_sub_le_wedge`. -/
+
+section OffDiag
+
+variable {E F : Type*}
+  [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
+
+open scoped RealInnerProductSpace
+
+/-- **J2.a — the off-diagonal residual is orthogonal to `v₀`.** For a unit `v₀`, the residual
+`C v₀ − ⟪C v₀, v₀⟫ v₀ = (I − P) C v₀` is orthogonal to `v₀`. -/
+theorem residual_orthogonal {C : E →ₗ[ℝ] E} {v₀ : E} (hv₀ : ‖v₀‖ = 1) :
+    (inner ℝ (C v₀ - (inner ℝ (C v₀) v₀ : ℝ) • v₀) v₀ : ℝ) = 0 := by
+  have hv₀v₀ : (inner ℝ v₀ v₀ : ℝ) = 1 := by rw [real_inner_self_eq_norm_sq, hv₀]; norm_num
+  rw [inner_sub_left, real_inner_smul_left, hv₀v₀, mul_one, sub_self]
+
+/-- **J2.b — Rayleigh of the Gram operator is the squared norm.** `⟪(adjoint G ∘ₗ G) v, v⟫ = ‖G v‖²`
+(abstract form; `rayleigh_compound_eq_norm_sq` is the compound-matrix specialisation). -/
+theorem gram_rayleigh_eq_norm_sq (G : E →ₗ[ℝ] F) (v : E) :
+    (inner ℝ ((LinearMap.adjoint G ∘ₗ G) v) v : ℝ) = ‖G v‖ ^ 2 := by
+  rw [LinearMap.comp_apply, LinearMap.adjoint_inner_left, real_inner_self_eq_norm_sq]
+
+/-- **J2.c — the off-diagonal inner product reduction.** `⟪(adjoint G' ∘ₗ G') v₀, z⟫ = ⟪G' v₀, G' z⟫`
+(plain adjoint move; for `z ⊥ v₀` this is the off-diagonal block of `Cₙ₊₁`). -/
+theorem offdiag_inner_eq (G' : E →ₗ[ℝ] F) (v₀ z : E) :
+    (inner ℝ ((LinearMap.adjoint G' ∘ₗ G') v₀) z : ℝ) = inner ℝ (G' v₀) (G' z) := by
+  rw [LinearMap.comp_apply, LinearMap.adjoint_inner_left]
+
+/-- **NODE 1 (L7c.3b, §J.2) — the off-diagonal residual norm estimate.**
+For the perturbed Gram operator `Cₙ₊₁ = adjoint G' ∘ₗ G'` with `G' = H ∘ₗ G` (functoriality) and
+`v₀` the top unit eigenvector of `Cₙ = adjoint G ∘ₗ G`, the off-diagonal residual
+`Cₙ₊₁ v₀ − ⟪Cₙ₊₁ v₀, v₀⟫ v₀` has norm at most `τ₀ · τ₁ · ‖H‖²`, where `τ₀ = ‖G v₀‖` (the top
+singular value of `G`) and `τ₁` is the second-singular-value ceiling on `v₀^⊥`
+(`hperp : ∀ z ⊥ v₀, ‖z‖ ≤ 1 → ‖G z‖ ≤ τ₁`).
+
+Proof (§J.2): the residual `res ⊥ v₀`; `‖res‖² = ⟪res, res⟫ = ⟪Cₙ₊₁ v₀, res⟫` (since `res ⊥ v₀`)
+`= ⟪H G v₀, H G res⟫ ≤ ‖H‖²‖G v₀‖‖G res‖ ≤ ‖H‖² τ₀ τ₁ ‖res‖` by Cauchy–Schwarz, the per-vector
+operator-norm bound on `H`, `htop`, and `hperp` applied to the unit normalisation of `res`. Dividing
+by `‖res‖` gives the bound. -/
+theorem offdiag_residual_norm_le
+    {G : E →ₗ[ℝ] F} {H : F →ₗ[ℝ] F} {G' : E →ₗ[ℝ] F}
+    (hcomp : G' = H ∘ₗ G)
+    {v₀ : E} {τ₀ τ₁ nH : ℝ} (hτ₀ : 0 ≤ τ₀) (hτ₁ : 0 ≤ τ₁) (hnH : 0 ≤ nH) (hv₀ : ‖v₀‖ = 1)
+    (htop : ‖G v₀‖ = τ₀)
+    (hH : ∀ y, ‖H y‖ ≤ nH * ‖y‖)
+    (hperp : ∀ z : E, (inner ℝ z v₀ : ℝ) = 0 → ‖z‖ ≤ 1 → ‖G z‖ ≤ τ₁) :
+    ‖(LinearMap.adjoint G' ∘ₗ G') v₀ - (inner ℝ ((LinearMap.adjoint G' ∘ₗ G') v₀) v₀ : ℝ) • v₀‖
+      ≤ τ₀ * τ₁ * nH ^ 2 := by
+  set C := LinearMap.adjoint G' ∘ₗ G' with hC
+  set res := C v₀ - (inner ℝ (C v₀) v₀ : ℝ) • v₀ with hres
+  have hresperp : (inner ℝ res v₀ : ℝ) = 0 := residual_orthogonal hv₀
+  -- key inner bound: for z ⊥ v₀, ⟪res, z⟫ ≤ τ₀τ₁nH² ‖z‖
+  have hkey : ∀ z : E, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ res z : ℝ) ≤ τ₀ * τ₁ * nH ^ 2 * ‖z‖ := by
+    intro z hz
+    have hrz : (inner ℝ res z : ℝ) = inner ℝ (C v₀) z := by
+      rw [hres, inner_sub_left, real_inner_smul_left,
+        show (inner ℝ v₀ z : ℝ) = inner ℝ z v₀ from real_inner_comm z v₀, hz, mul_zero, sub_zero]
+    rw [hrz, hC, offdiag_inner_eq, hcomp]
+    simp only [LinearMap.comp_apply]
+    rcases eq_or_lt_of_le (norm_nonneg z) with hz0 | hzpos
+    · have : z = 0 := by rw [← norm_eq_zero]; exact hz0.symm
+      subst this; simp
+    · have hznorm : ‖z‖ ≠ 0 := ne_of_gt hzpos
+      have hzu : ‖(‖z‖⁻¹ : ℝ) • z‖ ≤ 1 := by
+        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity), inv_mul_cancel₀ hznorm]
+      have hzuperp : (inner ℝ ((‖z‖⁻¹ : ℝ) • z) v₀ : ℝ) = 0 := by
+        rw [real_inner_smul_left, hz, mul_zero]
+      have hGzu : ‖G ((‖z‖⁻¹ : ℝ) • z)‖ ≤ τ₁ := hperp _ hzuperp hzu
+      have hGz : ‖G z‖ ≤ τ₁ * ‖z‖ := by
+        rw [map_smul, norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at hGzu
+        rw [inv_mul_le_iff₀ hzpos] at hGzu
+        linarith [hGzu]
+      calc (inner ℝ (H (G v₀)) (H (G z)) : ℝ)
+          ≤ ‖H (G v₀)‖ * ‖H (G z)‖ := real_inner_le_norm _ _
+        _ ≤ (nH * ‖G v₀‖) * (nH * ‖G z‖) := by
+            apply mul_le_mul (hH _) (hH _) (norm_nonneg _); positivity
+        _ ≤ (nH * τ₀) * (nH * (τ₁ * ‖z‖)) := by rw [htop]; gcongr
+        _ = τ₀ * τ₁ * nH ^ 2 * ‖z‖ := by ring
+  rcases eq_or_lt_of_le (norm_nonneg res) with hr0 | hrpos
+  · rw [hres] at hr0 ⊢; rw [← hr0]; positivity
+  · have hself : (inner ℝ res res : ℝ) = ‖res‖ ^ 2 := real_inner_self_eq_norm_sq res
+    have hb := hkey res hresperp
+    rw [hself] at hb
+    have hmul : ‖res‖ * ‖res‖ ≤ (τ₀ * τ₁ * nH ^ 2) * ‖res‖ := by nlinarith [hb]
+    exact le_of_mul_le_mul_right hmul hrpos
+
+/-- **NODE 1 ceiling (L7c.3b.ν, §J.3) — the `ν`-ceiling for the perturbed Gram operator.**
+From a Rayleigh ceiling `∀ z ⊥ v₀, ⟪Cₙ z, z⟫ ≤ μ₁ ‖z‖²` on the unperturbed Gram operator
+`Cₙ = adjoint G ∘ₗ G`, the perturbed operator `Cₙ₊₁ = adjoint G' ∘ₗ G'` with `G' = H ∘ₗ G` obeys
+the amplified ceiling `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖H‖²) ‖z‖²`. Proof: `⟪Cₙ₊₁ z, z⟫ = ‖H G z‖²
+≤ ‖H‖² ‖G z‖² = ‖H‖² ⟪Cₙ z, z⟫ ≤ ‖H‖² μ₁ ‖z‖²`. This supplies the `ν := μ₁ ‖H‖²` ceiling consumed
+by `offdiag_sin_le_residual_div_gap`. -/
+theorem perturbed_gram_ceiling
+    {G : E →ₗ[ℝ] F} {H : F →ₗ[ℝ] F} {G' : E →ₗ[ℝ] F}
+    (hcomp : G' = H ∘ₗ G)
+    {v₀ : E} {μ₁ nH : ℝ}
+    (hH : ∀ y, ‖H y‖ ≤ nH * ‖y‖)
+    (hceil : ∀ z : E, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ ((LinearMap.adjoint G ∘ₗ G) z) z : ℝ) ≤ μ₁ * ‖z‖ ^ 2) :
+    ∀ z : E, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ ((LinearMap.adjoint G' ∘ₗ G') z) z : ℝ) ≤ (μ₁ * nH ^ 2) * ‖z‖ ^ 2 := by
+  intro z hz
+  rw [gram_rayleigh_eq_norm_sq, hcomp, LinearMap.comp_apply]
+  have h1 : ‖H (G z)‖ ^ 2 ≤ nH ^ 2 * ‖G z‖ ^ 2 := by
+    have := hH (G z); nlinarith [this, norm_nonneg (G z), norm_nonneg (H (G z))]
+  have h2 : ‖G z‖ ^ 2 = (inner ℝ ((LinearMap.adjoint G ∘ₗ G) z) z : ℝ) :=
+    (gram_rayleigh_eq_norm_sq G z).symm
+  have h3 : (inner ℝ ((LinearMap.adjoint G ∘ₗ G) z) z : ℝ) ≤ μ₁ * ‖z‖ ^ 2 := hceil z hz
+  calc ‖H (G z)‖ ^ 2 ≤ nH ^ 2 * ‖G z‖ ^ 2 := h1
+    _ = nH ^ 2 * (inner ℝ ((LinearMap.adjoint G ∘ₗ G) z) z : ℝ) := by rw [h2]
+    _ ≤ nH ^ 2 * (μ₁ * ‖z‖ ^ 2) := by apply mul_le_mul_of_nonneg_left h3 (by positivity)
+    _ = (μ₁ * nH ^ 2) * ‖z‖ ^ 2 := by ring
+
+end OffDiag
+
+/-! ### The cocycle specialisation of NODE 1 (compound-matrix coordinates)
+
+Specialising `offdiag_residual_norm_le` / `perturbed_gram_ceiling` to the cocycle Gram operators
+`Cₙ = adjoint Gₙ ∘ₗ Gₙ`, `Gₙ = toEuclideanLin (compoundMatrix k Mₙ)`, with the one-step left factor
+`B = A(Tⁿx)` (so `Mₙ₊₁ = B · Mₙ` and `Gₙ₊₁ = (compound B) ∘ Gₙ` by
+`toEuclideanLin_compoundMatrix_mul`). The SVD ceiling `hperp` of the abstract lemma is discharged
+from a `μ₁`-ceiling on `Cₙ` via `rayleigh_compound_eq_norm_sq`:
+`‖Gₙ z‖² = ⟪Cₙ z, z⟫ ≤ μ₁ ‖z‖² ≤ μ₁` for `‖z‖ ≤ 1`, hence `‖Gₙ z‖ ≤ √μ₁ =: τ₁`. -/
+
+section CompoundOffDiag
+
+variable {d : ℕ}
+
+open scoped RealInnerProductSpace
+
+/-- **NODE 1 (cocycle, §J.2) — the off-diagonal residual estimate for the compound Gram operators.**
+With `Gₙ = toEuclideanLin (compoundMatrix k M)`, `Cₙ = adjoint Gₙ ∘ₗ Gₙ`, the one-step left factor
+`B`, and `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁` for `Gₙ₊₁ = toEuclideanLin (compoundMatrix k (B * M))`: if
+`v₀` is a unit vector achieving the compound operator norm `‖Gₙ v₀‖ = ‖compoundMatrix k M‖ = τ₀`
+(the top right-singular vector of `Gₙ`, i.e. the top eigenvector of `Cₙ`) with a `μ₁`-Rayleigh
+ceiling on `v₀^⊥`, then the off-diagonal residual obeys
+`‖Cₙ₊₁ v₀ − ⟪Cₙ₊₁ v₀, v₀⟫ v₀‖ ≤ ‖compoundMatrix k M‖ · √μ₁ · ‖compoundMatrix k B‖²`.
+(`τ₀ = ‖compoundMatrix k M‖`, `τ₁ = √μ₁`, `‖H‖ = ‖compoundMatrix k B‖`.) -/
+theorem norm_offdiag_residual_compound_le (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ)
+    {v₀ : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))}
+    {μ₁ : ℝ} (hμ₁ : 0 ≤ μ₁) (hv₀ : ‖v₀‖ = 1)
+    (htop : ‖Matrix.toEuclideanLin (compoundMatrix k M) v₀‖ = ‖compoundMatrix k M‖)
+    (hceil : ∀ z, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+          Matrix.toEuclideanLin (compoundMatrix k M)) z) z : ℝ) ≤ μ₁ * ‖z‖ ^ 2) :
+    ‖(LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k (B * M))) ∘ₗ
+          Matrix.toEuclideanLin (compoundMatrix k (B * M))) v₀
+        - (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k (B * M))) ∘ₗ
+            Matrix.toEuclideanLin (compoundMatrix k (B * M))) v₀) v₀ : ℝ) • v₀‖
+      ≤ ‖compoundMatrix k M‖ * Real.sqrt μ₁ * ‖compoundMatrix k B‖ ^ 2 := by
+  -- discharge `hperp`: `‖Gₙ z‖ ≤ √μ₁` for `z ⊥ v₀`, `‖z‖ ≤ 1`.
+  have hperp : ∀ z, (inner ℝ z v₀ : ℝ) = 0 → ‖z‖ ≤ 1 →
+      ‖Matrix.toEuclideanLin (compoundMatrix k M) z‖ ≤ Real.sqrt μ₁ := by
+    intro z hz hzn
+    have hsq : ‖Matrix.toEuclideanLin (compoundMatrix k M) z‖ ^ 2 ≤ μ₁ := by
+      rw [← rayleigh_compound_eq_norm_sq k M z]
+      calc (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+              Matrix.toEuclideanLin (compoundMatrix k M)) z) z : ℝ)
+          ≤ μ₁ * ‖z‖ ^ 2 := hceil z hz
+        _ ≤ μ₁ * 1 ^ 2 := by gcongr
+        _ = μ₁ := by ring
+    have hnn := norm_nonneg (Matrix.toEuclideanLin (compoundMatrix k M) z)
+    calc ‖Matrix.toEuclideanLin (compoundMatrix k M) z‖
+        = Real.sqrt (‖Matrix.toEuclideanLin (compoundMatrix k M) z‖ ^ 2) :=
+          (Real.sqrt_sq hnn).symm
+      _ ≤ Real.sqrt μ₁ := Real.sqrt_le_sqrt hsq
+  -- apply the abstract NODE 1 with the functoriality `G' = H ∘ₗ G`.
+  exact offdiag_residual_norm_le
+    (G := Matrix.toEuclideanLin (compoundMatrix k M))
+    (H := Matrix.toEuclideanLin (compoundMatrix k B))
+    (G' := Matrix.toEuclideanLin (compoundMatrix k (B * M)))
+    (toEuclideanLin_compoundMatrix_mul k B M)
+    (norm_nonneg _) (Real.sqrt_nonneg _) (norm_nonneg _) hv₀ htop
+    (fun y => norm_toEuclideanLin_apply_le (compoundMatrix k B) y)
+    hperp
+
+/-- **NODE 1 ceiling (cocycle, §J.3) — the `ν`-ceiling for the perturbed compound Gram operator.**
+From a `μ₁`-Rayleigh ceiling on `Cₙ = adjoint Gₙ ∘ₗ Gₙ` over `v₀^⊥`, the perturbed compound Gram
+operator `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁` (with `Gₙ₊₁ = toEuclideanLin (compoundMatrix k (B * M))`)
+obeys the amplified ceiling `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖compoundMatrix k B‖²) ‖z‖²`. This is the
+`ν := μ₁ ‖H‖²` ceiling consumed by `offdiag_sin_le_residual_div_gap`. -/
+theorem perturbed_compound_gram_ceiling (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ)
+    {v₀ : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))}
+    {μ₁ : ℝ}
+    (hceil : ∀ z, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+          Matrix.toEuclideanLin (compoundMatrix k M)) z) z : ℝ) ≤ μ₁ * ‖z‖ ^ 2) :
+    ∀ z, (inner ℝ z v₀ : ℝ) = 0 →
+      (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k (B * M))) ∘ₗ
+          Matrix.toEuclideanLin (compoundMatrix k (B * M))) z) z : ℝ)
+        ≤ (μ₁ * ‖compoundMatrix k B‖ ^ 2) * ‖z‖ ^ 2 :=
+  perturbed_gram_ceiling
+    (G := Matrix.toEuclideanLin (compoundMatrix k M))
+    (H := Matrix.toEuclideanLin (compoundMatrix k B))
+    (G' := Matrix.toEuclideanLin (compoundMatrix k (B * M)))
+    (toEuclideanLin_compoundMatrix_mul k B M)
+    (fun y => norm_toEuclideanLin_apply_le (compoundMatrix k B) y)
+    hceil
+
+end CompoundOffDiag
+
 /-! ## The Plücker bridge (PB1/PB2/PB3)
 
 For a symmetric PD map `f` with orthonormal eigenbasis `u` and eigenvalues `lam`, the compound
