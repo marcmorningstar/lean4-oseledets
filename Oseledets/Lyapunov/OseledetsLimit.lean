@@ -919,6 +919,144 @@ theorem tendsto_logNorm_inv_orbit_div_atTop_zero {A : X → Matrix (Fin d) (Fin 
     (integrable_logNorm_inv_cocycle hT hA hAmeas hTmeas hint hint' 1)] with x hx
   simpa using hx
 
+/-! ## L7c.3a (corrected core): refined Davis–Kahan off-diagonal sin-Θ
+
+The Rayleigh-DEFICIT bound `sin_sq_le_rayleigh_deficit_div_gap` is *true* but the WRONG tool for the
+gapped band-projector summability: feeding it the only provable deficit `ε ≤ (1−1/κ²)μ₀` yields
+`sin²θ ≤ (1−1/κ²)/(1−r²)`, which is NOT summable along the orbit (the one-step `κ` is tempered with
+positive mean, so `1−1/κ²` does not decay), and the route is structurally circular (`ε ≈ μ₀ sin²θ`).
+The summable estimate needs the refined Davis–Kahan sin-Θ in **off-diagonal/residual form**: the
+numerator is the off-diagonal block `C v₀ − ⟪C v₀, v₀⟫ v₀`, which (for the cocycle compound) carries
+the extra `σₖ/σₖ₋₁` factor the deficit route loses. See `oseledets-l7c-route.md` §J. -/
+
+/-- **L7c.3a (corrected core) — refined off-diagonal rank-1 sin-Θ.** For a perturbed operator `C`
+with top unit eigenvector `vt` (eigenvalue `μ₀`), an unperturbed top eigenline `v₀`, and a Rayleigh
+ceiling `ν < μ₀` of `C` on `v₀^⊥`, the sine of the angle between `vt` and `v₀` is bounded by the
+*off-diagonal residual* `‖C v₀ − ⟪C v₀, v₀⟫ v₀‖` over the gap `μ₀ − ν`. Elementary (Rayleigh +
+Cauchy–Schwarz + `|⟪vt,v₀⟫| ≤ 1`); no symmetry, no functional calculus. This replaces the
+deficit-form `sin_sq_le_rayleigh_deficit_div_gap` as the load-bearing sin-Θ core. -/
+theorem offdiag_sin_le_residual_div_gap {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    {C : E →ₗ[ℝ] E} {μ₀ ν : ℝ} {v₀ vt : E} (hv₀ : ‖v₀‖ = 1) (hvtnorm : ‖vt‖ = 1)
+    (hev : C vt = μ₀ • vt) (hgap : ν < μ₀)
+    (hν : ∀ w : E, ⟪w, v₀⟫_ℝ = 0 → ⟪C w, w⟫_ℝ ≤ ν * ‖w‖ ^ 2) :
+    ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ≤ ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν) := by
+  set p : ℝ := ⟪vt, v₀⟫_ℝ with hp
+  set w : E := vt - p • v₀ with hw
+  set res : E := C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀ with hres
+  have hv₀v₀ : ⟪v₀, v₀⟫_ℝ = (1 : ℝ) := by rw [real_inner_self_eq_norm_sq, hv₀]; norm_num
+  have hwv₀ : ⟪w, v₀⟫_ℝ = (0 : ℝ) := by
+    rw [hw, inner_sub_left, real_inner_smul_left, hv₀v₀, hp]; ring
+  have hv₀w : ⟪v₀, w⟫_ℝ = (0 : ℝ) := by rw [real_inner_comm]; exact hwv₀
+  have hdecomp : vt = p • v₀ + w := by rw [hw]; abel
+  have hresw : ⟪res, w⟫_ℝ = ⟪C v₀, w⟫_ℝ := by
+    rw [hres, inner_sub_left, real_inner_smul_left, hv₀w, mul_zero, sub_zero]
+  have hvtw : ⟪vt, w⟫_ℝ = ‖w‖ ^ 2 := by
+    rw [hdecomp, inner_add_left, real_inner_smul_left, hv₀w, mul_zero,
+      zero_add, real_inner_self_eq_norm_sq]
+  have hCvtw : ⟪C vt, w⟫_ℝ = μ₀ * ‖w‖ ^ 2 := by rw [hev, real_inner_smul_left, hvtw]
+  have hexpand : ⟪C vt, w⟫_ℝ = p * ⟪C v₀, w⟫_ℝ + ⟪C w, w⟫_ℝ := by
+    rw [hdecomp, map_add, map_smul, inner_add_left, real_inner_smul_left]
+  have hpres : p * ⟪res, w⟫_ℝ = μ₀ * ‖w‖ ^ 2 - ⟪C w, w⟫_ℝ := by
+    rw [hresw]; have h := hCvtw.symm.trans hexpand; linarith [h]
+  have hCww : ⟪C w, w⟫_ℝ ≤ ν * ‖w‖ ^ 2 := hν w hwv₀
+  have hpabs : |p| ≤ 1 := by
+    have hcs := abs_real_inner_le_norm vt v₀
+    rw [hv₀, hvtnorm, mul_one] at hcs
+    exact hcs
+  have hCS : ⟪res, w⟫_ℝ ≤ ‖res‖ * ‖w‖ := real_inner_le_norm res w
+  have hCS' : -(‖res‖ * ‖w‖) ≤ ⟪res, w⟫_ℝ := by
+    have := real_inner_le_norm (-res) w
+    rw [inner_neg_left, norm_neg] at this; linarith
+  have hp_res : p * ⟪res, w⟫_ℝ ≤ ‖res‖ * ‖w‖ := by
+    rcases le_or_gt 0 (⟪res, w⟫_ℝ) with hge | hlt
+    · calc p * ⟪res, w⟫_ℝ ≤ |p| * ⟪res, w⟫_ℝ := by
+            apply mul_le_mul_of_nonneg_right (le_abs_self p) hge
+        _ ≤ 1 * ⟪res, w⟫_ℝ := by apply mul_le_mul_of_nonneg_right hpabs hge
+        _ = ⟪res, w⟫_ℝ := one_mul _
+        _ ≤ ‖res‖ * ‖w‖ := hCS
+    · calc p * ⟪res, w⟫_ℝ ≤ |p| * |⟪res, w⟫_ℝ| := by
+            rw [← abs_mul]; exact le_abs_self _
+        _ ≤ 1 * |⟪res, w⟫_ℝ| := by apply mul_le_mul_of_nonneg_right hpabs (abs_nonneg _)
+        _ = |⟪res, w⟫_ℝ| := one_mul _
+        _ ≤ ‖res‖ * ‖w‖ := by rw [abs_le]; exact ⟨hCS', hCS⟩
+  have hkey : (μ₀ - ν) * ‖w‖ ^ 2 ≤ ‖res‖ * ‖w‖ := by
+    calc (μ₀ - ν) * ‖w‖ ^ 2 ≤ μ₀ * ‖w‖ ^ 2 - ⟪C w, w⟫_ℝ := by nlinarith [hCww]
+      _ = p * ⟪res, w⟫_ℝ := hpres.symm
+      _ ≤ ‖res‖ * ‖w‖ := hp_res
+  have hgap' : 0 < μ₀ - ν := by linarith
+  rcases eq_or_lt_of_le (norm_nonneg w) with hw0 | hwpos
+  · rw [hw, ← hw0]; positivity
+  · rw [hw] at hwpos ⊢
+    rw [le_div_iff₀ hgap']
+    have h2 : (μ₀ - ν) * ‖vt - p • v₀‖ * ‖vt - p • v₀‖ ≤ ‖res‖ * ‖vt - p • v₀‖ := by
+      have : (μ₀ - ν) * ‖vt - p • v₀‖ ^ 2 = (μ₀ - ν) * ‖vt - p • v₀‖ * ‖vt - p • v₀‖ := by ring
+      rw [hw] at hkey; linarith [hkey, this]
+    have hcancel := le_of_mul_le_mul_right h2 hwpos
+    linarith [hcancel]
+
+/-! ## L7c.4 (engine): summability by the root test
+
+The corrected per-step bound has the shape `‖Pₙ₊₁ − Pₙ‖ ≤ √(2k)·κ(⋀ᵏB)²·rₙ` with
+`rₙ = σₖ(Mₙ)/σₖ₋₁(Mₙ)` geometric (`(1/n)log rₙ → λₖ−λₖ₋₁ < 0`) and `κ(⋀ᵏB)²` subexponential
+(`(1/n)log → 0`). Their product is summable by the root test. These are the scalar engines. -/
+
+/-- **L7c.4 — geometric tail ⟹ summable.** A nonnegative sequence eventually dominated by `ρⁿ`
+(`0 ≤ ρ < 1`) is summable. -/
+theorem summable_of_eventually_le_geometric (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n)
+    {ρ : ℝ} (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) (hev : ∀ᶠ n in atTop, a n ≤ ρ ^ n) :
+    Summable a := by
+  obtain ⟨N, hN⟩ := eventually_atTop.mp hev
+  apply summable_of_sum_range_le (c := (∑ i ∈ Finset.range N, a i) + (1 - ρ)⁻¹)
+  · intro n; exact ha n
+  intro n
+  have hgeo : (0:ℝ) ≤ (1 - ρ)⁻¹ := by positivity
+  rcases le_or_gt n N with h | h
+  · have hsub : ∑ i ∈ Finset.range n, a i ≤ ∑ i ∈ Finset.range N, a i :=
+      Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.mpr h) (fun i _ _ => ha i)
+    linarith [hsub]
+  · have hsplit : ∑ i ∈ Finset.range n, a i
+        = (∑ i ∈ Finset.range N, a i) + ∑ i ∈ Finset.Ico N n, a i := by
+      rw [← Finset.sum_range_add_sum_Ico _ (le_of_lt h)]
+    rw [hsplit]
+    have htail : ∑ i ∈ Finset.Ico N n, a i ≤ (1 - ρ)⁻¹ := by
+      calc ∑ i ∈ Finset.Ico N n, a i
+          ≤ ∑ i ∈ Finset.Ico N n, ρ ^ i := by
+            apply Finset.sum_le_sum; intro i hi
+            exact hN i (Finset.mem_Ico.mp hi).1
+        _ ≤ ∑' i, ρ ^ i :=
+            Summable.sum_le_tsum _ (fun i _ => by positivity)
+              (summable_geometric_of_lt_one hρ0 hρ1)
+        _ = (1 - ρ)⁻¹ := tsum_geometric_of_lt_one hρ0 hρ1
+    linarith [htail]
+
+/-- **L7c.4 — root test (log form).** For an eventually-positive `a` whose normalized log tends to a
+negative limit `L`, `a` is summable. The engine that turns the geometric×subexponential per-step
+projector bound into summability (take `L = λₖ − λₖ₋₁ < 0`). -/
+theorem summable_of_logLimit_neg (a : ℕ → ℝ) (hnn : ∀ n, 0 ≤ a n) (hpos : ∀ᶠ n in atTop, 0 < a n)
+    {L : ℝ} (hL : L < 0)
+    (hlog : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (a n)) atTop (𝓝 L)) :
+    Summable a := by
+  set ρ : ℝ := Real.exp (L / 2) with hρdef
+  have hρ0 : 0 < ρ := Real.exp_pos _
+  have hρ1 : ρ < 1 := by rw [hρdef]; exact Real.exp_lt_one_iff.mpr (by linarith)
+  have hev : ∀ᶠ n in atTop, a n ≤ ρ ^ n := by
+    have hlt : ∀ᶠ n : ℕ in atTop, (n : ℝ)⁻¹ * Real.log (a n) < L / 2 := by
+      have := hlog.eventually (eventually_lt_nhds (show L < L/2 by linarith))
+      exact this
+    have hn1 : ∀ᶠ n in atTop, (1 : ℕ) ≤ n := eventually_atTop.mpr ⟨1, fun n hn => hn⟩
+    filter_upwards [hlt, hpos, hn1] with n hn hp hn1
+    have hnpos : (0:ℝ) < n := by exact_mod_cast hn1
+    have hloga : Real.log (a n) < (L/2) * n := by
+      rw [inv_mul_eq_div, div_lt_iff₀ hnpos] at hn
+      linarith [hn]
+    have : a n < ρ ^ n := by
+      rw [hρdef, ← Real.exp_nat_mul]
+      calc a n = Real.exp (Real.log (a n)) := (Real.exp_log hp).symm
+        _ < Real.exp ((L/2) * n) := by exact Real.exp_lt_exp.mpr hloga
+        _ = Real.exp (↑n * (L/2)) := by rw [mul_comm]
+    exact le_of_lt this
+  exact summable_of_eventually_le_geometric a hnn (le_of_lt hρ0) hρ1 hev
+
 end Oseledets
 
 end
