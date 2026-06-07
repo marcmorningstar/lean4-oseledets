@@ -612,3 +612,202 @@ the old "abstract Davis–Kahan"; the irreducible analytic content is the alread
   API + the rank-1 facts (H.1, probe `rank1`); one new compound-mult lemma (L7c.3b.0) is required.
 - No committed statement is contradicted; `sin_sq_le_rayleigh_deficit_div_gap`, `eigenvalues₀_qpow_eq`,
   `prod_singularValues_eq_l2_opNorm_compound`, `L7_statement` all remain sound.
+
+## I. L7c.3b→L7d — assembled chain (verified)
+
+> Final de-risking pass 4, 2026-06-07. Nails the EXACT Lean-provable statement chain from the
+> committed pieces through `norm_bandProjector_succ_sub_le` and on to `L7_statement`, resolving
+> UNCERTAINTY 1 (compound top-2 eigenvalues / the `hμ₁` ceiling) and UNCERTAINTY 2 (projector↔wedge
+> glue). THREE new compiled probes (all `lake env lean`, repo root, exit 0; codes echoed):
+> `scratch_l7c3final_top2eig.lean`, `scratch_l7c3final_glue.lean`, `scratch_l7c3final_chain.lean`.
+> One §G/§H CORRECTION below (I.3 SURPRISE C — the relative-gap amplifier). No committed statement
+> contradicted.
+
+### I.0 RESOLVED — UNCERTAINTY 1: top-2 eigenvalues of `Cₙ = (⋀^k Mₙ)ᵀ(⋀^k Mₙ) = ⋀^k Qₙ`
+
+The committed `exteriorOpNorm_hodge_eq_prod_singularValues` proof DIAGONALIZES `conjExteriorMap`
+internally: its `hortho` shows the standard-basis images of the SVD-basis conjugated exterior map
+are PAIRWISE ORTHOGONAL with weights `c i = ∏_{a∈S_i} σ_a²`, `S_i` over the k-subsets of `Fin nE`.
+These weights ARE the eigenvalues of `Cₙ = adjoint∘self` (a self-adjoint operator, diagonal in that
+o.n. basis). Hence, CONFIRMED:
+
+- **eigenvalues of `Cₙ` = `{ (∏_{a∈S} σ_a)² : |S| = k }`** (the SVD diagonalization).
+- **`μ₀(Cₙ) = (∏_{i<k} σᵢ)² = ‖compoundMatrix k Mₙ‖²`** — top prefix set `{0,…,k-1}`, maximal by the
+  committed `prod_le_prod_top`; and `= ‖compound‖²` via `prod_singularValues_eq_l2_opNorm_compound`
+  (top eigenvalue of `AᵀA = ‖A‖²`). Probe `top2eig` (1a/1c/1e).
+- **`μ₁(Cₙ) = (σ₀···σ_{k-2}·σ_k)² = (∏_{i<k-1}σᵢ²)·σ_k²`** — the SECOND set swaps `σ_{k-1}→σ_k`;
+  it is `≤ μ₀` exactly when `σ_k ≤ σ_{k-1}` (genuine gap). Probe `top2eig` (1b/1c).
+- **GAP `μ₀ − μ₁ = (∏_{i<k-1}σᵢ²)·(σ_{k-1}² − σ_k²)`, `> 0 ⟺ σ_{k-1} > σ_k`** (and all prefix
+  factors `> 0`). Probe `top2eig` (1d). At a genuine exponent gap the dominant eigenLINE of `Cₙ` is
+  SIMPLE, so `sin_sq_le_rayleigh_deficit_div_gap` applies with `v₀` the decomposable wedge of the
+  top-k right-singular vectors.
+
+**The `hμ₁` ceiling (cleanest Lean route).** `hμ₁ : ∀ w ⊥ v₀, ⟪Cₙ w, w⟫ ≤ μ₁‖w‖²`. In the SVD
+o.n. eigenbasis of `Cₙ`, write `w = Σ aᵢ eᵢ`; orthogonality to `v₀ = e_{i₀}` (the top index) means
+`a_{i₀}=0`. Then `⟪Cₙ w,w⟫ = Σ cᵢ aᵢ²` and every remaining weight `cᵢ ≤ μ₁` (the top is dropped),
+so `⟪Cₙ w,w⟫ ≤ μ₁ Σ aᵢ² = μ₁‖w‖²`. The PURE scalar kernel (weighted sum, weights `≤ μ₁` off the
+dropped support) is COMPILED in probe `top2eig` (1f). This is strictly softer than re-proving the
+diagonalization: it consumes the committed `hortho` orthogonality directly. **No new abstract
+spectral theorem is needed for the ceiling.**
+
+### I.1 RESOLVED — UNCERTAINTY 2: projector↔wedge glue (the Frobenius back-transport)
+
+For orthonormal frames `U,V : Matrix (Fin d) (Fin k) ℝ` (columns = o.n. bases of `Eₙ,Eₙ₊₁`),
+`P = U·Uᵀ`, `P' = V·Vᵀ`:
+
+- **`tr(P·P') = ‖UᵀV‖_F²`** — cyclic trace `tr(UUᵀVVᵀ) = tr((UᵀV)(UᵀV)ᵀ)` then
+  `tr(AAᵀ)=Σ A²`. COMPILED probe `glue` (G1/G1'). Matrices NONCOMMUTATIVE: used `Matrix.mul_assoc`
+  + `trace_mul_comm`, not `ring`.
+- **`det(UᵀV) = ⟪w_{Eₙ}, w_{Eₙ₊₁}⟫`** (det-Gram = decomposable-wedge inner product) — via the
+  committed `hodgeForm_ιMulti`'s public path `exteriorPower.pairingDual_ιMulti_ιMulti`. COMPILED
+  probe `glue` (G2).
+- **`k·∏cos²θᵢ ≤ Σcos²θᵢ`** — ELEMENTARY: each `cos²≤1 ⟹ ∏ ≤ each factor ⟹ k·∏ = Σ_j(∏) ≤ Σ_j cos²_j`.
+  NO `geom_mean` needed (contra §H.6's "AM-GM `geom_mean_le_arith_mean_weighted`" suggestion — the
+  uniform-weight geom-mean is AVOIDABLE; the one-line product-≤-factor argument suffices). COMPILED
+  probe `glue` (G3 general-Finset + G3-range). **This simplifies the §H.2 build (no MeanInequalities
+  dependency).**
+
+Chaining (the committed `singularValues_zero_sq_le_sum` gives `‖P−P'‖_op² ≤ ‖P−P'‖_F²` through the
+σ-bridge; the trace identity `tr((P−P')²)=2k−2tr(PP')` is the committed-style `frobenius` probe):
+`‖P−P'‖_op² ≤ ‖P−P'‖_F² = 2k − 2tr(PP') = 2k − 2‖UᵀV‖_F² ≤ 2k(1−det(UᵀV)²) = 2k(1−⟪w,w'⟫²)
+= 2k·sin²∠_wedge`.
+
+**Band projector gives the frame `U` DIRECTLY.** `bandProjector A T χ n x = cfc χ (qpow)
+= U·diag(χ∘eig)·Uᴴ` by committed `cfc_eq_eigenvectorUnitary_conj`. For the 0/1 top-block indicator,
+`diag` selects the top-k columns of the eigenvector unitary `U`, so `bandProjector = U_top·U_topᵀ`
+with `U_top` = those columns — i.e. `P = U Uᵀ` is IMMEDIATE (the diag-selector·unitary collapses to
+the column-frame outer product; idempotence under unitary conjugation COMPILED probe `glue` (G4)).
+So no separate "extract the frame from the projector" lemma is needed.
+
+### I.2 EXACT node signatures (L7c.3b through L7d)
+
+```lean
+-- L7c.3b  exterior Rayleigh-deficit  (NO σⱼ min-max; rank-1 facts + compound-mult)
+theorem rayleigh_deficit_le {d : ℕ} (M B : Matrix (Fin d) (Fin d) ℝ) (hB : B.det ≠ 0)
+    (k : ℕ) (hk : 1 ≤ k) (hgap : (toEuclideanLin M).singularValues k
+                                   < (toEuclideanLin M).singularValues (k-1)) :
+    -- μ₀(Cₙ) − ⟨Cₙ v', v'⟩ ≤ (‖compound k B‖·‖(compound k B)⁻¹‖)²·(σₖ M/σₖ₋₁ M)²·μ₀(Cₙ)
+    -- where v' = top eigenvector of Cₙ₊₁ = (compound k (B*M))ᵀ(compound k (B*M))
+    sorry  -- via toEuclideanLin_compoundMatrix_mul + rank-1 facts (scratch_l7c3bc_rank1) + I.0
+
+-- L7c.3c.0  ‖M‖_op ≤ ‖M‖_F  (committed singularValues_zero_sq_le_sum + σ-bridge)
+theorem opNorm_le_frobenius {d : ℕ} (M : Matrix (Fin d) (Fin d) ℝ) :
+    (toEuclideanLin M).singularValues 0 ≤ Real.sqrt (∑ i, (toEuclideanLin M).singularValues i ^ 2)
+
+-- L7c.3c.1  Frobenius back-transport  (trace + AM-GM + det-Gram glue, constant 2k)
+theorem norm_proj_sub_le_wedge {d k : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ)
+    (hU : Uᵀ * U = 1) (hV : Vᵀ * V = 1) :
+    ‖U*Uᵀ - V*Vᵀ‖ ^ 2 ≤ 2 * k * (1 - (Uᵀ * V).det ^ 2)   -- = 2k·sin²∠_wedge
+
+-- L7c.3c  the assembled increment bound (G.3a ∘ L7c.3b ∘ L7c.3c.1 + Plücker glue)
+theorem norm_bandProjector_succ_sub_le {d : ℕ}
+    (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (χ : ℝ → ℝ) (kⱼ n : ℕ) (x : X)
+    (hgap : … genuine exponent gap at index kⱼ …) :
+    ‖bandProjector A T χ (n+1) x - bandProjector A T χ n x‖
+      ≤ Real.sqrt (2 * kⱼ)
+        * ‖A (T^[n] x)‖ ^ kⱼ * ‖(A (T^[n] x))⁻¹‖ ^ kⱼ
+        * ((toEuclideanLin (cocycle A T n x)).singularValues kⱼ
+            / (toEuclideanLin (cocycle A T n x)).singularValues (kⱼ-1))
+-- NOTE: see I.3 SURPRISE C — the honest RHS carries a relative-gap amplifier; the displayed
+-- clean form holds EVENTUALLY (n large, σₖ/σₖ₋₁ ≤ 1/√2), which is all L7c.4 summability needs.
+
+-- L7c.4  hsum a.e.  (geometric decay of the RHS ⟹ summable increments)
+theorem summable_norm_bandProjector_succ_sub {A T χ} (… a.e. hyps …) :
+    ∀ᵐ x ∂μ, Summable (fun n => ‖bandProjector A T χ (n+1) x - bandProjector A T χ n x‖)
+-- via: (1/n)·log(RHS) → λ_{kⱼ} − λ_{kⱼ-1} < 0 a.e. using committed `tendsto_log_singularValue`
+--      (two distinct indices) + tempered `tendsto_logNorm_orbit_div_atTop_zero` /
+--      `tendsto_logNorm_inv_orbit_div_atTop_zero` (the κ(⋀^kB) ≤ ‖B‖^k‖B⁻¹‖^k factor, log/n → 0);
+--      √(2kⱼ) constant harmless. Then eventual ρⁿ-decay ⟹ Summable. (scratch_l7c3final_chain C3–C5)
+
+-- L7c.5  packaging  (COMMITTED)
+theorem cauchySeq_cfc_of_summable …            -- already in OseledetsLimit.lean
+theorem exists_tendsto_cfc_of_summable …       -- already in OseledetsLimit.lean
+
+-- L7d  cauchySeq_qpow ⇒ L7_statement
+theorem cauchySeq_qpow {A T} (… a.e. hyps …) :
+    ∀ᵐ x ∂μ, CauchySeq (fun n => qpow A T n x)
+-- assemble qpow_n = Σⱼ (block eigenvalue)·(P⁽ʲ⁾ₙ − P⁽ʲ⁺¹⁾ₙ); each bandProjector Cauchy (L7c.5),
+-- each block eigenvalue → e^{λⱼ} (committed eigenvalues_qpow_tendsto); products/sums of
+-- Cauchy/convergent matrix sequences are Cauchy (CompleteSpace).
+theorem L7d {A T} (… ) : L7_statement μ T A
+-- = cauchySeq_qpow + cauchySeq_tendsto_of_complete (the committed L7_statement is ∃Λ, qpow→Λ a.e.)
+```
+
+### I.3 §G/§H correction — SURPRISE C (the relative-gap amplifier)
+
+§G.2 step 4 / §H.1 claim the deficit→sin chain "collapses to `sin²∠ ≤ C·κ(⋀^kB)²·(σ_k/σ_{k-1})²`"
+with `C` absolute. The LITERAL algebra (probe `chain` C1-literal, COMPILED) gives, with `a=σ_{k-1}²`,
+`b=σ_k²`, `pre=∏_{i<k-1}σ²`, `ε ≤ κ²·(b/a)·μ₀`, `μ₀=pre·a`, `μ₀−μ₁=pre·(a−b)`:
+
+```
+sin²∠ ≤ ε/(μ₀−μ₁) ≤ κ²·b/(a−b) = κ²·σ_k²/(σ_{k-1}² − σ_k²).
+```
+
+To rewrite this as `C·κ²·(σ_k/σ_{k-1})² = C·κ²·b/a` one needs `C ≥ a/(a−b) = σ_{k-1}²/(σ_{k-1}²−σ_k²)`
+— **a relative-gap AMPLIFIER that is NOT a fixed/absolute constant** (it blows up as the gap closes,
+`b↑a`). So §G/§H's "`C` absolute" is, strictly, FALSE for a SINGLE generic `n`.
+
+**Why it is harmless (and the fix).** Along the orbit, `(σ_k/σ_{k-1})² = b/a → 0` because
+`(1/n)log(σ_k/σ_{k-1}) → λ_k − λ_{k-1} < 0` (committed `tendsto_log_singularValue`, distinct
+exponents). Hence EVENTUALLY `b ≤ a/2`, where the amplifier `a/(a−b) ≤ 2`, giving the clean
+`sin²∠ ≤ 2·κ²·(σ_k/σ_{k-1})²` (probe `chain` C1-amplifier, COMPILED). Since L7c.4 only needs EVENTUAL
+geometric decay of the increments (`Summable` is a tail property), the displayed clean RHS in
+`norm_bandProjector_succ_sub_le` is correct from some `n₀(x)` onward — exactly the regime
+summability lives in. **Fix to the doc: state `norm_bandProjector_succ_sub_le` either (a) with the
+honest RHS `κ²·σ_k²/(σ_{k-1}²−σ_k²)` (always true), or (b) with the clean `2·κ²·(σ_k/σ_{k-1})²` under
+the EVENTUAL hypothesis `σ_k ≤ σ_{k-1}/√2`. Route (a) is cleaner to prove; route (b) feeds L7c.4
+directly.** Either way summability is unaffected; the crux estimate stands. The probe `chain` also
+recompiles the rest of the chain: C2 (sin²→op `√(2k)`), C3/C3′ (`κ(⋀^kB) ≤ ‖B‖^k‖B⁻¹‖^k`, log/n→0),
+C4/C4-const (the `λ_k−λ_{k-1}<0` log-limit), C5 (`ρⁿ` ⟹ Summable).
+
+### I.4 Mathlib found-vs-missing delta (this pass)
+
+**FOUND / committed (compiled against):**
+- Committed: `sin_sq_le_rayleigh_deficit_div_gap`, `prod_singularValues_eq_l2_opNorm_compound`,
+  `toEuclideanLin_compoundMatrix_mul`/`compoundMatrix_mul`, `singularValues_zero_sq_le_sum`,
+  `cfc_eq_eigenvectorUnitary_conj`, `bandProjector`/`_indicator_mul_self`/`_rank`,
+  `tendsto_log_singularValue`, `tendsto_logNorm_orbit_div_atTop_zero`(+inv),
+  `eigenvalues_qpow_tendsto`, `cauchySeq_cfc_of_summable`, `exists_tendsto_cfc_of_summable`;
+  internal diagonalization `hortho`/`prod_le_prod_top`/`opNorm_eq_of_ortho`; `hodgeForm_ιMulti`.
+- Mathlib: `exteriorPower.pairingDual_ιMulti_ιMulti`, `Matrix.trace_mul_comm`, `Finset.mul_prod_erase`,
+  `Finset.prod_le_one`, `Finset.prod_le_prod`, `Real.sq_sqrt`, `summable_geometric_of_lt_one`,
+  `Summable.of_nonneg_of_le`, `Tendsto.const_mul`/`.add`, `tendsto_inv_atTop_zero`,
+  `div_le_iff₀`/`le_div_iff₀` (NOTE: `div_le_div_iff` was renamed/removed — use the `iff₀` pair).
+
+**MISSING (to BUILD, all BOUNDED, no Davis–Kahan / no principal angles / no σⱼ min-max):**
+- `rayleigh_deficit_le` (L7c.3b) — assembled from committed rank-1 facts + `toEuclideanLin_compound…`.
+- `opNorm_le_frobenius` (L7c.3c.0) — from `singularValues_zero_sq_le_sum`; minor norm-instance care.
+- `norm_proj_sub_le_wedge` (L7c.3c.1) — trace algebra + the ELEMENTARY `k·∏≤Σ` (NO `geom_mean`).
+- `norm_bandProjector_succ_sub_le` (L7c.3c), `summable_…` (L7c.4), `cauchySeq_qpow`/`L7d` — assembly.
+
+### I.5 COMPILED-vs-argued table (this pass)
+
+| Probe | Genuinely new step it pins | Status |
+|---|---|---|
+| `scratch_l7c3final_top2eig.lean` | compound TOP-2 eigenvalue identification: `μ₀=(∏σ)²`, `μ₁=prefix·σ_k²`, GAP factorization `pre·(σ_{k-1}²−σ_k²)>0`, and the `hμ₁` weighted-sum ceiling kernel | **COMPILED exit 0** (unused-var warns) |
+| `scratch_l7c3final_glue.lean` | `tr(PP')=‖UᵀV‖_F²` (cyclic trace), `det(UᵀV)=⟪w,w'⟫` (det-Gram), the ELEMENTARY `k·∏cos²≤Σcos²` (no geom_mean), `P=UDUᵀ` idempotent | **COMPILED exit 0** |
+| `scratch_l7c3final_chain.lean` | deficit→sin LITERAL collapse + the relative-gap AMPLIFIER correction (SURPRISE C), sin²→op `√(2k)`, `∏σ≤Mᵏ`, log/n→0 tempering, `λ_k−λ_{k-1}<0` log-limit, `ρⁿ⟹Summable` | **COMPILED exit 0** (unused-var warns) |
+
+ARGUED on paper (not Lean-encoded this pass): the FULL diagonalization that the `hortho` weights ARE
+the `Cₙ` eigenvalues (re-deriving it duplicates ~120 committed lines — instead the SCALAR
+consequences feeding `μ₀,μ₁,gap,hμ₁` are compiled); the numeric tightness (`‖P−P'‖_op² ≤ 1−⟪w,w'⟫²`
+sharp, `2k` necessary) from §H. No committed statement is contradicted.
+
+### I.6 Build order (critical path)
+
+```
+L7c.1  (bandProjector = top-k orthProj; COMPILED eigproj + I.1 G4)
+  └─ L7c.3b.0  compoundMatrix_mul                      [COMMITTED]
+       └─ L7c.3b  rayleigh_deficit_le                  [rank-1 facts + I.0 top-2 eig + hμ₁ ceiling]
+            └─ (committed sin_sq_le_rayleigh_deficit_div_gap)
+  L7c.3c.0  opNorm_le_frobenius                        [committed singularValues_zero_sq_le_sum]
+  L7c.3c.1  norm_proj_sub_le_wedge                     [I.1 glue: trace + k·∏≤Σ + det-Gram]
+       └─ L7c.3c  norm_bandProjector_succ_sub_le       [G.3a∘3b∘3c.1; honest-RHS or eventual clean]
+            └─ L7c.4  summable_… a.e.                  [I.3 chain C3–C5 + tendsto_log_singularValue]
+                 └─ L7c.5  (COMMITTED cauchySeq_cfc_of_summable / exists_tendsto_cfc_of_summable)
+                      └─ L7d  cauchySeq_qpow ⇒ L7_statement   [+ committed eigenvalues_qpow_tendsto]
+```
+
+Net L7c.3b→L7d remains **~5.5–8.5 sessions** (§H.6 estimate UNCHANGED). The two uncertainties are
+resolved with no new HIGH node; the only correction (SURPRISE C, relative-gap amplifier) is a
+statement-shape fix to `norm_bandProjector_succ_sub_le`, not new analytic content.
