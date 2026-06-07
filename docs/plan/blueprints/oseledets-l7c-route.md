@@ -811,3 +811,206 @@ L7c.1  (bandProjector = top-k orthProj; COMPILED eigproj + I.1 G4)
 Net L7c.3b→L7d remains **~5.5–8.5 sessions** (§H.6 estimate UNCHANGED). The two uncertainties are
 resolved with no new HIGH node; the only correction (SURPRISE C, relative-gap amplifier) is a
 statement-shape fix to `norm_bandProjector_succ_sub_le`, not new analytic content.
+
+## J. L7c.3c CORRECTED — refined Davis–Kahan OFF-DIAGONAL route (B1 blocker fix, 2026-06-07)
+
+> CRITICAL CORRECTNESS PASS. The orchestrator found that the §G/§H/§I route — built on the committed
+> `sin_sq_le_rayleigh_deficit_div_gap` (Rayleigh-DEFICIT) + `rayleigh_deficit_le` (crude κ-bound) — is
+> **CIRCULAR and yields only a NON-SUMMABLE estimate**. This pass verifies the blocker, establishes the
+> CORRECT route (refined Davis–Kahan in OFF-DIAGONAL form), cross-checks it against the literature
+> (Davis–Kahan 1970 via Stewart–Sun; Trung Vu's note; Columbia AML notes — all firecrawl-scraped), and
+> delivers exact Lean statements with FOUR new compiled probes (`scratch_l7cJ_*.lean`, all `lake env
+> lean`, exit codes read explicitly — the `lake env` wrapper masked a real `.olean`-missing error and a
+> docstring parse error on early runs, exactly the §F hazard). Numerics: Python, d ≤ 6, all k, 50k+
+> ill-conditioned gapped trials. THREE §G/§H/§I claims corrected (J.5 SURPRISE D/E/F). No committed
+> statement is contradicted — but two committed lemmas are now BYPASSED (J.6).
+
+### J.0 The blocker B1 — VERIFIED (the deficit route is circular / non-summable)
+
+Committed chain: `‖Pₙ₊₁−Pₙ‖² ≤ 2k·sin²θ`, `sin²θ ≤ ε/(μ₀−μ₁)` (`sin_sq_le_rayleigh_deficit_div_gap`),
+`ε = μ₀−⟨Cₙv',v'⟩ ≤ (1−1/κ²)μ₀` (`rayleigh_deficit_le`, the ONLY provable deficit bound), `μ₀−μ₁ =
+μ₀(1−r²)`, `r = σₖ/σₖ₋₁`. Hence the committed bound is
+
+```
+sin²θ ≤ (1 − 1/κ²)/(1 − r²),    κ = κ(⋀ᵏB(Tⁿx)),  r = σₖ(Mₙ)/σₖ₋₁(Mₙ).
+```
+
+Along the orbit `r → 0` GEOMETRICALLY, BUT `κ` is only TEMPERED (`(1/n)log κ → 0`) with `κ ≥ κ₀ > 1`
+on a positive-density set (positive Lyapunov spread). So `1 − 1/κ²` is bounded BELOW away from 0 and
+does NOT decay. **NUMERICALLY CONFIRMED** (orbit simulation, `κ(⋀ᵏB)² ≈ 8100`, n = 1..25): the crude
+`sin²θ` bound `→ 0.9999` and STAYS there for all n while the true `sin θ → 0` geometrically; `Σ crude`
+grows ~linearly (tail ratio **1.000** ⟹ diverges). Worse, `ε ≈ μ₀ sin²θ` ALWAYS (since `⟨Cₙv',v'⟩ ≥
+μ₀cos²θ`), so the deficit→sin route is **structurally circular** — it can never beat the crude κ-bound.
+COMPILED as a Lean obstruction in `scratch_l7cJ_crude_fails.lean` (J4, exit 0): `crude_logLimit_zero`
+proves the crude per-step ROOT-TEST log-limit is `0` (NOT `< 0`) whenever `cₙ = 1−1/κₙ² ∈ [δ,1)`, and
+`crude_not_tendsto_zero` proves the crude bound is not even a null sequence. **The Rayleigh-deficit
+lemma is the WRONG TOOL; B1 is real.**
+
+### J.1 The FIX — refined Davis–Kahan OFF-DIAGONAL rank-1 sin-Θ (VERIFIED, COMPILED)
+
+For the PERTURBED symmetric `C̃` (top unit eigvec `ṽ`, eigval `μ̃₀`), the UNPERTURBED top eigenline
+`v₀` (`P = ⟨·,v₀⟩v₀`), and `ν` an upper Rayleigh ceiling of `C̃` on `v₀^⊥`:
+
+```
+sin θ(ṽ,v₀) = ‖ṽ − ⟨ṽ,v₀⟩v₀‖  ≤  ‖(I−P) C̃ v₀‖ / (μ̃₀ − ν),   (I−P)C̃v₀ = C̃ v₀ − ⟨C̃v₀,v₀⟩v₀.
+```
+
+Derivation (exact identity): from `C̃ṽ = μ̃₀ṽ`, write `ṽ = p v₀ + w` (`p=⟨ṽ,v₀⟩`, `w=(I−P)ṽ`); then
+`μ̃₀ w − (I−P)C̃w = p·(I−P)C̃v₀`, take `⟨·,w⟩`, use `⟨C̃w,w⟩ ≤ ν‖w‖²` and `|p|≤1`:
+`(μ̃₀−ν)‖w‖² ≤ p⟨(I−P)C̃v₀,w⟩ ≤ ‖(I−P)C̃v₀‖·‖w‖`. **LITERATURE CROSS-CHECK:** this is the eigenvector
+RESIDUAL form of Davis–Kahan sin-Θ (Theorem 3 of the Columbia AML notes `‖F₁ᵀE₀‖ ≤ ‖F₁ᵀHE₀‖/δ`; the
+Sylvester/residual mechanism of Trung Vu's note `‖sinΘ‖_F ≤ ‖ΔU₁‖_F/δ`). It does NOT require the
+perturbation `C̃−C` to be small (`C̃ = κ²-scaled C` here): the GAIN is that the numerator `(I−P)C̃v₀`
+is the OFF-DIAGONAL block, which for `C̃ = Gᵀ(HᵀH)G` only sees singular values `≤ τ₁`.
+
+**COMPILED** (`scratch_l7cJ_offdiag_sintheta.lean`, exit 0) as the abstract lemma — the load-bearing
+NEW core that REPLACES `sin_sq_le_rayleigh_deficit_div_gap`:
+
+```lean
+theorem offdiag_sin_le_residual_div_gap {E} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    {C : E →ₗ[ℝ] E} {μ₀ ν : ℝ} {v₀ vt : E} (hv₀ : ‖v₀‖ = 1) (hvtnorm : ‖vt‖ = 1)
+    (hev : C vt = μ₀ • vt) (hgap : ν < μ₀)
+    (hν : ∀ w : E, ⟪w, v₀⟫_ℝ = 0 → ⟪C w, w⟫_ℝ ≤ ν * ‖w‖ ^ 2) :
+    ‖vt - (⟪vt, v₀⟫_ℝ) • v₀‖ ≤ ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ / (μ₀ - ν)
+```
+
+Note: no `IsSymmetric` needed (the proof is pure Pythagoras-free Rayleigh + Cauchy–Schwarz + `|p|≤1`).
+NUMERICALLY: the refined bound tracks the true sin almost exactly (max `sint/refined = 1.0000`, valid),
+decays geometrically; `Σ refined` finite (tail ratio **0.646** ⟹ summable). **Both the blocker AND the
+fix are confirmed in the same orbit experiment.**
+
+### J.2 The off-diagonal NUMERATOR estimate (VERIFIED, COMPILED modulo SVD ceiling)
+
+`‖(I−P) Cₙ₊₁ v₀‖ ≤ τ₀·τ₁·‖compound k B‖²`, `τ₀ = ∏_{i<k}σᵢ = ‖compound k M‖ = √μ₀`, `τ₁ = (∏_{i<k-1}σᵢ)σₖ
+= √μ₁`. NUMERICALLY VERIFIED, worst ratio **0.50** (20k trials, d ≤ 6, all k — bound holds with slack).
+Via `Cₙ₊₁ = adjoint(G')∘ₗG'`, `G' = H∘ₗG` (functoriality `toEuclideanLin_compoundMatrix_mul`), the
+chain reduces to: for `z ⊥ v₀` unit, `⟨Cₙ₊₁v₀,z⟩ = ⟨HGv₀,HGz⟩ ≤ ‖H‖²·‖Gv₀‖·‖Gz‖ ≤ ‖H‖²·τ₀·τ₁`, using
+`‖Gv₀‖ = τ₀` (top right-sing) and `‖Gz‖ ≤ τ₁` (SECOND singular value on `v₀^⊥`). **COMPILED**
+(`scratch_l7cJ_offdiag_estimate.lean`, exit 0): `offdiag_estimate_modulo_svd` proves the WHOLE chain
+from the operator-norm facts (`le_opNorm`, `adjoint_inner_left`, CS) MODULO the single SVD hypothesis
+`hperp : ∀z⊥v₀, ‖z‖≤1 → ‖Gz‖ ≤ τ₁`. **SURPRISE D (corrects §H.1):** the §G/§H "needs only PER-VECTOR
+op-norm facts; no σⱼ" is RIGHT, AND `hperp` is dischargeable WITHOUT new SVD min-max — it is exactly the
+committed `plucker_eigenpair_ceiling` (PB2): `‖Gz‖² = ⟨Cₙz,z⟩ ≤ μ₁‖z‖² = τ₁²‖z‖²` for `z ⊥ v₀`.
+
+### J.3 The denominator `μ̃₀ − ν > 0` — CORRECTED (SURPRISE E)
+
+**The orchestrator's proposed `ν = λmax of (I−P)C̃(I−P)` and lower bound `μ̃₀−ν ≥ τ₀²(1−r²)/‖H⁻¹‖²` are
+NUMERICALLY FALSE in general.** Cauchy-interlacing forces `ν ∈ [μ̃₁, μ̃₀]`, so `μ̃₀−ν ≤ gap(Cₙ₊₁)` (NOT
+`≥`); the realized denominator can be **~100× smaller** than the orchestrator's lower bound
+(`min denom/denomlb = 0.008`, 8k trials). It stays positive (`min ≈ 8.9e-7 > 0`) but small — compensated
+by a correspondingly small off-diagonal numerator, keeping the RATIO controlled.
+
+**The CLEAN PROVABLE route (this pass's fix):** take `ν := μ₁(Cₙ)·‖H‖²` (NOT the compression top — which
+Lean cannot easily access). Then:
+- `hν` holds: `∀z⊥v₀, ⟨Cₙ₊₁z,z⟩ = ‖HGz‖² ≤ ‖H‖²‖Gz‖² = ‖H‖²⟨Cₙz,z⟩ ≤ ‖H‖²μ₁‖z‖² = ν‖z‖²` —
+  via per-vector op-norm + committed PB2. **VERIFIED: 0 violations / 15k trials.**
+- `μ̃₀ − ν > 0` ⟺ `μ₁‖H‖² < μ̃₀`, and `μ̃₀ ≥ μ₀/‖H⁻¹‖²`, so suffices `μ₁/μ₀ = r² < 1/κ²` ⟺ `r < 1/κ`
+  — the EVENTUAL regime (since `r → 0`, `κ` tempered). **VERIFIED: 0 violations in r < 1/κ regime.**
+
+This is CLEANER than the orchestrator's route and bypasses the compression-eigenvalue access problem.
+
+### J.4 The summable per-step bound + root test (VERIFIED, COMPILED)
+
+Composing J.1∘J.2∘J.3 with `ν = μ₁‖H‖²`, `denom ≥ μ₀/‖H⁻¹‖² − μ₁‖H‖² = (τ₀²/‖H⁻¹‖²)(1 − κ²r²)`:
+
+```
+sin θ ≤ τ₀τ₁‖H‖² / ((τ₀²/‖H⁻¹‖²)(1−κ²r²)) = κ²·r/(1 − κ²r²),   κ = ‖⋀ᵏB‖·‖(⋀ᵏB)⁻¹‖, r = σₖ/σₖ₋₁.
+```
+
+**EXPONENT a = 2, CONSTANT C = 1** (eventually). NUMERICALLY: `sin θ ≤ κ²r/(1−κ²r²)` holds with max ratio
+**0.189** in the eventual regime `r < 1/κ` (0 violations, 20k trials). The per-step band-projector bound:
+`‖Pₙ₊₁ − Pₙ‖ ≤ √(2k)·sin θ_wedge ≤ √(2k)·κ²·r/(1−κ²r²)` (back-transport committed
+`norm_proj_sub_le_wedge` + `inner_hodgeTrivialization_ιMulti`). SUMMABLE by the ROOT TEST: `(1/n)log(RHS)
+→ λₖ − λₖ₋₁ < 0` (committed `tendsto_log_singularValue` two indices; `κ²` tempered via
+`tendsto_logNorm_orbit_div_atTop_zero` + inv, log/n → 0). **COMPILED** (`scratch_l7cJ_summable.lean`, J3):
+`summable_of_logLimit_neg` (root-test engine: `(1/n)log aₙ → L < 0` + `aₙ ≥ 0` ⟹ `Summable aₙ`) and
+`summable_of_eventually_le_geometric` (geometric tail ⟹ summable). The contrast J4 (`crude_logLimit_zero`,
+limit `= 0`) is precisely the input the root test REJECTS.
+
+### J.5 EXACT corrected node signatures (replaces §I.2)
+
+```lean
+-- L7c.3a (NEW CORE, COMPILED) — refined off-diagonal sin-Θ (abstract, real IPS). REPLACES the deficit lemma.
+theorem offdiag_sin_le_residual_div_gap … (as in J.1) …
+
+-- L7c.3b (REPLACES committed `rayleigh_deficit_le`) — the off-diagonal numerator + ν ceiling, cocycle.
+--   numerator: ‖(I−Pₙ) Cₙ₊₁ v₀‖ ≤ ‖compound k M‖·(∏_{i<k-1}σᵢ·σₖ)·‖compound k B‖²
+--   ceiling  : ν := (∏_{i<k-1}σᵢ²·σₖ²)·‖compound k B‖²  (from committed PB2 `plucker_eigenpair_ceiling`)
+--   gap      : μ̃₀ − ν > 0  for σₖ/σₖ₋₁ < 1/κ(⋀ᵏB)   (EVENTUAL)
+-- proof: offdiag_estimate_modulo_svd (COMPILED) + plucker_eigenpair_ceiling (committed) + per-vector op-norm.
+
+-- L7c.3c (UNCHANGED shape) — increment bound, now via offdiag_sin_le_residual_div_gap ∘ L7c.3b ∘ back-transport
+theorem norm_bandProjector_succ_sub_le … :
+    ‖bandProjector A T χ (n+1) x - bandProjector A T χ n x‖
+      ≤ Real.sqrt (2 * kⱼ) * (κ(⋀^kⱼ B))² * (σ kⱼ Mₙ / σ (kⱼ-1) Mₙ) / (1 - (κ²·r²))
+-- honest RHS carries 1/(1−κ²r²); EVENTUALLY (r < 1/(√2·κ)) this is ≤ 2, giving clean √(2kⱼ)·2·κ²·r.
+
+-- L7c.4 (COMPILED engine) — summability via root test
+theorem summable_of_logLimit_neg (a : ℕ → ℝ) (hnn : ∀ n, 0 ≤ a n) (hpos : ∀ᶠ n in atTop, 0 < a n)
+    {L : ℝ} (hL : L < 0) (hlog : Tendsto (fun n => (n:ℝ)⁻¹ * Real.log (a n)) atTop (𝓝 L)) : Summable a
+```
+
+### J.6 Compiled-vs-argued ledger + the revised ladder (which committed lemmas SURVIVE / are BYPASSED)
+
+| Probe | Genuinely new step it pins | Status |
+|---|---|---|
+| `scratch_l7cJ_offdiag_sintheta.lean` | **L7c.3a refined off-diagonal sin-Θ** (the new load-bearing core, abstract real IPS, no symmetry, no CFC) | **COMPILED exit 0** |
+| `scratch_l7cJ_offdiag_estimate.lean` | off-diagonal numerator chain `⟨Cₙ₊₁v₀,z⟩ ≤ τ₀τ₁‖H‖²` modulo PB2 ceiling `hperp`; residual ⊥ v₀; Gram-Rayleigh = ‖·‖² | **COMPILED exit 0** |
+| `scratch_l7cJ_summable.lean` | root-test engine `summable_of_logLimit_neg` + geometric-tail `summable_of_eventually_le_geometric` | **COMPILED exit 0** |
+| `scratch_l7cJ_crude_fails.lean` | **the B1 obstruction**: crude root-test log-limit `= 0` (not `< 0`); crude bound not null | **COMPILED exit 0** |
+
+ARGUED + verified NUMERICALLY only (Python, not Lean): the crude orbit-divergence (tail ratio 1.0) vs
+refined convergence (0.646); off-diag numerator ratio ≤ 0.50; `ν = μ₁‖H‖²` ceiling (0 viol/15k) + gap
+positivity in `r<1/κ` (0 viol/15k); final `sin ≤ κ²r/(1−κ²r²)` (max 0.189, 0 viol/20k, exponent a=2).
+
+**COMMITTED pieces that SURVIVE and compose into the corrected route:**
+`plucker_eigenpair_ceiling` (PB2 — now supplies the `ν` ceiling directly), `eigenpair_ceiling_transport`,
+`norm_proj_sub_le_wedge` (FULLY PROVED back-transport, unchanged), `inner_hodgeTrivialization_ιMulti`
+(det-Gram = wedge inner = `⟨ṽ,v₀⟩`), `compoundMatrix_gram`, `toEuclideanLin_compoundMatrix_mul`
+(functoriality `G' = H∘G`), `rayleigh_compound_eq_norm_sq`, `rayleigh_compound_mul_le`,
+`tendsto_log_singularValue`, `tendsto_logNorm_orbit_div_atTop_zero` (+inv), `eigenvalues_qpow_tendsto`,
+`cauchySeq_cfc_of_summable`.
+
+**COMMITTED pieces now BYPASSED (the deficit route):**
+`sin_sq_le_rayleigh_deficit_div_gap` (OseledetsLimit.lean:851 — the deficit lemma, REPLACED by
+`offdiag_sin_le_residual_div_gap`) and `rayleigh_deficit_le` (ExteriorNorm.lean:1495 — the crude κ-bound
+`ε ≤ (1−1/κ²)μ₀`, which only ever produces the non-summable estimate; REPLACED by the off-diagonal
+numerator estimate). Their helper `rayleigh_deficit_kernel` is also orphaned. These remain SOUND theorems
+(no false statement) — they are simply the WRONG TOOL for summability.
+
+### J.7 Revised risk-tagged sub-ladder (supersedes §I.6 / §H.6 for the crux)
+
+| # | Lemma | Risk | Effort | Probe / route |
+|---|---|---|---|---|
+| L7c.3a | `offdiag_sin_le_residual_div_gap` (abstract refined off-diagonal sin-Θ) | **LOW (COMPILED)** | <0.5 | `scratch_l7cJ_offdiag_sintheta` |
+| L7c.3b.0 | compound-mult `⋀^k(B·M) = (⋀^kB)(⋀^kM)` | LOW | — | **COMMITTED** `compoundMatrix_mul` |
+| L7c.3b.ν | `ν = μ₁(Cₙ)‖⋀ᵏB‖²` ceiling for `Cₙ₊₁` on `v₀^⊥` (PB2 + per-vector op-norm) | **LOW–MED** | 0.5–1 | `offdiag_estimate_modulo_svd` (COMPILED) + committed PB2 |
+| L7c.3b | off-diagonal numerator `‖(I−P)Cₙ₊₁v₀‖ ≤ τ₀τ₁‖⋀ᵏB‖²` | **MED** | 1–1.5 | `offdiag_estimate_modulo_svd` (COMPILED) + PB2 `hperp` |
+| L7c.3b.gap | `μ̃₀ − ν > 0` eventual (`σₖ/σₖ₋₁ < 1/κ`) | MED | 0.5 | committed singular-value sandwich; eventual via `tendsto_log_singularValue` |
+| L7c.3c | assemble `norm_bandProjector_succ_sub_le` (3a∘3b∘back-transport) | MED | 1–1.5 | committed `norm_proj_sub_le_wedge` + `inner_hodgeTrivialization_ιMulti` |
+| L7c.4 | `summable_…` a.e. (root test) | **LOW (COMPILED)** | 0.5 | `scratch_l7cJ_summable` + `tendsto_log_singularValue` + tempered factor |
+| L7c.5/L7d | (committed packaging + assembly) | LOW–MED | 1.5–2 | committed `cauchySeq_cfc_of_summable`, `eigenvalues_qpow_tendsto` |
+
+**Critical path: L7c.3b.ν → L7c.3b → L7c.3c → L7c.4 → L7d.** The single irreducible analytic core is now
+the COMPILED `offdiag_sin_le_residual_div_gap` (not an abstract block Davis–Kahan, not the bypassed
+deficit lemma). Honest revised net L7c.3→L7d: **~5–7 sessions**, dominated by L7c.3b (discharging
+`hperp`/`ν` via PB2 + the gap-positivity tail argument).
+
+### J.8 Residual gaps / honest flags
+
+1. **The clean bound is EVENTUAL, not uniform.** `μ̃₀ − ν > 0` (hence the displayed `sin ≤ κ²r/(1−κ²r²)`)
+   holds only for `r < 1/κ` — confirmed positive-measure-eventually since `r → 0` geometrically while
+   `κ` is tempered. Summability is a tail property, so this suffices; but `norm_bandProjector_succ_sub_le`
+   must be stated either with the honest RHS `κ²σₖ²/(σₖ₋₁²/‖H⁻¹‖²·‖H‖²·… )` (always true where `denom>0`)
+   or under the eventual hypothesis. This is the same EVENTUAL caveat as §I.3 SURPRISE C, now load-bearing
+   for the gap, not just the amplifier.
+2. **SURPRISE F:** the orchestrator's denominator identity `μ̃₀−ν ≈ κ²τ₀²(1−r²)` and its lower bound are
+   FALSE in general (J.3). The fix re-defines `ν = μ₁‖H‖²` (a PROVABLE ceiling, not the realized
+   compression top); the realized denominator is smaller, but the off-diagonal numerator shrinks in lock-step.
+   The final bound is robust; the intermediate `≈ gap` intuition is not.
+3. **`hperp`/`ν` via PB2 is the one MED node left to wire.** `offdiag_estimate_modulo_svd` is COMPILED
+   modulo `hperp`; discharging `hperp` = `‖Gz‖² = ⟨Cₙz,z⟩ ≤ μ₁‖z‖²` needs identifying `v₀` (top eigvec of
+   `Cₙ`) with the committed `plucker_eigenpair_ceiling`'s `i₀` and `‖toEuclideanLin(compound M) z‖² =
+   ⟨adjoint∘self z, z⟩` (committed `rayleigh_compound_eq_norm_sq`). No new analytic content; bookkeeping only.
+4. **No abstract block Davis–Kahan, no principal angles, no σⱼ min-max** are needed — the exterior rank-1
+   reduction + the COMPILED off-diagonal lemma + committed PB2/back-transport close the route.
