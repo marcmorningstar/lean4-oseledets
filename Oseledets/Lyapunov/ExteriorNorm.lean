@@ -839,6 +839,68 @@ theorem conjExteriorMap_eq_toEuclideanLin_compound (k : ℕ) (M : Matrix (Fin d)
   simp only [Function.comp_apply, OrthonormalBasis.coe_toBasis]
   exact inner_basisFun_toEuclideanLin M _ _
 
+/-- `toEuclideanLin` of a matrix product is the composition of the linear maps. -/
+private lemma toEuclideanLin_mul (B M : Matrix (Fin d) (Fin d) ℝ) :
+    Matrix.toEuclideanLin (B * M)
+      = (Matrix.toEuclideanLin B) ∘ₗ (Matrix.toEuclideanLin M) := by
+  ext v i
+  simp only [Matrix.toEuclideanLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
+
+open scoped Classical in
+/-- **L7c.3b.0 — matrix-level Cauchy–Binet.** The `k`-th compound of a matrix product is the
+product of the compounds: `C_k(B * M) = C_k(B) * C_k(M)`. This is the multiplicativity of the
+compound matrix, proved via the functoriality `⋀^k(B ∘ M) = ⋀^k B ∘ ⋀^k M`
+(`exteriorPower.map_comp`) transported through the standard orthonormal-wedge trivialization by
+the compound bridge `conjExteriorMap_eq_toEuclideanLin_compound`. -/
+theorem compoundMatrix_mul (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ) :
+    compoundMatrix k (B * M) = compoundMatrix k B * compoundMatrix k M := by
+  -- Work through the injective `toEuclideanLin` linear equiv.
+  apply (Matrix.toEuclideanLin (n := Fin _) (m := Fin _)).injective
+  rw [toEuclideanLin_mul, ← conjExteriorMap_eq_toEuclideanLin_compound,
+    ← conjExteriorMap_eq_toEuclideanLin_compound, ← conjExteriorMap_eq_toEuclideanLin_compound]
+  -- `toEuclideanLin (B * M) = toEuclideanLin B ∘ₗ toEuclideanLin M`, then telescope the trivializations.
+  rw [toEuclideanLin_mul]
+  unfold conjExteriorMap
+  rw [exteriorPower.map_comp]
+  ext x
+  simp [LinearMap.comp_apply]
+
+open scoped Classical in
+/-- **L7c.3b.0 (linear-map form).** `toEuclideanLin` of the `k`-th compound of a product is the
+composition of the compounds. The form consumed by the rank-1 exterior Rayleigh-deficit chain
+(L7c.3b), where the right-hand factor is post-composed with the inverse compound. -/
+theorem toEuclideanLin_compoundMatrix_mul (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ) :
+    Matrix.toEuclideanLin (compoundMatrix k (B * M))
+      = Matrix.toEuclideanLin (compoundMatrix k B) ∘ₗ Matrix.toEuclideanLin (compoundMatrix k M) := by
+  rw [compoundMatrix_mul, toEuclideanLin_mul]
+
+/-! ### Top singular value vs. the sum of squared singular values (Frobenius)
+
+The Frobenius back-transport (L7c.3c) needs `‖M‖_op ≤ ‖M‖_F`. Stated through the committed
+singular-value bridge (`toEuclideanLin`) to avoid the L2-operator vs. Frobenius
+`NormedAddCommGroup`-instance diamond on `Matrix`. The core inequality is that the top squared
+singular value is at most the sum of all squared singular values; the sum equals
+`tr(MᵀM) = ‖M‖_F²`. -/
+
+/-- **L7c.3c.0 core.** The top squared singular value of `toEuclideanLin M` is at most the sum of
+all squared singular values. The sum over `Fin d` equals `tr(MᵀM) = ‖M‖_F²` (the Hilbert–Schmidt
+norm squared); combined with `‖M‖_op = σ₀` this yields `‖M‖_op ≤ ‖M‖_F`. -/
+theorem singularValues_zero_sq_le_sum (M : Matrix (Fin d) (Fin d) ℝ) :
+    (Matrix.toEuclideanLin M).singularValues 0 ^ 2
+      ≤ ∑ i : Fin d, (Matrix.toEuclideanLin M).singularValues i ^ 2 := by
+  rcases Nat.eq_zero_or_pos d with hd | hd
+  · -- `d = 0`: the top singular value vanishes (`finrank = 0 ≤ 0`) and the sum is empty.
+    subst hd
+    have hfr : Module.finrank ℝ (EuclideanSpace ℝ (Fin 0)) ≤ 0 := by
+      rw [finrank_euclideanSpace, Fintype.card_fin]
+    rw [(Matrix.toEuclideanLin M).singularValues_of_finrank_le hfr]
+    simp
+  · -- `d > 0`: the `i = 0` term is one nonneg summand of the sum.
+    have hmem := Finset.single_le_sum
+      (f := fun i : Fin d => (Matrix.toEuclideanLin M).singularValues i ^ 2)
+      (fun i _ => sq_nonneg _) (Finset.mem_univ (⟨0, hd⟩ : Fin d))
+    simpa using hmem
+
 set_option maxHeartbeats 800000 in
 /-- **The product of singular values is the L2 operator norm of the compound matrix.** Combining
 the singular-value bridge with the compound identity: `∏_{i<k} σᵢ(toEuclideanLin M) = ‖C_k(M)‖`. -/

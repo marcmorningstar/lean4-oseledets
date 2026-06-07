@@ -11,6 +11,7 @@ import Mathlib.LinearAlgebra.Matrix.PosDef
 import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Analysis.Matrix.HermitianFunctionalCalculus
+import Mathlib.LinearAlgebra.Matrix.Rank
 import Mathlib.Topology.UniformSpace.Cauchy
 
 /-!
@@ -723,6 +724,80 @@ theorem bandProjector_mul_self (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X →
     (hidem : (spectrum ℝ (qpow A T n x)).EqOn (fun t => χ t * χ t) χ) :
     bandProjector A T χ n x * bandProjector A T χ n x = bandProjector A T χ n x := by
   rw [bandProjector, ← cfc_mul χ χ _, cfc_congr hidem]
+
+/-! ## L7c.1: the band projector is the top-block eigenprojector
+
+For a cutoff `χ` equal on the (finite) spectrum of `qpow A T n x` to the `0/1` indicator of
+`(c, ∞)`, the band projector `bandProjector A T χ n x = cfc χ (qpow…)` is a genuine orthogonal
+projector (self-adjoint idempotent) whose **rank** equals the number of eigenvalues of `qpow`
+strictly above `c` — i.e. the dimension of the top eigenvalue-block. The explicit Hermitian-CFC
+triple-product formula `cfc χ A = U · diag(χ ∘ eigenvalues) · Uᴴ` (compiled in the probe
+`scratch_l7c3bc_eigproj.lean`) makes the projector concrete; the rank is the count of nonzero
+diagonal entries, and a `{0,1}`-valued `χ` selects exactly the eigenvalues above the cut. -/
+
+/-- **L7c.1.** When `χ` equals the `0/1` indicator of `(c, ∞)` on the spectrum of `qpow`, the band
+projector is idempotent (a genuine orthogonal projector). Specialization of `bandProjector_mul_self`
+to the indicator cutoff, whose continuity hypothesis is discharged because the spectrum is finite
+and the indicator is `0/1`-valued (hence `χ² = χ` on it). -/
+theorem bandProjector_indicator_mul_self (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) {c : ℝ}
+    (n : ℕ) (x : X) :
+    bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
+        * bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
+      = bandProjector A T (Set.indicator (Set.Ioi c) 1) n x := by
+  -- On the spectrum, the `0/1`-valued indicator satisfies `χ² = χ`.
+  have hidem : (spectrum ℝ (qpow A T n x)).EqOn
+      (fun t => Set.indicator (Set.Ioi c) (1 : ℝ → ℝ) t * Set.indicator (Set.Ioi c) (1 : ℝ → ℝ) t)
+      (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) := by
+    intro t _
+    by_cases ht : t ∈ Set.Ioi c
+    · simp [Set.indicator_of_mem ht]
+    · simp [Set.indicator_of_notMem ht]
+  -- `ContinuousOn` of any function on the (finite) spectrum holds.
+  have hcont : ContinuousOn (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ))
+      (spectrum ℝ (qpow A T n x)) :=
+    (Matrix.finite_real_spectrum (A := qpow A T n x)).continuousOn _
+  rw [bandProjector, ← cfc_mul _ _ _ hcont hcont, cfc_congr hidem]
+
+/-- The explicit Hermitian-CFC triple product: for a Hermitian matrix `M`, `cfc χ M` equals the
+unitary conjugate of the diagonal matrix of `χ` applied to the eigenvalues,
+`U · diag(RCLike.ofReal ∘ χ ∘ eigenvalues) · Uᴴ`. Matrix analogue lifting the probe step
+`hA.cfc χ = U · diag(ofReal ∘ χ ∘ eig) · star U`. -/
+theorem cfc_eq_eigenvectorUnitary_conj {m : Type*} [Fintype m] [DecidableEq m] {𝕜 : Type*}
+    [RCLike 𝕜] {M : Matrix m m 𝕜} (hM : M.IsHermitian) (χ : ℝ → ℝ) :
+    cfc χ M
+      = (hM.eigenvectorUnitary : Matrix m m 𝕜)
+          * Matrix.diagonal (RCLike.ofReal ∘ χ ∘ hM.eigenvalues)
+          * star (hM.eigenvectorUnitary : Matrix m m 𝕜) := by
+  rw [hM.cfc_eq χ, Matrix.IsHermitian.cfc, Unitary.conjStarAlgAut_apply]
+
+/-- **L7c.1 — rank of the band projector.** The rank of `bandProjector A T χ n x = cfc χ (qpow…)`
+is the number of eigenvalues `i` of `qpow A T n x` with `χ (eigenvalues i) ≠ 0`. Computed from the
+explicit Hermitian-CFC triple product `U · diag(χ ∘ eig) · Uᴴ`: conjugation by the (invertible)
+eigenvector unitary preserves rank, and the rank of the diagonal is the count of nonzero entries. -/
+theorem bandProjector_rank (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (χ : ℝ → ℝ)
+    (n : ℕ) (x : X) :
+    (bandProjector A T χ n x).rank
+      = Fintype.card {i : Fin d //
+          χ ((qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues i) ≠ 0} := by
+  classical
+  set hM := (qpow_isSelfAdjoint A T n x).isHermitian with hMdef
+  set U : Matrix (Fin d) (Fin d) ℝ := (hM.eigenvectorUnitary : Matrix (Fin d) (Fin d) ℝ) with hU
+  -- The eigenvector unitary has unit determinant (both `U` and `star U`).
+  have hUstar : U * star U = 1 := Unitary.coe_mul_star_self hM.eigenvectorUnitary
+  have hdetU : IsUnit U.det :=
+    IsUnit.of_mul_eq_one (a := U.det) (star U).det
+      (by rw [← Matrix.det_mul, hUstar, Matrix.det_one])
+  have hdetUs : IsUnit (star U).det :=
+    IsUnit.of_mul_eq_one (a := (star U).det) U.det
+      (by rw [← Matrix.det_mul, Unitary.coe_star_mul_self hM.eigenvectorUnitary, Matrix.det_one])
+  -- The band projector is the unitary conjugate of the diagonal of `χ ∘ eigenvalues`.
+  rw [bandProjector, cfc_eq_eigenvectorUnitary_conj hM χ, ← hU]
+  -- Strip the unitary factors (rank is invariant under multiplication by invertible matrices).
+  rw [Matrix.rank_mul_eq_left_of_isUnit_det _ _ hdetUs,
+    Matrix.rank_mul_eq_right_of_isUnit_det _ _ hdetU, Matrix.rank_diagonal]
+  -- The nonzero diagonal entries are exactly the indices with `χ (eigenvalues i) ≠ 0`.
+  refine Fintype.card_congr (Equiv.subtypeEquivRight (fun i => ?_))
+  simp only [Function.comp_apply, RCLike.ofReal_real_eq_id, id_eq, ne_eq]
 
 /-! ## L7c.5: Cauchy packaging — summable increments give a convergent (band-projector) sequence
 

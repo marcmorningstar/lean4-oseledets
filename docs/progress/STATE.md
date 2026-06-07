@@ -176,6 +176,18 @@ Subbundle → Limit`):
     `Ergodic/Birkhoff.lean`'s `ae_tendsto_orbit_div_atTop_zero` (Birkhoff orbital tail `n⁻¹·g(Tⁿx)→0`
     for integrable `g`) and instantiated at the integrable signed log-norms (`integrable_logNorm_cocycle`
     at `n=1`, `cocycle A T 1 = A`). Axiom-clean. Feeds L7c.4 summability.
+  - **L7c.1 + L7c.3b.0 + L7c.3c.0 (foundational geometry nodes) DONE, `sorry`-free** (route §H, 8
+    probes compiled). In `ExteriorNorm.lean`: `compoundMatrix_mul` (matrix-level Cauchy–Binet
+    `Cₖ(B·M) = Cₖ(B)·Cₖ(M)`) + `toEuclideanLin_compoundMatrix_mul` (the linear-map form the rank-1
+    deficit chain consumes), via committed `conjExteriorMap_eq_toEuclideanLin_compound` +
+    `exteriorPower.map_comp`; and `singularValues_zero_sq_le_sum` (`σ₀² ≤ Σσᵢ²`, the operator≤Frobenius
+    core, stated through `toEuclideanLin` to dodge the L2/Frobenius instance diamond). In
+    `OseledetsLimit.lean` (L7c.1): `bandProjector_indicator_mul_self` (the 0/1-indicator band projector
+    is idempotent — a genuine orthogonal projector; continuity discharged via finite spectrum),
+    `cfc_eq_eigenvectorUnitary_conj` (explicit `cfc χ M = U·diag(χ∘eig)·Uᴴ`), and `bandProjector_rank`
+    (rank = #{eigenvalues with χ≠0} = dim of the top block). Axiom-clean. Remaining: L7c.3b (rank-1
+    deficit), L7c.3c.1 (Frobenius 2k back-transport), L7c.3c (assemble `norm_bandProjector_succ_sub_le`),
+    L7c.4 (hsum), L7d (assemble `L7_statement`).
   - **`OseledetsLimit.lean` REMAINING (L7c.3+, task #22, the crux):** (§3.3, highest risk, NEW infra
     M-2′, no Mathlib Davis–Kahan) the gapped self-adjoint **projection-Cauchy** estimate (per-distinct-λ,
     NOT per-index) ⟹ `oseledetsLimit Λ` exists (L7d, closure compiled); then (§3.4) bridge
