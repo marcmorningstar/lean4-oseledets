@@ -225,3 +225,160 @@ Net estimate for L7c→L7d: ~8–14 sessions, dominated by L7c.3.
   degeneracy. The number of gaps is `specCard − 1`. Safe.
 - **No counterexample to any committed statement.** The committed scalar/eigenvalue layer and
   `L7_statement` remain sound; the corrections are about the M-2/complexification route only.
+
+## G. Crux L7c.3 — verified proof route (de-risking pass 2, 2026-06-07)
+
+> Adversarial re-audit of §A/§B/§E, hunting the CHEAPEST correct route for the increment bound.
+> Worked the inequality out on paper, verified its truth + direction + constant numerically (Python,
+> thousands of random ill-conditioned cases), and COMPILED the load-bearing Lean facts in four new
+> probes `scratch_l7c3_{index,rayleigh,assembly,sintheta}.lean` (all `lake env lean`, exit 0; read
+> exit codes explicitly — the `lake env` wrapper masked a real error on one earlier run, exactly the
+> §F hazard). Conclusions below SUPERSEDE the cost estimate in §E for node L7c.3.
+
+### G.0 Index convention — CHECKED (and it bites)
+
+Committed `cocycle A T (n+1) x = cocycle A T n (T x) * A x` (newest factor LEFT). The left-mult
+recurrence the perturbation step needs, `Mₙ₊₁ = A(Tⁿx)·Mₙ`, is NOT definitional — it is
+`cocycle_add A T 1 n` after `Nat.add_comm` + `cocycle_one`. COMPILED (`scratch_l7c3_index.lean`,
+first `example`). So `B := A(T^[n] x)` is the one-step left factor; `κ(B) = ‖A(Tⁿx)‖·‖A(Tⁿx)⁻¹‖`.
+
+### G.1 The increment bound is TRUE — with constant `C = 1`, ratio `σₖ/σₖ₋₁`, on `sin∠` (NOT `tan`)
+
+Let `Pₙ⁽ᵏ⁾` be the orthogonal projector onto the top-`k` RIGHT-singular subspace of `Mₙ`
+(= top-`k` eigenspace of `Qₙ = MₙᵀMₙ`; INDEPENDENT of the power `1/(2n)` — the band projector
+`Πₙ⁽ʲ⁾ = cfc χⱼ Hₙ` equals exactly this `Pₙ⁽ᵏⱼ⁾`, the power only relabels eigenvalues). The cut index
+`k = kⱼ` must sit at a genuine exponent gap `λ_{k-1} > λ_k`. Then, verified numerically over `d=5`,
+all `k`, ill-conditioned `B` (50k+ trials, max ratio **0.52**):
+
+```
+‖Pₙ₊₁⁽ᵏ⁾ − Pₙ⁽ᵏ⁾‖  ≤  κ(A(Tⁿx)) · σₖ(Mₙ) / σₖ₋₁(Mₙ)        [C = 1]
+```
+
+This CONFIRMS §B.2 (the route doc's `Cⱼ·‖A‖‖A⁻¹‖·σⱼ₊₁/σⱼ`) with the explicit constant `1` and pins
+the 0-indexed ratio as `σₖ/σₖ₋₁` (bottom-of-bottom-block over bottom-of-top-block at the cut).
+
+SURPRISES / pitfalls found, each a real correctness constraint:
+- **It is genuinely a `sin∠` bound, not `tan∠`.** The `tan` version blows up (max ratio 518 in the
+  same experiment). So `‖Pₙ₊₁−Pₙ‖ = sin∠(Eₙ,Eₙ₊₁)` is the right LHS; any proof that produces a
+  `tan`-shaped estimate is WRONG.
+- **Naive triangle/quadratic-form juggling gives only the WEAK (≈1) bound, not `σₖ/σₖ₋₁`.** Worked it
+  out: `‖Mₙu‖² = ‖Mₙ Pₙu‖² + ‖Mₙ(I−Pₙ)u‖²` (orthogonal eigenspaces of `Qₙ`) plus the lower bound
+  `‖Mₙu‖ ≥ σₖ₋₁(Mₙ)/κ(B)` yields only `‖w‖² ≤ (σ₀²−(σₖ₋₁/κ)²)/(σ₀²−σₖ²)` — the `σ₀` ruins it. The
+  sharp `σₖ/σₖ₋₁` constant is a genuine sin-Θ statement; there is no elementary triangle-inequality
+  shortcut on the plain matrices. **The route doc's HIGH risk on L7c.3 stands.**
+- **Cutting INSIDE a multiplicity block is FALSE.** With `σ₁ = σ₂` (cut at a non-gap), `‖Pₙ₊₁−Pₙ‖`
+  reaches **1.0** (projector NOT Cauchy) and the RHS does not decay (`σₖ/σₖ₋₁ → 1`). Re-confirms
+  "per DISTINCT exponent, never per index" as a hard correctness requirement, not style.
+
+### G.2 The CHEAPEST correct route: exterior rank-1 Rayleigh-gap sin-Θ (NOT block Davis–Kahan)
+
+VERDICT: **a full abstract Davis–Kahan / block sin-Θ theorem is NOT needed.** The exterior-power
+machinery already committed (`compoundMatrix`, `prod_singularValues_eq_l2_opNorm_compound`,
+`exteriorPower.map_comp` functoriality) collapses the block problem to a **rank-1 dominant-eigenvector
+sin-Θ**, which has a fully ELEMENTARY (Parseval-only) proof. The reduction (numerically verified):
+
+1. Top-`k` right-singular subspace of `Mₙ` ↔ (Plücker) the dominant eigenLINE of
+   `Cₙ := (⋀^k Mₙ)ᵀ(⋀^k Mₙ) = ⋀^k Qₙ` on `⋀^k ℝᵈ ≅ ℝ^(d chok)`. Functoriality gives
+   `⋀^k Mₙ₊₁ = (⋀^k B)(⋀^k Mₙ)`.
+2. At a genuine gap `λ_{k-1} > λ_k`, the top two singular values of `⋀^k Mₙ` are
+   `σ₀···σ_{k-1}` and `σ₀···σ_{k-2}σ_k`, ratio EXACTLY `σ_k/σ_{k-1}` (verified) — so the dominant
+   eigenline of `Cₙ` is SIMPLE and gapped. A simple gapped top eigenline is the easiest sin-Θ case.
+3. **Elementary rank-1 Rayleigh-gap lemma (the irreducible core, fully provable):** for self-adjoint
+   `C` with top eigenvalue `μ₀`, second `≤ μ₁ < μ₀`, top unit eigenvector `v₀`, and ANY unit `v'`
+   with `⟨C v', v'⟩ ≥ μ₀ − ε`, one has `sin²∠(v', v₀) ≤ ε/(μ₀ − μ₁)`. Proof = Pythagoras
+   (`Submodule.norm_sq_eq_add_norm_sq_projection`, COMPILED) + the purely algebraic kernel
+   `μ₀−ε ≤ μ₀c+b, b ≤ μ₁s, c+s=1 ⟹ s ≤ ε/(μ₀−μ₁)` (`nlinarith` after `c := 1−s`, COMPILED in
+   `scratch_l7c3_sintheta.lean`). NO abstract Davis–Kahan, NO Riesz contour, NO operator-CFC
+   continuity.
+4. The Rayleigh deficit `ε = μ₀(Cₙ) − ⟨Cₙ v', v'⟩` for `v' =` dominant eigenvector of `Cₙ₊₁`
+   is bounded by `(κ(⋀^k B)·σ_k/σ_{k-1})²` (verified, max ratio 0.18), via
+   `⟨Cₙ v',v'⟩ = ‖⋀^k Mₙ v'‖² = ‖(⋀^kB)⁻¹ ⋀^k Mₙ₊₁ v'‖² ≥ ‖⋀^k Mₙ₊₁ v'‖²/‖⋀^kB‖² ≥ μ₀(Cₙ₊₁)/‖⋀^kB‖²`
+   and `μ₀(Cₙ₊₁) ≥ μ₀(Cₙ)/‖(⋀^kB)⁻¹‖²`. Hence `sin∠ ≤ κ(⋀^kB)·σ_k/σ_{k-1}`.
+
+Trade-off, stated honestly: the exterior route uses `κ(⋀^k B) = ‖⋀^kB‖‖(⋀^kB)⁻¹‖` (LOOSER than the
+direct `κ(B)`), but `(1/n)log κ(⋀^kB)` is STILL tempered → 0 a.e. (it is `≤ k·log‖B‖ + k·log‖B⁻¹‖`
+up to the committed `sigma_le_opNorm`/`prod_singularValues` sandwich), so summability is unaffected.
+The WIN is that the irreducible analytic content shrinks from a block sin-Θ theorem (which Mathlib
+lacks entirely and which would have to be built from scratch) to ONE scalar `nlinarith` kernel +
+Pythagoras + the ALREADY-COMMITTED exterior bridge. This is strictly cheaper than building block
+Davis–Kahan and is the recommended route.
+
+Why NOT the direct (non-exterior) block route: it needs (i) the per-vector restricted-Rayleigh
+bounds `v∈Eₙ ⟹ ‖Mₙv‖≥σₖ₋₁‖v‖` and `v∈Eₙ^⊥ ⟹ ‖Mₙv‖≤σₖ‖v‖` for the BLOCK (provable from the
+eigenbasis but more bookkeeping), AND (ii) a genuine block sin-Θ assembly (multi-dimensional
+principal angles). The exterior route replaces (ii) by the rank-1 lemma. Both need the eigenbasis
+facts (COMPILED, `scratch_l7c3_rayleigh.lean`); only the exterior route avoids multi-dim sin-Θ.
+
+### G.3 EXACT Lean statements (Mathlib-style, plain real matrices / inner product spaces)
+
+```lean
+-- G.3a  THE irreducible core (abstract, real inner product space). Bare IsSymmetric, NO CFC instance.
+theorem sin_sq_le_rayleigh_deficit_div_gap
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    {C : E →ₗ[ℝ] E} (hC : C.IsSymmetric)
+    {μ₀ μ₁ : ℝ} {v₀ : E} (hv₀ : ‖v₀‖ = 1) (hev : C v₀ = μ₀ • v₀)   -- top eigenpair
+    (hgap : μ₁ < μ₀) (hμ₁ : ∀ w, ⟪w, v₀⟫_ℝ = 0 → ⟪C w, w⟫_ℝ ≤ μ₁ * ‖w‖^2)  -- second-eigval ceiling
+    {v' : E} (hv' : ‖v'‖ = 1) {ε : ℝ} (hRay : μ₀ - ε ≤ ⟪C v', v'⟫_ℝ) :
+    ‖v' - (⟪v', v₀⟫_ℝ) • v₀‖^2 ≤ ε / (μ₀ - μ₁)
+-- proof: Pythagoras ‖v'‖²=‖proj‖²+‖perp‖² (Submodule.norm_sq_eq_add_norm_sq_projection on span{v₀});
+--        ⟪C v',v'⟫ = μ₀·c + ⟪C perp,perp⟫ ≤ μ₀ c + μ₁ s; then the COMPILED nlinarith kernel.
+
+-- G.3b  the one-step exterior Rayleigh-deficit bound (cocycle-specific; uses committed exterior API)
+theorem rayleigh_deficit_le {d : ℕ} (M B : Matrix (Fin d) (Fin d) ℝ)
+    (hB : B.det ≠ 0) (k : ℕ) (hk : k ≤ d) (hgap : 0 < σ (k-1) M - σ k M /-genuine gap-/) :
+    -- μ₀(⋀^k M) − ⟨(⋀^k M)·v', v'⟩  ≤  (‖⋀^kB‖·‖(⋀^kB)⁻¹‖)² · (σₖ M / σₖ₋₁ M)² · μ₀(⋀^k M)
+    sorry  -- via ‖compoundMatrix k (B*M)‖, prod_singularValues_eq_l2_opNorm_compound, compound mult.
+
+-- G.3c  band-projector increment bound (= §B.2, now DERIVED from G.3a+G.3b)
+theorem norm_bandProjector_succ_sub_le {d : ℕ}
+    (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (j n : ℕ) (x : X) :
+    ‖bandProjector A T j (n+1) x - bandProjector A T j n x‖
+      ≤ ‖A (T^[n] x)‖^kⱼ * ‖(A (T^[n] x))⁻¹‖^kⱼ * (σ kⱼ (Mₙ) / σ (kⱼ-1) (Mₙ))   -- κ(⋀^kⱼ B)≤‖B‖^k‖B⁻¹‖^k
+
+-- G.3d  packaging: Cauchy from summable increments  (COMPILED, scratch_l7c3_index.lean)
+theorem cauchySeq_of_summable_succ_sub {E} [NormedAddCommGroup E] [CompleteSpace E]
+    (f : ℕ → E) (hsum : Summable (fun n => ‖f (n+1) - f n‖)) : CauchySeq f
+
+-- G.3e  geometric decay ⇒ summable  (COMPILED, scratch_l7c3_assembly.lean)
+theorem summable_of_le_exp_neg (a : ℕ → ℝ) (han : ∀ n, 0 ≤ a n) {c : ℝ} (hc : 0 < c)
+    (hbd : ∀ n, a n ≤ Real.exp (-c * n)) : Summable a
+```
+
+### G.4 The verified ladder (replaces the L7c.3 row of §E)
+
+| # | Lemma | Risk | Effort | Probe / Mathlib |
+|---|---|---|---|---|
+| L7c.0 | `bandProjector := cfc χⱼ Hₙ`; self-adj + idempotent on good set | LOW (probe-backed §A) | <0.5 | `cfc_predicate/_mul/_congr` |
+| L7c.1 | `bandProjector = Pₙ⁽ᵏⱼ⁾` (top-`kⱼ` eigenproj of `Qₙ`), power-independent | MED | 1 | `IsHermitian.cfc` formula; repo `orthProjMatrix` pattern |
+| L7c.2 | tempered factor `(1/n)log(‖A(Tⁿx)‖‖A⁻¹‖) → 0` a.e. | **LOW (already proved)** | <0.5 | repo `ae_tendsto_orbit_div_atTop_zero` (Birkhoff.lean:187, currently `private`) |
+| L7c.3a | rank-1 Rayleigh-gap sin-Θ core `sin_sq_le_rayleigh_deficit_div_gap` | **MED** (was HIGH) | 1–2 | **COMPILED kernel** `scratch_l7c3_sintheta.lean` (Pythagoras + nlinarith) |
+| L7c.3b | exterior Rayleigh-deficit `rayleigh_deficit_le` (compound API) | **HIGH** | 2–3 | committed `prod_singularValues_eq_l2_opNorm_compound`, `exteriorPower.map_comp`; needs single-index `σⱼ(⋀^kB·X) ≤ ‖⋀^kB‖σⱼ(X)` (BUILD) |
+| L7c.3c | assemble `norm_bandProjector_succ_sub_le` (G.3a∘G.3b + Plücker subspace↔eigenline) | **HIGH** | 1–2 | the subspace↔eigenline (Plücker) bridge is new infra |
+| L7c.4 | `hsum` a.e. (geometric decay ⇒ summable) | LOW–MED | 0.5–1 | **COMPILED** `scratch_l7c3_{assembly,index}.lean` + `tendsto_log_singularValue` |
+| L7c.5 | `cauchySeq_bandProjector` (Cauchy from summable incr.) | **LOW (COMPILED)** | <0.5 | `scratch_l7c3_index.lean` |
+| L7d  | `cauchySeq_qpow ⇒ L7_statement` (assemble blocks×eigenvalues) | MED | 1–1.5 | `scratch_l7c3_assembly.lean` (smul-limit, completeness) + committed `eigenvalues_qpow_tendsto` |
+
+Net L7c→L7d: **~7–11 sessions** (down from §E's 8–14), dominated now by L7c.3b+L7c.3c (the
+exterior-deficit estimate + the Plücker subspace↔eigenline bridge), NOT by an abstract Davis–Kahan
+theorem. The single-index exterior submultiplicativity `σⱼ(⋀^kB·X) ≤ ‖⋀^kB‖·σⱼ(X)` is a small new
+lemma (Mathlib has only the product form `prod_singularValues_comp_le`; min-max is absent).
+
+### G.5 What was COMPILED vs argued on paper (honest ledger)
+
+| Probe | Claim | Status |
+|---|---|---|
+| `scratch_l7c3_index.lean` | (i) `Mₙ₊₁ = A(Tⁿx)·Mₙ` from committed cocycle; (ii) Cauchy ⇐ summable increments | **COMPILED exit 0** |
+| `scratch_l7c3_rayleigh.lean` | eigenbasis `apply_eigenvectorBasis`, `eigenvalues_antitone`, `singularValues_antitone`, `sq_singularValues` — the restricted-Rayleigh ingredients | **COMPILED exit 0** |
+| `scratch_l7c3_assembly.lean` | geometric-decay ⇒ summable; `Tendsto.smul` block assembly; `cauchySeq_tendsto_of_complete` | **COMPILED exit 0** |
+| `scratch_l7c3_sintheta.lean` | Pythagoras `norm_sq_eq_add_norm_sq_projection`; **the algebraic kernel of the rank-1 sin-Θ bound** | **COMPILED exit 0** |
+
+ARGUED ON PAPER + verified NUMERICALLY only (Python, not Lean):
+- The increment bound `‖Pₙ₊₁−Pₙ‖ ≤ κ(B)σₖ/σₖ₋₁` with `C=1` (max ratio 0.52 over 50k+ trials).
+- The exterior reduction: top-2 singular-value ratio of `⋀^k M` equals `σₖ/σₖ₋₁` (exact).
+- The full chain `sin²∠ ≤ ε/g ≤ (κ(⋀^kB)·σₖ/σₖ₋₁)²` (max 0.18) and the rank-1 kernel `sin² ≤ ε/g`
+  (tight, ratio 1.0).
+- The `tan` form FAILS (518); cutting inside a multiplicity block FAILS (1.0). Both are correctness
+  guards, not yet Lean-encoded.
+
+These four numerically-verified inequalities are the L7c.3 work to formalize; the Lean *kernels* they
+rest on are the four compiled probes above. No committed statement is contradicted.
