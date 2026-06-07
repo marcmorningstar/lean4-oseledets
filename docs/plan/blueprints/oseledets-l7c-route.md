@@ -382,3 +382,233 @@ ARGUED ON PAPER + verified NUMERICALLY only (Python, not Lean):
 
 These four numerically-verified inequalities are the L7c.3 work to formalize; the Lean *kernels* they
 rest on are the four compiled probes above. No committed statement is contradicted.
+
+## H. L7c.3b/c + L7c.1 — verified geometry route (de-risking pass 3, 2026-06-07)
+
+> Adversarial scout of the three still-HIGH nodes (L7c.1, L7c.3b, L7c.3c), targeting the exact
+> Lean-provable statements, the Mathlib found-vs-missing ledger, and the CHEAPEST correct path for
+> the Plücker back-transport. FOUR new compiled probes (all `lake env lean`, repo root, exit codes
+> read explicitly): `scratch_l7c3bc_rank1.lean`, `scratch_l7c3bc_eigproj.lean`,
+> `scratch_l7c3bc_plucker.lean`, `scratch_l7c3bc_frobenius.lean`. Two §G claims CORRECTED below
+> (H.1 SURPRISE A, H.2 SURPRISE B). No committed statement contradicted.
+
+### H.0 Verdict (TL;DR)
+
+1. **L7c.3b does NOT need single-index σⱼ submultiplicativity.** §G.4 lists "needs single-index
+   `σⱼ(⋀^kB·X) ≤ ‖⋀^kB‖·σⱼ(X)` (BUILD)" as a sub-task. This is an OVERSTATEMENT: the rank-1
+   reduction (§G.2) only ever touches the TOP eigenvalue / operator norm of the compound, so the
+   chain needs only PER-VECTOR operator-norm facts `‖P w‖ ≤ ‖P‖‖w‖`, `‖w‖ ≤ ‖P⁻¹‖‖P w‖`
+   (probe `rank1`, all immediate from `ContinuousLinearMap.le_opNorm`). The min-max single-index
+   lemma — which Mathlib genuinely lacks — is NOT on the critical path. (SURPRISE A.)
+2. **L7c.3c back-transport is UNAVOIDABLE but the sharp principal-angle identity can be SIDESTEPPED.**
+   The committed `L7_statement` fixes the limit object as a `d×d` matrix (`qpow → Λ`), so the `d×d`
+   band projectors `bandProjector = cfc χ qpow` must be shown Cauchy; one cannot stay in `⋀^k`-space.
+   But the SHARP `‖P_E − P_E'‖_op = sin θ_max` (needs principal angles — ABSENT from Mathlib) is NOT
+   required: a **Frobenius route with a dimension-only constant 2k** works and avoids principal
+   angles entirely (H.2, probes `plucker`+`frobenius`).
+3. **L7c.1 is MED and fully probe-backed** (probe `eigproj`): the cfc-indicator equals the top-block
+   eigenprojector via the explicit `IsHermitian.cfc = U·diag(χ∘eig)·Uᴴ` formula.
+
+Net revised estimate L7c.3b → L7c.3c → L7d: **~5.5–8.5 sessions** (down from §G.4's 7–11), because
+the σⱼ min-max build is removed (SURPRISE A) and the back-transport uses only soft trace algebra +
+AM-GM + the committed det-Gram kernel, not a Davis–Kahan/principal-angle theory build.
+
+### H.1 L7c.3b — the rank-1 exterior Rayleigh-deficit bound (exact statements)
+
+The chain of §G.2 step 4, restated PRECISELY (no σⱼ index). With `Cₙ := compoundᵀ·compound` where
+`compound := compoundMatrix k Mₙ` (so `Cₙ = ⋀^k Qₙ` on `⋀^k ℝᵈ`), and `v'` = top unit eigenvector
+of `Cₙ₊₁`:
+
+```
+⟨Cₙ v', v'⟩ = ‖toEuclideanLin(compound k Mₙ) · v'‖²                       -- adjoint∘self Rayleigh
+‖toEuclideanLin(compound k Mₙ) v'‖ ≥ ‖toEuclideanLin(compound k Mₙ₊₁) v'‖ / ‖⋀^kB‖
+                                                                          -- ⋀^k Mₙ₊₁ = (⋀^kB)(⋀^k Mₙ)
+μ₀(Cₙ₊₁) = ‖toEuclideanLin(compound k Mₙ₊₁) v'‖²                           -- v' is top eigvec
+μ₀(Cₙ₊₁) ≥ μ₀(Cₙ) / ‖(⋀^kB)⁻¹‖²
+⟹ μ₀(Cₙ) − ⟨Cₙ v', v'⟩ ≤ (1 − 1/(‖⋀^kB‖‖(⋀^kB)⁻¹‖)²)·μ₀(Cₙ)
+                       ≤ (‖⋀^kB‖‖(⋀^kB)⁻¹‖)²·(σₖ/σₖ₋₁)²·μ₀(Cₙ)            -- §G.3b, ε form
+```
+
+**LOAD-BEARING facts (all COMPILED in `scratch_l7c3bc_rank1.lean`, exit 0):**
+- `‖P w‖ ≤ ‖P‖·‖w‖` = `P.le_opNorm w` (CLM).
+- `‖w‖ ≤ ‖Pinv‖·‖P w‖` from `Pinv ∘ P = id` (`congrArg` + `le_opNorm`).
+- `⟨(adjoint P ∘ₗ P) w, w⟩ = ‖P w‖²` (`adjoint_inner_left` + `real_inner_self_eq_norm_sq`).
+- `⟨C w, w⟩ ≤ ‖C‖·‖w‖²` for symmetric `C` (`real_inner_le_norm` + `le_opNorm`).
+
+**NEW sub-lemma still to BUILD (small, LOW–MED):** the compound-multiplicativity
+`toEuclideanLin (compoundMatrix k (B*M)) = toEuclideanLin (compoundMatrix k B) ∘ₗ toEuclideanLin (compoundMatrix k M)`
+(Cauchy–Binet at the matrix level). DERIVABLE from committed `conjExteriorMap_eq_toEuclideanLin_compound`
++ `exteriorPower.map_comp` (the same telescoping used in `exteriorOpNorm_comp_le`). And
+`μ₀(compoundᵀcompound) = ‖compound‖²` = `(∏_{i<k} σᵢ)²` from the committed
+`prod_singularValues_eq_l2_opNorm_compound` + top-eigenvalue-of-AᵀA = op-norm².
+
+Exact target signature (replaces the `sorry` in §G.3b `rayleigh_deficit_le`): unchanged in shape,
+but the proof uses ONLY the rank-1 facts above + the new compound-mult lemma — NOT a σⱼ lemma.
+
+> **SURPRISE A (corrects §G.4):** the row "needs single-index `σⱼ(⋀^kB·X) ≤ ‖⋀^kB‖σⱼ(X)` (BUILD)"
+> is unnecessary. The min-max/Courant–Fischer single-index bound is genuinely ABSENT from Mathlib
+> (confirmed: `Mathlib/Analysis/InnerProductSpace/SingularValues.lean` has only def, `_nonneg`,
+> `_antitone`, the `sq_singularValues_fin` eigenvalue bridge, support/rank — NO min-max; and
+> `Rayleigh.lean` has only the GLOBAL `iSup/iInf` top/bottom eigenvalue characterization, no
+> codim-j variational form). But the rank-1 route never needs it. Removing this build is the main
+> cost saving of this pass.
+
+### H.2 L7c.3c — the Plücker back-transport: the Frobenius route (avoids principal angles)
+
+The output of the rank-1 lemma (G.3a) is a sin-Θ bound on the dominant eigenLINE of `Cₙ = ⋀^k Qₙ`,
+i.e. on the decomposable unit wedges `wₙ`, `wₙ₊₁` (Plücker images of o.n. frames of the top-k
+eigenspaces `Eₙ`, `Eₙ₊₁`). The band projector `bandProjector A T χ n x` is (by L7c.1) the `d×d`
+orthogonal projector `P_{Eₙ}`. We must bound `‖P_{Eₙ₊₁} − P_{Eₙ}‖` (L2 operator norm) by the wedge
+sine. **Numerically verified, tight (ratio 1.0, 50k+ trials, gapped PD pairs, d≤6):**
+
+```
+‖P_E − P_E'‖_op²  ≤  1 − ⟨w_E, w_E'⟩²   ( = sin²∠_wedge )           (SHARP — needs principal angles)
+```
+
+The SHARP form needs `‖P−P'‖_op = sin θ_max` and `⟨w,w'⟩ = ∏cos θᵢ`, i.e. principal-angle theory,
+which **Mathlib LACKS ENTIRELY** (grep: no `principalAngle`, no sin-Θ, no
+`‖orthogonalProjection K − orthogonalProjection K'‖` identity, no Davis–Kahan). Building it is the
+expensive path. **The CHEAPER substitute (this scout's recommendation):** a Frobenius bound with a
+dimension-only constant, decomposing into pieces that need only trace algebra, AM-GM, and the
+COMMITTED det-Gram kernel — no principal angles:
+
+```
+‖P − P'‖_op²  ≤  ‖P − P'‖_F²                                  -- self-adjoint: spectral radius ≤ HS
+‖P − P'‖_F²   =  tr((P−P')²) = 2k − 2·tr(P·P')               -- P²=P, P'²=P', tr P = tr P' = (k:ℝ)
+tr(P·P')      =  ‖UᵀV‖_F²  =  Σ cos²θᵢ                        -- P = UUᵀ, P' = VVᵀ; cyclic trace
+k − ‖UᵀV‖_F²  ≤  k·(1 − det(UᵀV)²)                            -- AM-GM (k·∏cos² ≤ Σcos², det²≤1)
+det(UᵀV)²     =  ⟨w_E, w_E'⟩²                                  -- COMMITTED hodgeForm_ιMulti det-Gram
+⟹  ‖P − P'‖_op²  ≤  2k·(1 − ⟨w_E,w_E'⟩²)  =  2k·sin²∠_wedge
+```
+
+The constant `2k ≤ 2d` is a fixed dimension constant, so summability (L7c.4/L7c.5) is UNAFFECTED:
+`sin∠_wedge ≤ κ(⋀^kB)·σₖ/σₖ₋₁` (G.3a∘G.3b) still decays geometrically a.e., and `√(2k)` is a
+harmless multiplicative constant.
+
+**LOAD-BEARING facts COMPILED:**
+- `scratch_l7c3bc_plucker.lean` (exit 0): the decomposable-wedge inner product = cross-Gram
+  determinant `det⟨v j, w i⟩` (via `exteriorPower.pairingDual_ιMulti_ιMulti` — the public path of
+  the committed private `hodgeForm_ιMulti`); o.n. frame ⟹ self-Gram = `1`, det = 1 (unit wedge);
+  the SCALAR back-transport closer `pd² ≤ 1−cmax², detc² ≤ cmax² ⟹ pd² ≤ 1−detc²` (`nlinarith`);
+  the two-factor `(ab)² ≤ b²` core for `|cos| ≤ 1`.
+- `scratch_l7c3bc_frobenius.lean` (exit 0): the trace identity `tr((P−Q)²) = 2k − 2 tr(PQ)` for
+  self-adjoint idempotents of trace `k` (`trace_mul_comm` + `trace_sub/_add`, `abel` — matrices are
+  NONCOMMUTATIVE so `ring` FAILS, use `abel` for the additive expansion); the AM-GM two-factor base
+  `2−(t₀+t₁) ≤ 2(1−t₀t₁)`; the packaging `k·D ≤ S ⟹ k−S ≤ k(1−D)`; the sqrt closer
+  `op² ≤ twok(1−d²), 0≤1−d² ⟹ op ≤ √twok·√(1−d²)`.
+
+**Still to BUILD for L7c.3c (MED–HIGH but BOUNDED, no principal angles):**
+- `‖M‖_op ≤ ‖M‖_F` for self-adjoint `M` on `Matrix (Fin d) (Fin d) ℝ` (L2 op-norm). Cleanest via the
+  committed singular-value bridge: `‖M‖ = σ₀(toEuclideanLin M)` and `σ₀² ≤ Σσᵢ² = tr(MᵀM)`. There is
+  norm-instance friction (L2-operator vs Frobenius `NormedAddCommGroup` instances on `Matrix`); the
+  bridge sidesteps it by working through `toEuclideanLin`.
+- the general-k AM-GM `k·∏cos² ≤ Σcos²` via `Real.geom_mean_le_arith_mean_weighted` (uniform weights
+  `1/k`) + `∏cos² ≤ 1`. (FOUND in `Mathlib/Analysis/MeanInequalities.lean`.)
+- the trace/Plücker glue: `tr(P_E P_E') = ‖UᵀV‖_F²` and `det(UᵀV) = ⟨w_E, w_E'⟩` tying the committed
+  `compoundMatrix`/`hodgeForm_ιMulti` to the o.n. frames produced by `eigenvectorUnitary`.
+
+> **SURPRISE B (sharpens §G):** the projector-difference ↔ wedge-sine identity (the genuinely novel
+> "Plücker back-transport" infra) does NOT require the principal-angle machinery one would expect
+> from a literal Davis–Kahan reading. Replacing the SHARP operator-norm identity by the LOOSER
+> Frobenius bound with constant `2k` keeps summability and trades a (large) principal-angle theory
+> build for soft trace algebra + AM-GM + the already-committed det-Gram kernel. This is the cheapest
+> correct path and is what the implementation should take.
+
+### H.3 L7c.1 — eigenprojector identification (exact statement + compiled load-bearing step)
+
+For a threshold `c` strictly between the k-th and (k+1)-th sorted eigenvalues of `qpow A T n x`,
+and `χ` continuous with `(spectrum ℝ (qpow…)).EqOn χ (indicator (Ioi c) 1)`, the band projector
+equals the orthogonal projector onto the top-k eigenvectors:
+
+```lean
+theorem bandProjector_eq_orthProj_topBlock {A} {T} {χ : ℝ → ℝ} {c : ℝ} (n : ℕ) (x : X)
+    (heq : (spectrum ℝ (qpow A T n x)).EqOn χ (Set.indicator (Set.Ioi c) 1))
+    (hgap : … c strictly between eigenvalues k and k+1 …) :
+    bandProjector A T χ n x
+      = orthProjMatrix (span of eigenvectors of (gram A T n x) with eigenvalue > c²ⁿ)   -- d×d projector
+```
+
+**Load-bearing step COMPILED in `scratch_l7c3bc_eigproj.lean` (exit 0):**
+- `cfc χ A = hA.cfc χ` (`cfc_eq`) and `hA.cfc χ = U · diag(ofReal∘χ∘eig) · Uᴴ`
+  (`Matrix.IsHermitian.cfc` + `Unitary.conjStarAlgAut_apply`).
+- {0,1}-valued χ∘eig ⟹ `diag(ofReal∘χ∘eig)` idempotent (`diagonal_mul_diagonal`); conjugation by the
+  unitary `U` (via `Unitary.coe_star_mul_self : star U * U = 1`) preserves idempotence ⟹ `cfc χ A` is
+  a genuine orthogonal projector.
+- `cfc_congr heq` replaces continuous χ by the exact indicator on the (finite) spectrum.
+- `indicator (Ioi c) 1 (eig i) = 1` iff `c < eig i`, else `0` (`Set.indicator_of_mem`/`_notMem`) —
+  the diagonal selects exactly the top block.
+
+The remaining work (MED, ~1 sess) is identifying the conjugated diagonal projector with
+`orthProjMatrix (top-block span)` — reuse the committed `Measurable.lean` `orthProjMatrix` pattern
+(a self-adjoint idempotent equals the orthogonal projection onto its range) — plus pinning that
+`eigenvalues(qpow) > c ↔ eigenvalues(gram) > c²ⁿ` via the committed `eigenvalues₀_qpow_eq`.
+
+### H.4 Mathlib found-vs-missing ledger (min-max σⱼ + projector-angle), this scout
+
+**FOUND (compiled against):**
+- `ContinuousLinearMap.le_opNorm`, `LinearMap.adjoint_inner_left`, `real_inner_le_norm`,
+  `real_inner_self_eq_norm_sq` — the rank-1 chain (probe `rank1`).
+- `Matrix.IsHermitian.cfc` explicit formula, `cfc_eq`, `cfc_congr`, `Unitary.conjStarAlgAut_apply`,
+  `Unitary.coe_star_mul_self`, `diagonal_mul_diagonal`, `Set.indicator_of_mem/_notMem` (probe
+  `eigproj`).
+- `exteriorPower.pairingDual_ιMulti_ιMulti`, `exteriorPower.map_apply_ιMulti` — decomposable-wedge
+  inner = det⟨vⱼ,wᵢ⟩ (probe `plucker`; mirrors committed `hodgeForm_ιMulti`).
+- `Matrix.trace_mul_comm`, `Matrix.trace_sub/_add`, `Real.sq_sqrt` — Frobenius cores (probe
+  `frobenius`). `Real.geom_mean_le_arith_mean_weighted` (`MeanInequalities.lean`) for general-k AM-GM.
+- Committed: `prod_singularValues_eq_l2_opNorm_compound`, `conjExteriorMap_eq_toEuclideanLin_compound`,
+  `exteriorPower.map_comp`, `sigma_le_opNorm`, `singularValues_le_opNorm`, `eigenvalues₀_qpow_eq`,
+  `gram_eigenvalues₀_eq_sq_singularValues`, `sin_sq_le_rayleigh_deficit_div_gap`, `hodgeForm_ιMulti`
+  (private), `orthProjMatrix` pattern.
+
+**MISSING (confirmed ABSENT; the route AVOIDS each):**
+- **Single-index σⱼ min-max / Courant–Fischer / `σⱼ(P∘Y) ≤ ‖P‖σⱼ(Y)`** — absent (`SingularValues.lean`
+  has no min-max; `Rayleigh.lean` only global top/bottom). AVOIDED by the rank-1 reduction (H.1).
+- **Principal angles / sin-Θ / Davis–Kahan / `‖orthogonalProjection K − orthogonalProjection K'‖`
+  identity** — absent entirely. AVOIDED by the Frobenius route (H.2).
+- **Compound-multiplicativity `compoundMatrix k (B*M) = compoundMatrix k B * compoundMatrix k M`** —
+  absent (no matrix-level Cauchy–Binet). To BUILD (LOW–MED) from functoriality.
+- **`‖M‖_op ≤ ‖M‖_F`** for the L2 operator norm — to BUILD (MED) via the singular-value bridge.
+
+### H.5 COMPILED-vs-argued table (this pass)
+
+| Probe | Claims | Status |
+|---|---|---|
+| `scratch_l7c3bc_rank1.lean` | rank-1 per-vector op-norm chain (H.1): `le_opNorm`, inverse lower bound, `⟨adjoint∘self w,w⟩=‖Pw‖²`, symmetric-Rayleigh ≤ `‖C‖‖w‖²` | **COMPILED exit 0** |
+| `scratch_l7c3bc_eigproj.lean` | L7c.1 (H.3): `cfc_eq`+explicit `IsHermitian.cfc`; idempotent diag + unitary-conjugation projector; `cfc_congr`; indicator selects top block | **COMPILED exit 0** |
+| `scratch_l7c3bc_plucker.lean` | decomposable-wedge inner = det-Gram; o.n. frame ⟹ unit wedge; scalar back-transport closer; `(ab)²≤b²` | **COMPILED exit 0** (unused-var warns) |
+| `scratch_l7c3bc_frobenius.lean` | Frobenius back-transport cores (H.2): `tr((P−Q)²)=2k−2tr(PQ)`; AM-GM two-factor; `k·D≤S⟹k−S≤k(1−D)`; sqrt closer | **COMPILED exit 0** (`abel` not `ring` — matrices noncommutative) |
+
+ARGUED + verified NUMERICALLY only (Python, not Lean):
+- `‖P_E−P_E'‖_op² ≤ 1−⟨w,w'⟩²` (sharp, tight ratio 1.0) and `‖·‖_op² ≤ 2k(1−⟨w,w'⟩²)` (Frobenius,
+  dimension-uniform); `k·∏tᵢ ≤ Σtᵢ` for tᵢ∈[0,1] (0 violation); top-2 singular-ratio of `⋀^k M`
+  equals `σₖ/σₖ₋₁`.
+- The Frobenius bound is NOT controlled by `1−⟨w,w'⟩²` with a CONSTANT < `k` (ratio grows with k —
+  the `2k` factor is necessary, not removable).
+
+### H.6 Revised risk-tagged sub-ladder (supersedes the L7c.3b/3c rows of §G.4)
+
+| # | Lemma | Risk | Effort | Probe / route |
+|---|---|---|---|---|
+| L7c.1 | `bandProjector = orthProj(top-k eigenspace)` | MED | 1 | **COMPILED** `eigproj`; `orthProjMatrix` pattern + `eigenvalues₀_qpow_eq` |
+| L7c.3b.0 | compound-mult `⋀^k(B*M) = (⋀^kB)(⋀^kM)` (matrix-level Cauchy–Binet) | LOW–MED | 0.5 | committed `conjExteriorMap_eq…` + `map_comp` |
+| L7c.3b | rank-1 exterior Rayleigh-deficit `rayleigh_deficit_le` (NO σⱼ) | MED | 1–1.5 | **COMPILED** `rank1` + `sin_sq_le_rayleigh_deficit_div_gap` + L7c.3b.0 |
+| L7c.3c.0 | `‖M‖_op ≤ ‖M‖_F` for self-adjoint (via σ-bridge) | MED | 1 | committed `prod_singularValues…`; norm-instance friction |
+| L7c.3c.1 | Frobenius back-transport `‖P−P'‖_op² ≤ 2k(1−⟨w,w'⟩²)` | HIGH (bounded) | 1.5–2 | **COMPILED** `frobenius`+`plucker`; AM-GM `geom_mean_le_arith_mean_weighted` |
+| L7c.3c | assemble `norm_bandProjector_succ_sub_le` (G.3a∘G.3b∘3c.1, Plücker glue) | MED | 1 | det-Gram = wedge inner (committed `hodgeForm_ιMulti`) |
+| L7c.4/5/L7d | (unchanged from §G.4) | LOW–MED | 1.5–2.5 | `scratch_l7c3_*` |
+
+**Critical path: L7c.3b.0 → L7c.3b → L7c.3c.0 → L7c.3c.1 → L7c.3c → L7c.4 → L7d.** No single node is
+the old "abstract Davis–Kahan"; the irreducible analytic content is the already-COMMITTED
+`sin_sq_le_rayleigh_deficit_div_gap` (G.3a). Net L7c.3b→L7c.3c→L7d: **~5.5–8.5 sessions**.
+
+### H.7 Flags on §G claims
+
+- §G.4 row L7c.3b "needs single-index `σⱼ(⋀^kB·X) ≤ ‖⋀^kB‖σⱼ(X)` (BUILD)" — **CORRECTED**: not
+  needed (H.1, SURPRISE A). Removed from the ladder.
+- §G.4 row L7c.3c "the subspace↔eigenline (Plücker) bridge is new infra" — **REFINED**: the bridge
+  is real, but it is the Frobenius `2k`-constant route (trace + AM-GM + det-Gram), NOT a
+  principal-angle/Davis–Kahan build (H.2, SURPRISE B). The sharp `sin θ_max` identity is sidestepped.
+- §G.2 step 4 chain — **CONFIRMED** Lean-expressible exactly as written with the committed compound
+  API + the rank-1 facts (H.1, probe `rank1`); one new compound-mult lemma (L7c.3b.0) is required.
+- No committed statement is contradicted; `sin_sq_le_rayleigh_deficit_div_gap`, `eigenvalues₀_qpow_eq`,
+  `prod_singularValues_eq_l2_opNorm_compound`, `L7_statement` all remain sound.
