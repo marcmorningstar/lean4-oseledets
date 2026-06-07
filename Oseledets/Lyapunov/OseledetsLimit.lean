@@ -1512,6 +1512,41 @@ theorem summable_norm_bandProjector_succ_sub {c : ℝ} (A : X → Matrix (Fin d)
   filter_upwards [hb, hpos, hL, hlog, hstep] with x hbx hposx hLx hlogx hstepx
   exact summable_norm_of_logLimit_neg_of_le _ (b x) hbx hposx hLx hlogx hstepx
 
+/-! ## L7c.5 (a.e. assembly): the band projectors converge
+
+The committed Cauchy packaging `exists_tendsto_cfc_of_summable` turns the a.e. summability of the
+band-projector increments (`summable_norm_bandProjector_succ_sub`, L7c.4) into a.e. convergence of
+the band projectors themselves: the candidate Oseledets spectral projector exists `μ`-a.e. The
+`bandProjector A T (indicator (Ioi c) 1) n x = cfc (indicator (Ioi c) 1) (qpow A T n x)` sequence is
+the `cfc χ (H n)` sequence with `H = fun n => qpow A T n x`, so this is a direct specialization. -/
+
+/-- **L7c.5 (a.e. assembly).** For `μ`-a.e. `x`, the band projectors
+`bandProjector A T (indicator (Ioi c) 1) n x` converge: there is a limiting projector `P` with
+`Tendsto (fun n => bandProjector A T (indicator (Ioi c) 1) n x) atTop (𝓝 P)`. This is the
+convergence of the Oseledets spectral projector pinned by the growing spectral gap, obtained by
+feeding the a.e. summability of the increments (L7c.4, `summable_norm_bandProjector_succ_sub`) into
+the soft-analysis Cauchy packaging `exists_tendsto_cfc_of_summable` (L7c.5). The summability
+hypotheses are the genuine outputs of the per-step bound `norm_bandProjector_succ_sub_le` and the
+committed scalar root-test layer (`tendsto_log_singularValue`,
+`tendsto_logNorm_compound_orbit_div_atTop_zero`). -/
+theorem exists_tendsto_bandProjector {c : ℝ} (A : X → Matrix (Fin d) (Fin d) ℝ)
+    (b : X → ℕ → ℝ)
+    (hb : ∀ᵐ x ∂μ, ∀ n, 0 ≤ b x n)
+    (hpos : ∀ᵐ x ∂μ, ∀ᶠ n in atTop, 0 < b x n)
+    (L : X → ℝ) (hL : ∀ᵐ x ∂μ, L x < 0)
+    (hlog : ∀ᵐ x ∂μ,
+      Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (b x n)) atTop (𝓝 (L x)))
+    (hstep : ∀ᵐ x ∂μ, ∀ᶠ n in atTop,
+      ‖bandProjector A T (Set.indicator (Set.Ioi c) 1) (n + 1) x
+          - bandProjector A T (Set.indicator (Set.Ioi c) 1) n x‖ ≤ b x n) :
+    ∀ᵐ x ∂μ, ∃ P : Matrix (Fin d) (Fin d) ℝ,
+      Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) atTop (𝓝 P) := by
+  have hsummable := summable_norm_bandProjector_succ_sub (c := c) A b hb hpos L hL hlog hstep
+  filter_upwards [hsummable] with x hx
+  -- `bandProjector A T χ n x = cfc χ (qpow A T n x)` is `cfc χ (H n)` with `H = qpow A T · x`.
+  exact exists_tendsto_cfc_of_summable (fun n => qpow A T n x)
+    (Set.indicator (Set.Ioi c) 1) hx
+
 end Oseledets
 
 end
