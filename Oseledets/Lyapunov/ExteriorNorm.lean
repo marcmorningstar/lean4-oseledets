@@ -1235,6 +1235,174 @@ theorem prod_singularValues_comp_le (k : ℕ) (f : E →ₗ[ℝ] F) (g : F →�
 
 end Crux
 
+/-! ## L7c.3b — the rank-1 exterior Rayleigh-deficit bound
+
+The orchestrator (L7c.3c) reduces the band-projector increment to a rank-1 dominant-eigenvector
+`sin Θ` estimate (the committed/forthcoming `sin_sq_le_rayleigh_deficit_div_gap`). This section
+provides the deficit-side pieces feeding that core: the per-vector compound operator-norm step
+(Lemma 1), the Rayleigh quotient identity and top-eigenvalue ceiling `μ₀ = ‖compound‖²`
+(Lemma 2), and the assembled deficit bound `μ₀ − ⟨C_n v', v'⟩ ≤ (1 − 1/κ²)·μ₀` (Lemma 3),
+with `κ = ‖compound B‖·‖(compound B)⁻¹‖` the compound condition number. -/
+
+section Rayleigh
+
+variable {d : ℕ}
+
+/-- Per-vector L2 operator-norm bound for `toEuclideanLin`: `‖toEuclideanLin N w‖ ≤ ‖N‖·‖w‖`.
+Routed through the bundled continuous-linear-map `toEuclideanCLM`, whose operator norm is the L2
+matrix norm `‖N‖` by `Matrix.l2_opNorm_toEuclideanCLM`. -/
+theorem norm_toEuclideanLin_apply_le (N : Matrix (Fin d) (Fin d) ℝ)
+    (w : EuclideanSpace ℝ (Fin d)) :
+    ‖Matrix.toEuclideanLin N w‖ ≤ ‖N‖ * ‖w‖ := by
+  have hc : (Matrix.toEuclideanLin N w) = Matrix.toEuclideanCLM (𝕜 := ℝ) N w := by
+    rw [← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin]; rfl
+  rw [hc]
+  calc ‖Matrix.toEuclideanCLM (𝕜 := ℝ) N w‖
+      ≤ ‖Matrix.toEuclideanCLM (𝕜 := ℝ) N‖ * ‖w‖ := (Matrix.toEuclideanCLM (𝕜 := ℝ) N).le_opNorm w
+    _ = ‖N‖ * ‖w‖ := by rw [Matrix.l2_opNorm_toEuclideanCLM]
+
+/-- The `k`-th compound of the identity matrix is the identity. Via the compound bridge
+`conjExteriorMap_eq_toEuclideanLin_compound`, since `⋀^k id = id` (`exteriorPower.map_id`). -/
+theorem compoundMatrix_one (k : ℕ) :
+    compoundMatrix k (1 : Matrix (Fin d) (Fin d) ℝ) = 1 := by
+  apply (Matrix.toEuclideanLin (n := Fin _) (m := Fin _)).injective
+  rw [← conjExteriorMap_eq_toEuclideanLin_compound]
+  have h1 : Matrix.toEuclideanLin (1 : Matrix (Fin d) (Fin d) ℝ) = LinearMap.id := by
+    ext v i; simp
+  rw [h1]
+  unfold conjExteriorMap
+  rw [exteriorPower.map_id]
+  have h2 : Matrix.toEuclideanLin
+      (1 : Matrix (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))
+        (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d))))) ℝ) = LinearMap.id := by
+    ext v i; simp
+  rw [h2]
+  ext x; simp
+
+/-- For invertible `B`, `compound k B⁻¹` is a right inverse of `compound k B`
+(`compoundMatrix_mul` + `compoundMatrix_one`). -/
+theorem compoundMatrix_mul_inv (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.det ≠ 0) :
+    compoundMatrix k B * compoundMatrix k B⁻¹ = 1 := by
+  rw [← compoundMatrix_mul, Matrix.mul_nonsing_inv _ (Ne.isUnit hB), compoundMatrix_one]
+
+/-- For invertible `B`, `compound k B⁻¹` is a left inverse of `compound k B`. -/
+theorem compoundMatrix_inv_mul (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.det ≠ 0) :
+    compoundMatrix k B⁻¹ * compoundMatrix k B = 1 := by
+  rw [← compoundMatrix_mul, Matrix.nonsing_inv_mul _ (Ne.isUnit hB), compoundMatrix_one]
+
+/-- The compound factorisation `compound M = (compound B)⁻¹ · compound(B · M)`, for invertible
+`B`. Used in Lemma 3 to lower-bound `‖compound M‖` by `‖compound(B·M)‖`. -/
+theorem compoundMatrix_eq_inv_mul (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.det ≠ 0)
+    (M : Matrix (Fin d) (Fin d) ℝ) :
+    compoundMatrix k M = compoundMatrix k B⁻¹ * compoundMatrix k (B * M) := by
+  rw [← compoundMatrix_mul, ← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ (Ne.isUnit hB),
+    Matrix.one_mul]
+
+set_option maxHeartbeats 800000 in
+/-- **Lemma 1 — the rank-1 per-vector step.** The squared norm of the compound of a product,
+applied to `w`, is dominated by `‖compound B‖²` times the squared norm of the `M`-compound at `w`:
+`‖compound(B·M) w‖² ≤ ‖compound B‖²·‖compound M w‖²`. This relates the Rayleigh quotients of the
+compound Gram operators `C_{n+1}` (from `B·M`) and `C_n` (from `M`). Via
+`toEuclideanLin_compoundMatrix_mul` + the per-vector operator-norm step. -/
+theorem rayleigh_compound_mul_le (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ)
+    (w : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))) :
+    ‖Matrix.toEuclideanLin (compoundMatrix k (B * M)) w‖ ^ 2
+      ≤ ‖compoundMatrix k B‖ ^ 2
+        * ‖Matrix.toEuclideanLin (compoundMatrix k M) w‖ ^ 2 := by
+  rw [toEuclideanLin_compoundMatrix_mul, LinearMap.comp_apply]
+  set a := ‖Matrix.toEuclideanLin (compoundMatrix k M) w‖ with ha
+  set b := ‖compoundMatrix k B‖ with hb
+  have h : ‖Matrix.toEuclideanLin (compoundMatrix k B)
+      (Matrix.toEuclideanLin (compoundMatrix k M) w)‖ ≤ b * a :=
+    norm_toEuclideanLin_apply_le _ _
+  have han : 0 ≤ a := norm_nonneg _
+  have hbn : 0 ≤ b := norm_nonneg _
+  calc ‖Matrix.toEuclideanLin (compoundMatrix k B)
+        (Matrix.toEuclideanLin (compoundMatrix k M) w)‖ ^ 2
+      ≤ (b * a) ^ 2 := by
+        apply pow_le_pow_left₀ (norm_nonneg _) h
+    _ = b ^ 2 * a ^ 2 := by ring
+
+/-- **Lemma 2 (Rayleigh identity).** The Rayleigh quotient of the compound Gram operator
+`C_n = adjoint(compound M) ∘ₗ compound M` at `w` equals `‖compound M w‖²`. -/
+theorem rayleigh_compound_eq_norm_sq (k : ℕ) (M : Matrix (Fin d) (Fin d) ℝ)
+    (w : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))) :
+    (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+        Matrix.toEuclideanLin (compoundMatrix k M)) w) w : ℝ)
+      = ‖Matrix.toEuclideanLin (compoundMatrix k M) w‖ ^ 2 := by
+  rw [LinearMap.comp_apply, LinearMap.adjoint_inner_left, real_inner_self_eq_norm_sq]
+
+/-- **Lemma 2 (top-eigenvalue ceiling).** The Rayleigh quotient of the compound Gram operator is
+bounded by `‖compound M‖²·‖w‖²`; equivalently the top eigenvalue `μ₀` of
+`C_n = adjoint(compound M) ∘ₗ compound M` is `‖compound M‖²` (the squared operator norm of the
+compound = top eigenvalue of `AᵀA`). -/
+theorem rayleigh_compound_le (k : ℕ) (M : Matrix (Fin d) (Fin d) ℝ)
+    (w : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))) :
+    (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+        Matrix.toEuclideanLin (compoundMatrix k M)) w) w : ℝ)
+      ≤ ‖compoundMatrix k M‖ ^ 2 * ‖w‖ ^ 2 := by
+  rw [rayleigh_compound_eq_norm_sq]
+  have h := norm_toEuclideanLin_apply_le (compoundMatrix k M) w
+  have hn := norm_nonneg (Matrix.toEuclideanLin (compoundMatrix k M) w)
+  nlinarith [h, norm_nonneg (compoundMatrix k M), norm_nonneg w]
+
+/-- Pure-real algebraic kernel of the deficit bound: from `BM ≤ CB·r` and `mu ≤ CBi·BM` (with all
+nonnegative) one gets `mu² − r² ≤ (1 − 1/(CB·CBi)²)·mu²`. -/
+theorem rayleigh_deficit_kernel {BM CB r CBi mu : ℝ}
+    (hCBn : 0 ≤ CB) (hCBin : 0 ≤ CBi) (hmun : 0 ≤ mu)
+    (hstep1 : BM ≤ CB * r) (hstep2 : mu ≤ CBi * BM) :
+    mu ^ 2 - r ^ 2 ≤ (1 - 1 / (CB * CBi) ^ 2) * mu ^ 2 := by
+  by_cases hκ : CB * CBi = 0
+  · have h0 : (CB * CBi) ^ 2 = 0 := by rw [hκ]; ring
+    rw [h0]; simp only [div_zero, sub_zero, one_mul]
+    nlinarith [sq_nonneg r]
+  · have hκpos : 0 < CB * CBi := lt_of_le_of_ne (by positivity) (Ne.symm hκ)
+    have hchain : mu ≤ (CB * CBi) * r := by
+      calc mu ≤ CBi * BM := hstep2
+        _ ≤ CBi * (CB * r) := by nlinarith [hstep1, hCBin]
+        _ = (CB * CBi) * r := by ring
+    have hrlb : mu / (CB * CBi) ≤ r := by rw [div_le_iff₀ hκpos]; linarith
+    have hr2 : (mu / (CB * CBi)) ^ 2 ≤ r ^ 2 := pow_le_pow_left₀ (by positivity) hrlb 2
+    rw [div_pow] at hr2
+    have heq : mu ^ 2 - mu ^ 2 / (CB * CBi) ^ 2 = (1 - 1 / (CB * CBi) ^ 2) * mu ^ 2 := by ring
+    linarith [hr2, heq.ge, heq.le]
+
+set_option maxHeartbeats 1600000 in
+/-- **Lemma 3 — the rank-1 exterior Rayleigh-deficit bound.**
+For invertible `B` and a unit vector `v'` that achieves the operator norm of the compound
+`compound (B·M)` (so `‖compound(B·M) v'‖ = ‖compound(B·M)‖`, i.e. `v'` is a top right-singular
+vector / dominant eigenvector of `C_{n+1}`), the Rayleigh deficit of the operator
+`C_n = adjoint(compound M) ∘ₗ compound M` at `v'` against its top value `μ₀ = ‖compound M‖²`
+obeys `μ₀ − ⟨C_n v', v'⟩ ≤ (1 − 1/κ²)·μ₀` with `κ = ‖compound B‖·‖(compound B)⁻¹‖`.
+
+This is the deficit-side input to `sin_sq_le_rayleigh_deficit_div_gap` (with
+`ε := μ₀ − ⟨C_n v', v'⟩`, `μ₀ := ‖compound M‖²`). The `v'`-achieves-the-op-norm hypothesis encodes
+that `v'` is the top eigenvector of `C_{n+1}`; its existence is the caller's responsibility. -/
+theorem rayleigh_deficit_le (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.det ≠ 0)
+    (M : Matrix (Fin d) (Fin d) ℝ)
+    {v' : EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k (EuclideanSpace ℝ (Fin d)))))}
+    (htop : ‖Matrix.toEuclideanLin (compoundMatrix k (B * M)) v'‖ = ‖compoundMatrix k (B * M)‖) :
+    ‖compoundMatrix k M‖ ^ 2
+        - (inner ℝ ((LinearMap.adjoint (Matrix.toEuclideanLin (compoundMatrix k M)) ∘ₗ
+            Matrix.toEuclideanLin (compoundMatrix k M)) v') v' : ℝ)
+      ≤ (1 - 1 / (‖compoundMatrix k B‖ * ‖compoundMatrix k B⁻¹‖) ^ 2)
+          * ‖compoundMatrix k M‖ ^ 2 := by
+  rw [rayleigh_compound_eq_norm_sq]
+  -- (1) `v'` achieves the op-norm of `compound(B·M)`, then the per-vector step:
+  --     `‖compound(B·M)‖ ≤ ‖compound B‖·‖compound M v'‖`.
+  have hstep1 : ‖compoundMatrix k (B * M)‖
+      ≤ ‖compoundMatrix k B‖ * ‖Matrix.toEuclideanLin (compoundMatrix k M) v'‖ := by
+    rw [← htop, toEuclideanLin_compoundMatrix_mul, LinearMap.comp_apply]
+    exact norm_toEuclideanLin_apply_le _ _
+  -- (2) `‖compound M‖ ≤ ‖(compound B)⁻¹‖·‖compound(B·M)‖` from the compound factorisation.
+  have hstep2 : ‖compoundMatrix k M‖
+      ≤ ‖compoundMatrix k B⁻¹‖ * ‖compoundMatrix k (B * M)‖ := by
+    conv_lhs => rw [compoundMatrix_eq_inv_mul k hB M]
+    exact Matrix.l2_opNorm_mul _ _
+  exact rayleigh_deficit_kernel (norm_nonneg _) (norm_nonneg _) (norm_nonneg _) hstep1 hstep2
+
+end Rayleigh
+
 end ExteriorNorm
 
 end
