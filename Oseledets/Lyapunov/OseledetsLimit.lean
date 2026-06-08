@@ -3493,20 +3493,32 @@ theorem eigenvalues₀_qpow_tendsto_exp_lamSing [IsProbabilityMeasure μ] (hT : 
   rw [hlam]
   exact eigenvalues_qpow_tendsto hA i (by simpa using hx)
 
-/-!
-### BLOCKED: the eigenvalue equality `eigenvalues₀ (Λ x) i = e^{lamSing A T x i}`
+/-- **L9 — the eigenvalue equality `eigenvalues₀ (Λ x) i = e^{lamSing A T x i}`.** For `μ`-a.e. `x`
+and every sorted index `i`, the `i`-th sorted eigenvalue of the Oseledets limit `Λ x` is exactly
+`e^{lamSing A T x i}`.
 
-The remaining L9 conclusion — that the sorted eigenvalues of the Oseledets limit `Λ x` are exactly
-the exponentials of the Lyapunov exponents — requires passing the eigenvalue convergence
-`eigenvalues₀ (qpow A T n x) i → e^{lamSing i}` (`eigenvalues₀_qpow_tendsto_exp_lamSing`) through the
-matrix limit `qpow A T n x → Λ x` (`tendsto_oseledetsLimit`). That step is **continuity of the
-sorted eigenvalues `eigenvalues₀` in the Hermitian matrix** (equivalently the Weyl perturbation
-inequality `|eigenvalues₀ A i − eigenvalues₀ B i| ≤ ‖A − B‖`), which is **absent from Mathlib**
-(searched: no `Continuous … eigenvalues`, no `Weyl`, no eigenvalue Lipschitz bound; root-continuity
-of `charpoly` is likewise unavailable). The eigenvalue equality is therefore not yet provable
-sorry-free and is intentionally omitted; the self-adjointness and positive-semidefiniteness of `Λ`
-(`oseledetsLimit_isSelfAdjoint`, `oseledetsLimit_posSemidef`) and the approximant-level eigenvalue
-convergence above are delivered. -/
+This is the headline spectral statement of the Oseledets limit. The proof passes the
+approximant-level eigenvalue convergence `eigenvalues₀ (qpow A T n x) i → e^{lamSing i}`
+(`eigenvalues₀_qpow_tendsto_exp_lamSing`) through the matrix limit `qpow A T n x → Λ x`
+(`tendsto_oseledetsLimit`) using **continuity of the sorted eigenvalues `eigenvalues₀`**
+(`Weyl.tendsto_eigenvalues₀`, the new Weyl perturbation infrastructure in `ExteriorNorm.lean`):
+`eigenvalues₀ (qpow A T n x) i → eigenvalues₀ (Λ x) i`, and uniqueness of limits forces the two
+limits to agree. -/
+theorem oseledetsLimit_eigenvalues₀_eq [IsProbabilityMeasure μ] (hT : Ergodic T μ)
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
+    (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
+    ∀ᵐ x ∂μ, ∀ (hH : (oseledetsLimit A T x).IsHermitian) (i : Fin (Fintype.card (Fin d))),
+      hH.eigenvalues₀ i = Real.exp (lamSing A T x (i : ℕ)) := by
+  filter_upwards [tendsto_oseledetsLimit hT hA hAmeas hint hint',
+    eigenvalues₀_qpow_tendsto_exp_lamSing hT hA hAmeas hint hint'] with x hx hexp
+  intro hH i
+  -- the i-th sorted eigenvalue of `qpow A T n x` converges to two things:
+  -- (1) to `eigenvalues₀ (Λ x) i` by continuity (Weyl perturbation), and
+  -- (2) to `e^{lamSing i}` by `eigenvalues₀_qpow_tendsto_exp_lamSing`. Uniqueness forces equality.
+  have hcont : Tendsto (fun n : ℕ => (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ i)
+      atTop (𝓝 (hH.eigenvalues₀ i)) :=
+    Weyl.tendsto_eigenvalues₀ (fun n => (qpow_isSelfAdjoint A T n x).isHermitian) hH hx i
+  exact tendsto_nhds_unique hcont (hexp i)
 
 end Oseledets
 
