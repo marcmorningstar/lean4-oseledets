@@ -44,9 +44,21 @@ cut/gap/regime stability) and `hblog`/`hLneg` (the root-test log-limit `(1/n)log
 `tendsto_log_singularValue` two-index + `tendsto_logNorm_compound_orbit_div_atTop_zero` + the
 `bCocycle` algebra) and `hstepAE` (from `eigenvalues_qpow_tendsto`: for `c` strictly between
 two DISTINCT Lyapunov exponents `e^{λₖ₋₁} > c > e^{λₖ}`, eventually exactly `k` qpow eigenvalues
-exceed `c` and `κ²r²<1`) ⟹ UNCONDITIONAL `tendsto_bandProjector` at each distinct-exponent gap;
-then **L7d** (`qpow_n = Σⱼ e^{λⱼ}(P⁽ʲ⁾−P⁽ʲ⁺¹⁾)` spectral assembly over the gaps ⟹
-`L7_statement`), then **L8–L13** (Λ measurability via the committed CFC polynomial bypass;
+exceed `c` and `κ²r²<1`) ⟹ UNCONDITIONAL `tendsto_bandProjector` at each distinct-exponent gap.
+**L7 is now COMPLETE** (commit `da38811`): `tendsto_qpow` discharges `L7_statement` in FULL
+generality (arbitrary multiplicity) — the Oseledets limit `Λ = lim ((A⁽ⁿ⁾)ᵀA⁽ⁿ⁾)^{1/2n}` EXISTS
+a.e., sorry-free. The analytic heart of the MET is done. **REMAINING = L8–L13** (connect `Λ` to the
+target `oseledets_filtration`; the committed `Filtration.lean` limsup flag `Vflag`/`specList`/
+`lambdaSublevel` already has strict-anti + equivariance + `lambdaBar_eq_on_stratum`, so the missing
+links are): **L8** a named MEASURABLE `Λ` (extract from `tendsto_qpow`'s a.e. limit via
+`measurable_of_tendsto`); **L9** `Λ` Hermitian-PD, its eigenvalues `= e^{λᵢ}` (from
+`eigenvalues_qpow_tendsto` + continuity); **L10** measurable `V i x := range (cfc gᵢ Λ)` via the
+committed CFC polynomial bypass (`measurable_cfc_eqOn_polynomial` in `Measurable.lean`); **L11**
+`Vᵢ = lambdaSublevel` a.e. (so V inherits strict-anti/equivariance/growth from `Vflag`); **L12** the
+genuine two-sided limit `(1/n)log‖A⁽ⁿ⁾v‖ → λᵢ` on each stratum (limsup-flag gives only limsup;
+the SVD/`Λ` structure upgrades it to a limit); **L13** assemble. Spectrum/exponents made
+a.e.-constant by ergodicity (`specCard`/`specList` constant; `λᵢ = Γ`-limits).
+Legacy detail (L8–L13 also reads): Λ measurability via the committed CFC polynomial bypass;
 Λ eigen-data; `Vᵢ = lambdaSublevel` a.e.; forward limit on strata; assemble
 `oseledets_filtration`). **Practical risk:** fully-instantiated `⋀^k`-finrank statements hit
 the elaborator heartbeat ceiling — use the abstract-operator + scoped-lemma pattern.
