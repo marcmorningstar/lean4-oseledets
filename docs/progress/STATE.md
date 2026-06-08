@@ -33,13 +33,20 @@ eigenpair bridge (`plucker_eigenpair_ceiling_standard`) + Frobenius back-transpo
 coordinate bridge + frame extraction (`bandProjector_indicator_eq_frame`), the rank-1 lower
 bound (`norm_sq_compound_mul_ge`), the abstract per-step bound
 `norm_bandProjector_succ_sub_le`, and the a.e.-summability packaging
-`summable_norm_bandProjector_succ_sub`. **NEXT (resumption):** close the `hdet` frame↔Plücker
-det bridge by applying `plucker_eigenpair_ceiling_standard` with `u = gram.eigenvectorBasis`
-(so `v₀` IS the wedge of the frame columns ⟹ `det(UᵀV)=⟪v₀,vt⟫` via
-`inner_hodgeTrivialization_ιMulti`) + the subtype→`Fin k` reindex; instantiate
-`norm_bandProjector_succ_sub_le`; wire into `summable_norm_bandProjector_succ_sub` ⟹ band
-projectors converge a.e.; then **L7d** (`qpow_n = Σⱼ e^{λⱼ}(P⁽ʲ⁾−P⁽ʲ⁺¹⁾)` spectral assembly
-⟹ `L7_statement`), then **L8–L13** (Λ measurability via the committed CFC polynomial bypass;
+`summable_norm_bandProjector_succ_sub`. **L7c.3 is now COMPLETE** (commit `da6b8cc`): the
+unsorted↔sorted eigenframe reconciliation (`bandProjector_indicator_eq_sortedTopFrame`, via the
+trace-zero symmetric-idempotent device), the concrete cocycle per-step bound
+(`norm_bandProjector_succ_sub_le_cocycle`, all abstract hyps discharged), and a.e.
+band-projector convergence (`exists_tendsto_bandProjector_cocycle`) are all banked sorry-free.
+The convergence still THREADS two hypotheses to be discharged in L7d: `hstepAE` (a.e.-eventual
+cut/gap/regime stability) and `hblog`/`hLneg` (the root-test log-limit `(1/n)log bCocycle →
+λₖ−λₖ₋₁ < 0`). **NEXT (resumption):** discharge `hblog`/`hLneg` (closed form from committed
+`tendsto_log_singularValue` two-index + `tendsto_logNorm_compound_orbit_div_atTop_zero` + the
+`bCocycle` algebra) and `hstepAE` (from `eigenvalues_qpow_tendsto`: for `c` strictly between
+two DISTINCT Lyapunov exponents `e^{λₖ₋₁} > c > e^{λₖ}`, eventually exactly `k` qpow eigenvalues
+exceed `c` and `κ²r²<1`) ⟹ UNCONDITIONAL `tendsto_bandProjector` at each distinct-exponent gap;
+then **L7d** (`qpow_n = Σⱼ e^{λⱼ}(P⁽ʲ⁾−P⁽ʲ⁺¹⁾)` spectral assembly over the gaps ⟹
+`L7_statement`), then **L8–L13** (Λ measurability via the committed CFC polynomial bypass;
 Λ eigen-data; `Vᵢ = lambdaSublevel` a.e.; forward limit on strata; assemble
 `oseledets_filtration`). **Practical risk:** fully-instantiated `⋀^k`-finrank statements hit
 the elaborator heartbeat ceiling — use the abstract-operator + scoped-lemma pattern.
