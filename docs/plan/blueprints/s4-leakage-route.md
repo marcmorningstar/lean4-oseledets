@@ -1,7 +1,22 @@
 # S4 — vector-aware sharp leakage (the upper-bound crux): Route B execution plan
 
-> Verified-true route (mathematician, 400-digit numerics + Lean-API audit). This is the SOURCE OF
-> TRUTH for formalizing the per-vector growth **upper bound** `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ`.
+> Verified-true route. This is the SOURCE OF TRUTH for formalizing the per-vector growth
+> **upper bound** `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ`.
+
+## ARCHITECTURE SOUNDNESS — VERIFIED (2026-06-09, high-precision numerics)
+
+A later run claimed S4 was false / the orthogonal Λ-eigenspace filtration ≠ the growth filtration
+(a Λ-slow eigenvector would grow *fast*). **That claim is WRONG — it was based on ill-conditioned
+numerics** (low precision at large `N`: `gram_N` has condition `~e^{2N·λ_max}`, so the "slowest
+eigenvector" is roundoff garbage unless `dps ≫ 2N·λ_max/ln10`). Re-verified correctly at **dps=600,
+N=50** on a 3-block non-normal cocycle `G=diag(e³,e^{1.5},e⁰)+0.5·strict-upper`:
+* the Λ-slowest eigenvector grows at **0 = λ_min** (slow) at every scale (consistency check
+  `(1/N)log‖GⁿNv‖ ≈ 0` confirms it really is the slowest singular vector);
+* the Λ-middle eigenvector grows at **1.5 = λ_mid**.
+So **the orthogonal Λ-eigenspace filtration IS the forward growth filtration; `V_Λ = lambdaSublevel`
+a.e. (L11) holds; S4 is TRUE.** The fast-overlap decay is **block-specific** (not band-edge),
+confirmed directly: `⟪v_slow, u_fast(n)⟩ → −3 = λ_min−λ₀`, `⟪v_slow, u_mid(n)⟩ → −1.5 = λ_min−λ₁`.
+The handle route below is therefore correct. (Scripts: `/tmp/lyap_check2.py`, `/tmp/lyap_overlap.py`.)
 
 ## The crux S4 (= (A′))
 

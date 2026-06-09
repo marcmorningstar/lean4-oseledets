@@ -24,7 +24,10 @@ entirely to the crux lemma S4 (= (A′)):**
 > `c > e^{λᵢ}`), and `cₘ` straddling block m−1/m with `1 ≤ m ≤ i`:
 > `limsup (1/n) log ‖Pᶜᵐₙ v‖ ≤ λᵢ − λₘ₋₁`.
 
-S4 is **VERIFIED TRUE** (mathematician, 400-digit numerics on real product cocycles). It is a
+S4 is **VERIFIED TRUE** (high-precision numerics, dps=600/N=50, re-confirmed 2026-06-09 after a
+flawed low-precision run wrongly claimed it false — see `s4-leakage-route.md` soundness note: the
+Λ-eigenspace filtration **is** the growth filtration, `V_Λ = lambdaSublevel` holds, and the fast
+overlap `⟪v,uⱼ⟩` decays **block-specifically** at `λᵢ−λⱼ`, NOT band-edge). It is a
 *vector-aware* (sharp) Davis–Kahan leakage rate, strictly sharper than the operator-norm projector
 rate `λₘ−λₘ₋₁` (the gap `λₘ−λᵢ` is the gain from `v` being in a deep slow block). **Two traps
 confirmed (do NOT take them):** (i) the Abel-summation route with the operator-norm rate is BROKEN
