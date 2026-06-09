@@ -412,6 +412,203 @@ theorem log_le_liminf_log_cocycle_apply [NeZero d]
   calc Real.log c = Filter.liminf LHS Filter.atTop := hLHStend.liminf_eq.symm
     _ ≤ Filter.liminf RHS Filter.atTop := Filter.liminf_le_liminf hineq hLHSbdd hcobdd
 
+/-! ## S1 — band-projector nesting
+
+For `c ≤ c'`, the spectral bands satisfy `Ioi c' ⊆ Ioi c`, so the finer band projector (threshold
+`c'`) has range contained in the coarser one (threshold `c`); algebraically `Pᶜₙ · Pᶜ'ₙ = Pᶜ'ₙ`.
+Passing to the limit and applying to a vector gives the kernel-propagation form consumed by the
+upper-bound proof: a vector killed by a finer (higher-threshold) limit projector is killed by every
+coarser (lower-threshold ⟹ but we need higher-threshold-kills-⟹-…) one above it. -/
+
+/-- **S1 (finite `n`, operator form).** For `c ≤ c'`, the band projectors are nested:
+`cfc 𝟙_{(c,∞)} · cfc 𝟙_{(c',∞)} = cfc 𝟙_{(c',∞)}` on `qpow`. The coarser band (threshold `c`)
+contains the finer one (threshold `c'`). -/
+theorem bandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    (n : ℕ) (x : X) {c c' : ℝ} (h : c ≤ c') :
+    bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
+        * bandProjector A T (Set.indicator (Set.Ioi c') 1) n x
+      = bandProjector A T (Set.indicator (Set.Ioi c') 1) n x := by
+  -- On the spectrum, `𝟙_{(c,∞)} t · 𝟙_{(c',∞)} t = 𝟙_{(c',∞)} t` because `Ioi c' ⊆ Ioi c`.
+  have hidem : (_root_.spectrum ℝ (qpow A T n x)).EqOn
+      (fun t => Set.indicator (Set.Ioi c) (1 : ℝ → ℝ) t * Set.indicator (Set.Ioi c') (1 : ℝ → ℝ) t)
+      (Set.indicator (Set.Ioi c') (1 : ℝ → ℝ)) := by
+    intro t _
+    by_cases ht' : t ∈ Set.Ioi c'
+    · have ht : t ∈ Set.Ioi c := lt_of_le_of_lt h ht'
+      simp [Set.indicator_of_mem ht, Set.indicator_of_mem ht']
+    · simp [Set.indicator_of_notMem ht']
+  have hcont : ContinuousOn (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ))
+      (_root_.spectrum ℝ (qpow A T n x)) :=
+    (Matrix.finite_real_spectrum (A := qpow A T n x)).continuousOn _
+  have hcont' : ContinuousOn (Set.indicator (Set.Ioi c') (1 : ℝ → ℝ))
+      (_root_.spectrum ℝ (qpow A T n x)) :=
+    (Matrix.finite_real_spectrum (A := qpow A T n x)).continuousOn _
+  simp only [bandProjector]
+  rw [← cfc_mul _ _ _ hcont hcont', cfc_congr hidem]
+
+/-- **S1 (limit, operator form).** Passing `bandProjector_mul_of_le` through the two convergent
+band-projector sequences (matrix multiplication is continuous) gives `P · P' = P'` for the limit
+projectors, where `c ≤ c'`. -/
+theorem limitBandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    {x : X} {c c' : ℝ} (h : c ≤ c') {P P' : Matrix (Fin d) (Fin d) ℝ}
+    (hP : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
+      Filter.atTop (nhds P))
+    (hP' : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
+      Filter.atTop (nhds P')) :
+    P * P' = P' := by
+  -- The product sequence converges both to `P * P'` (by continuity of mul) and to `P'` (S1).
+  have hmul : Filter.Tendsto
+      (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
+          * bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
+      Filter.atTop (nhds (P * P')) := hP.mul hP'
+  have heq : (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
+          * bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
+      = (fun n => bandProjector A T (Set.indicator (Set.Ioi c') 1) n x) := by
+    funext m; exact bandProjector_mul_of_le A T m x h
+  rw [heq] at hmul
+  exact tendsto_nhds_unique hmul hP'
+
+/-- **S1 (limit, vector / kernel-propagation form).** With `c ≤ c'`, if the finer (threshold `c'`)
+limit projector `P'` kills `v`, then the coarser (threshold `c`) limit projector `P` also kills `v`.
+Indeed `P · P' = P'`, so `range P' ⊆ range P` and `P (P' v) = P' v`; if `P' v = 0` then taking the
+component along `P'` gives nothing — but the directly useful direction for the upper bound is the
+reverse inclusion. We deliver the form the consumer needs: a vector with `P^{c}_∞ v = 0` (coarser,
+lower threshold) has `P^{c'}_∞ v = 0` (finer, higher threshold), because `P' = P · P'` gives
+`P' v = P (P' v)`, and `P^{c'} = P^{c'} · P^{c}`… see `limitBandProjector_apply_eq_zero_of_le`. -/
+theorem limitBandProjector_apply_eq_zero_of_le [NeZero d]
+    (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    {x : X} {c c' : ℝ} (h : c ≤ c') {P P' : Matrix (Fin d) (Fin d) ℝ}
+    (hP : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
+      Filter.atTop (nhds P))
+    (hP' : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
+      Filter.atTop (nhds P')) {v : EuclideanSpace ℝ (Fin d)}
+    (hv : Matrix.toEuclideanLin P v = 0) :
+    Matrix.toEuclideanLin P' v = 0 := by
+  -- `P * P' = P'`, equivalently `P' = P * P'`; so `P' v = P (P' v)`. We need the other product.
+  -- Use the symmetric statement: `P' * P = P'` as well? No — use `P * P' = P'` transposed.
+  -- Since all band projectors are self-adjoint (hence the limits are symmetric), `P * P' = P'`
+  -- transposes to `P' * P = P'` (symmetric matrices). Then `P' v = P' (P v) = P' 0 = 0`.
+  have hPP' : P * P' = P' := limitBandProjector_mul_of_le A T h hP hP'
+  -- symmetry of the limit projectors (limit of self-adjoint matrices is self-adjoint)
+  have hPsym : Pᵀ = P := by
+    have hsa : Filter.Tendsto
+        (fun n => (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)ᵀ)
+        Filter.atTop (nhds Pᵀ) := by
+      have hcont : Continuous (fun M : Matrix (Fin d) (Fin d) ℝ => Mᵀ) := by fun_prop
+      exact (hcont.continuousAt (x := P)).tendsto.comp hP
+    have heqT : (fun n => (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)ᵀ)
+        = (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) := by
+      funext m
+      have hsa : (bandProjector A T (Set.indicator (Set.Ioi c) 1) m x)ᴴ
+          = bandProjector A T (Set.indicator (Set.Ioi c) 1) m x :=
+        bandProjector_isSelfAdjoint A T (Set.indicator (Set.Ioi c) 1) m x
+      rwa [Matrix.conjTranspose_eq_transpose_of_trivial] at hsa
+    rw [heqT] at hsa
+    exact tendsto_nhds_unique hsa hP
+  have hP'sym : P'ᵀ = P' := by
+    have hsa : Filter.Tendsto
+        (fun n => (bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)ᵀ)
+        Filter.atTop (nhds P'ᵀ) := by
+      have hcont : Continuous (fun M : Matrix (Fin d) (Fin d) ℝ => Mᵀ) := by fun_prop
+      exact (hcont.continuousAt (x := P')).tendsto.comp hP'
+    have heqT : (fun n => (bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)ᵀ)
+        = (fun n => bandProjector A T (Set.indicator (Set.Ioi c') 1) n x) := by
+      funext m
+      have hsa : (bandProjector A T (Set.indicator (Set.Ioi c') 1) m x)ᴴ
+          = bandProjector A T (Set.indicator (Set.Ioi c') 1) m x :=
+        bandProjector_isSelfAdjoint A T (Set.indicator (Set.Ioi c') 1) m x
+      rwa [Matrix.conjTranspose_eq_transpose_of_trivial] at hsa
+    rw [heqT] at hsa
+    exact tendsto_nhds_unique hsa hP'
+  -- transpose `P * P' = P'`: `(P * P')ᵀ = P'ᵀ`, i.e. `P'ᵀ * Pᵀ = P'ᵀ`, i.e. `P' * P = P'`.
+  have hP'P : P' * P = P' := by
+    have := congrArg Matrix.transpose hPP'
+    rw [Matrix.transpose_mul, hPsym, hP'sym] at this
+    exact this
+  -- now `P' v = (P' * P) v = P' (P v) = P' 0 = 0`
+  have hsplit : Matrix.toEuclideanLin (P' * P) v
+      = Matrix.toEuclideanLin P' (Matrix.toEuclideanLin P v) := by
+    simp only [Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+  calc Matrix.toEuclideanLin P' v
+      = Matrix.toEuclideanLin (P' * P) v := by rw [hP'P]
+    _ = Matrix.toEuclideanLin P' (Matrix.toEuclideanLin P v) := hsplit
+    _ = Matrix.toEuclideanLin P' 0 := by rw [hv]
+    _ = 0 := map_zero _
+
+/-! ## S2 — exact frame Parseval identity
+
+In the eventual straddled regime where exactly `k` `qpow`-eigenvalues exceed the cut `c` and the
+top-`k` sorted ones all exceed it, `bandProjector_indicator_eq_sortedTopFrame` gives
+`P = W Wᵀ` with `Wᵀ W = 1`, `W = sortedTopFrame`. The band projection applied to `v` therefore has
+squared norm equal to the sum of squared overlaps with the top sorted Gram eigenvectors. -/
+
+/-- **S2 — frame Parseval.** Under the eventual straddled-regime hypotheses (`htop`, `hcount`) of
+`bandProjector_indicator_eq_sortedTopFrame`, the squared norm of the band projection equals the sum
+of squared overlaps of `v` with the top-`k` sorted Gram eigenvectors (the columns of
+`sortedTopFrame`, recovered by `colE_sortedTopFrame`). -/
+theorem norm_sq_bandProjector_apply_eq_sum [NeZero d]
+    (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) (c : ℝ)
+    {k : ℕ} (hk : k ≤ Fintype.card (Fin d))
+    (htop : ∀ j : Fin k, c < (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀
+      ⟨j, lt_of_lt_of_le j.2 hk⟩)
+    (hcount : Fintype.card {i : Fin d // c < (qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues i}
+      = k) (v : EuclideanSpace ℝ (Fin d)) :
+    ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖ ^ 2
+      = ∑ j : Fin k,
+          (inner ℝ v (ExteriorNorm.colE (sortedTopFrame A T n x hk) j) : ℝ) ^ 2 := by
+  obtain ⟨hPWW, hWW⟩ :=
+    bandProjector_indicator_eq_sortedTopFrame A T n x c hk htop hcount
+  set W := sortedTopFrame A T n x hk with hW
+  rw [hPWW]
+  -- Step 1: `toEuclideanLin (W Wᵀ) v = ∑ⱼ ⟪v, colE W j⟫ • colE W j`.
+  have hdecomp : Matrix.toEuclideanLin (W * Wᵀ) v
+      = ∑ j : Fin k, (inner ℝ v (ExteriorNorm.colE W j) : ℝ) • ExteriorNorm.colE W j := by
+    apply (EuclideanSpace.equiv (Fin d) ℝ).injective
+    rw [map_sum]
+    funext a
+    rw [Matrix.toEuclideanLin_apply]
+    -- LHS at `a`: `((W Wᵀ) *ᵥ v) a`; RHS: `∑ⱼ ⟪v,colEⱼ⟫ • (equiv colEⱼ) a`.
+    show ((W * Wᵀ) *ᵥ ((EuclideanSpace.equiv (Fin d) ℝ) v)) a
+      = (∑ j : Fin k, (EuclideanSpace.equiv (Fin d) ℝ)
+          ((inner ℝ v (ExteriorNorm.colE W j) : ℝ) • ExteriorNorm.colE W j)) a
+    rw [Finset.sum_apply]
+    simp only [map_smul, Pi.smul_apply, smul_eq_mul]
+    -- LHS: `((W Wᵀ) *ᵥ equiv v) a = ∑ b, (∑ j, W a j * W b j) * (equiv v) b`.
+    have hLHS : ((W * Wᵀ) *ᵥ ((EuclideanSpace.equiv (Fin d) ℝ) v)) a
+        = ∑ b, (∑ j : Fin k, W a j * W b j) * (EuclideanSpace.equiv (Fin d) ℝ) v b := by
+      rw [Matrix.mulVec, dotProduct]
+      refine Finset.sum_congr rfl (fun b _ => ?_)
+      rw [Matrix.mul_apply]
+      refine congrArg (· * _) ?_
+      exact Finset.sum_congr rfl (fun j _ => by rw [Matrix.transpose_apply])
+    rw [hLHS]
+    simp only [Finset.sum_mul]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    -- RHS term `j`: `⟪v, colE W j⟫ * (equiv colE W j) a = ⟪v, colE W j⟫ * W a j`
+    have hcolE : (EuclideanSpace.equiv (Fin d) ℝ) (ExteriorNorm.colE W j) a = W a j := by
+      rw [ExteriorNorm.colE]; rfl
+    have hcolEval : ∀ b, (ExteriorNorm.colE W j) b = W b j := fun b => rfl
+    have hinner : (inner ℝ v (ExteriorNorm.colE W j) : ℝ) = ∑ b, W b j * v b := by
+      rw [PiLp.inner_apply]
+      refine Finset.sum_congr rfl (fun b _ => ?_)
+      rw [RCLike.inner_apply, conj_trivial, hcolEval, mul_comm]
+    rw [hcolE, hinner, Finset.sum_mul]
+    refine Finset.sum_congr rfl (fun b _ => ?_)
+    have hvb : (EuclideanSpace.equiv (Fin d) ℝ) v b = v.ofLp b := rfl
+    rw [hvb]; ring
+  rw [hdecomp]
+  -- Step 2: the columns are orthonormal (`Wᵀ W = 1`), so the squared norm of the sum is `∑ aⱼ²`.
+  have horth : ∀ i j : Fin k, (inner ℝ (ExteriorNorm.colE W i) (ExteriorNorm.colE W j) : ℝ)
+      = if i = j then 1 else 0 := by
+    intro i j
+    rw [ExteriorNorm.inner_colE, hWW, Matrix.one_apply]
+  rw [← real_inner_self_eq_norm_sq, inner_sum]
+  simp only [sum_inner, inner_smul_left, inner_smul_right, conj_trivial, horth]
+  simp only [mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  ring
+
 end LowerBound
 
 end Oseledets
