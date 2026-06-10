@@ -6,9 +6,11 @@ multiplicative ergodic theorem (MET)**. It is a single-purpose Lean project
 
 ## Status
 
-Freshly scaffolded skeleton. The `Oseledets` library builds an empty shell —
-no mathematical content yet. Build it to confirm the toolchain and Mathlib
-dependency are wired up correctly, then grow the formalization from here.
+**COMPLETE.** The target theorem `Oseledets.oseledets_filtration`
+(`Oseledets/MultiplicativeErgodic.lean`) is fully proved: the library builds
+sorry-free and the axiom audit prints exactly
+`[propext, Classical.choice, Quot.sound]`. See `docs/progress/STATE.md` for
+the final composition and the development history.
 
 ## Layout
 

@@ -7,8 +7,25 @@
 > `docs/plan/blueprints/m4-kingman-v2.md` + `docs/research/scratch/m4-L9-notes.md`.
 > Charter: `PROMPT.md`.
 
-_Last updated: 2026-06-09 (endgame phase: per-vector exact growth reduced to the
-verified S4 crux; foundations committed at `4812bd5`)._
+_Last updated: 2026-06-10 (**THE THEOREM IS PROVED** — `oseledets_filtration` closed at
+commit `6cc38a7`; axioms exactly `[propext, Classical.choice, Quot.sound]`; full library
+builds sorry-free, 2933 jobs)._
+
+## ✅ COMPLETE (2026-06-10): the MET is fully formalized
+
+`Oseledets.oseledets_filtration` in `Oseledets/MultiplicativeErgodic.lean` is proved, sorry-free,
+with axiom audit exactly `[propext, Classical.choice, Quot.sound]` (printed during the build).
+Final composition: `d = 0` via `oseledets_filtration_dim_zero` (AssemblyChain.lean); `d > 0` via
+`oseledets_filtration_of_topgap` (AssemblyTopGap.lean) fed by `topGapMassEnvelope_ae`
+(TopGapEnvelope.lean — the last analytic node, Ruelle Publ. IHES 50 Lemma 1.4 step 2, proved by
+per-stratum strong induction with δ-dependent canonical cuts; see the module header for the
+single-η budget and the design notes). Key final-phase commits: `f40b311` (chain engine +
+refutation of the arbitrary-cut envelope), `4848068` (`forward_graded_overlap'` + strict
+gap-interior `TopGapMassEnvelope`), `3f0cc97` (assembly pre-stage), `6cc38a7` (envelope proved +
+sorry closed; import cycle resolved by dropping the statement-shape-only `MultiplicativeErgodic`
+imports from AssemblyTopGap/AssemblyChain/FiltrationAssembly).
+
+Historical state below (kept for the record).
 
 ## ENDGAME STRUCTURE (2026-06-09) — the target reduced to ONE crux lemma
 
