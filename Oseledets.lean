@@ -44,6 +44,7 @@ import Oseledets.Lyapunov.ForwardGradedOverlap
 import Oseledets.Lyapunov.BridgeWiring
 import Oseledets.Lyapunov.AssemblyChain
 import Oseledets.Lyapunov.ChainRecursion
+import Oseledets.Lyapunov.ForwardGradedOverlapTopGap
 
 /-!
 # Oseledets
