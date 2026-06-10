@@ -25,6 +25,7 @@ import Oseledets.Lyapunov.ForwardV
 import Oseledets.Lyapunov.SpectralMeasurable
 import Oseledets.MultiplicativeErgodic
 import Oseledets.Lyapunov.FiltrationAssembly
+import Oseledets.Lyapunov.FiltrationAssemblyBridge
 
 /-!
 # Oseledets
