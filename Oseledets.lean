@@ -32,6 +32,7 @@ import Oseledets.Lyapunov.SlowFlagBridge
 import Oseledets.Lyapunov.SpectrumConstancy
 import Oseledets.Lyapunov.RuelleCore
 import Oseledets.Lyapunov.ForwardLowerWiring
+import Oseledets.Lyapunov.AssemblyFromUpper
 
 /-!
 # Oseledets
