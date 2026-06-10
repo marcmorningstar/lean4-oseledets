@@ -37,6 +37,8 @@ import Oseledets.Lyapunov.CapstoneTelescope
 import Oseledets.Lyapunov.SpectrumResiduals
 import Oseledets.Lyapunov.RuelleReverse
 import Oseledets.Lyapunov.CapstoneWiring
+import Oseledets.Lyapunov.LimitEigenbasis
+import Oseledets.Lyapunov.AssemblyFromUpperIdent
 
 /-!
 # Oseledets
