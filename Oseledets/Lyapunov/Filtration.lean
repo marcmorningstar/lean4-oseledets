@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.GrowthFunction
 import Mathlib.Data.Finset.Sort
 import Mathlib.Order.Fin.Basic
@@ -5,9 +10,8 @@ import Mathlib.Order.Fin.Basic
 /-!
 # The limsup flag (Lyapunov filtration)
 
-This module (blueprint `lyapunov-to-target.md` §3, layer `L4.4`) builds, at each point `x`,
-the **limsup flag** associated to the upper Lyapunov growth function `lambdaBar A T x` of
-`Oseledets.Lyapunov.GrowthFunction`.
+This module builds, at each point `x`, the **limsup flag** associated to the upper Lyapunov
+growth function `lambdaBar A T x` of `Oseledets.Lyapunov.GrowthFunction`.
 
 For a.e. `x` the function `lambdaBar A T x` is an `IsUltrametricGrowth` function
 (`isUltrametricGrowth_lambdaBar`); its values on nonzero vectors then form a finite set
@@ -23,7 +27,7 @@ All objects are defined **totally** (with a `⊥`/`∅` junk value off the a.e. 
 `lambdaBar A T x` is `IsUltrametricGrowth`), so the structural theorems carry an explicit
 hypothesis `hx : IsUltrametricGrowth (lambdaBar A T x)`.
 
-Main results:
+## Main results
 
 * `spectrum`, `specCard`, `specList` — the finite, descending limsup spectrum;
 * `Vflag` — the limsup flag, indexed by `Fin (specCard A T x + 1)`;
@@ -32,8 +36,6 @@ Main results:
 * `lambdaBar_eq_on_stratum` — on each stratum `lambdaBar` equals the exact exponent `λᵢ`;
 * `spectrum_equivariant_ae` / `Vflag_equivariant` — `A`-equivariance of the spectrum and the
   flag, a.e. in `x`.
-
-Reference: Oseledets MET, limsup flag, blueprint §3.
 -/
 
 open MeasureTheory Filter Topology
@@ -41,9 +43,7 @@ open scoped Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X} {d : ℕ}
+variable {X : Type*} {T : X → X} {d : ℕ}
 
 /-! ### The limsup spectrum -/
 
@@ -130,7 +130,8 @@ hypothesis), for a nonzero vector. -/
 theorem mem_Vflag {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x)) {j : Fin (specCard A T x + 1)}
     {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) :
-    v ∈ Vflag A T x j ↔ ∃ h : (j : ℕ) < specCard A T x, lambdaBar A T x v ≤ specList A T x ⟨j, h⟩ := by
+    v ∈ Vflag A T x j ↔
+      ∃ h : (j : ℕ) < specCard A T x, lambdaBar A T x v ≤ specList A T x ⟨j, h⟩ := by
   by_cases h : (j : ℕ) < specCard A T x
   · rw [Vflag_of_lt h, mem_lambdaSublevel hx]
     constructor
@@ -144,7 +145,7 @@ theorem mem_Vflag {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
 
 /-! ### Extremal levels -/
 
-/-- **L4.4 (a).** The top level of the flag is everything. -/
+/-- The top level of the flag is everything. -/
 theorem Vflag_zero {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x)) : Vflag A T x 0 = ⊤ := by
   rw [eq_top_iff]
@@ -166,7 +167,7 @@ theorem Vflag_zero {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     rw [hmax]
     exact Finset.le_max' _ _ hmem
 
-/-- **L4.4 (a).** The bottom level of the flag is trivial. -/
+/-- The bottom level of the flag is trivial. -/
 theorem Vflag_last (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) :
     Vflag A T x (Fin.last (specCard A T x)) = ⊥ := by
   rw [Vflag, dif_neg]
@@ -182,7 +183,8 @@ private theorem exists_witness {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
 
 /-- The successor index, as a member of `Fin (specCard A T x)`, when it stays interior. -/
 private theorem succ_lt_specList {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
-    (i : Fin (specCard A T x)) (hsucc : ((i.succ : Fin (specCard A T x + 1)) : ℕ) < specCard A T x) :
+    (i : Fin (specCard A T x))
+    (hsucc : ((i.succ : Fin (specCard A T x + 1)) : ℕ) < specCard A T x) :
     specList A T x ⟨(i.succ : Fin (specCard A T x + 1)), hsucc⟩ < specList A T x i := by
   refine specList_strictAnti A T x ?_
   -- `i < ⟨i.val + 1, _⟩` in `Fin (specCard A T x)`.
@@ -191,7 +193,7 @@ private theorem succ_lt_specList {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     omega
   exact this
 
-/-- **L4.4 (b).** Strict decrease of the flag. -/
+/-- Strict decrease of the flag. -/
 theorem Vflag_strictAnti {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x)) (i : Fin (specCard A T x)) :
     Vflag A T x i.succ < Vflag A T x i.castSucc := by
@@ -226,8 +228,7 @@ theorem Vflag_strictAnti {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     rw [hwval] at hle
     exact absurd hle (not_le.mpr (succ_lt_specList i hsucc))
 
-/-- **L4.4 (c).** On the stratum between consecutive levels, `lambdaBar` equals the exact
-exponent `λᵢ`. -/
+/-- On the stratum between consecutive levels, `lambdaBar` equals the exact exponent `λᵢ`. -/
 theorem lambdaBar_eq_on_stratum {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x)) (i : Fin (specCard A T x))
     {v : EuclideanSpace ℝ (Fin d)} (hmem : v ∈ Vflag A T x i.castSucc)
@@ -311,9 +312,11 @@ private theorem Aclm_ne_zero {A : X → Matrix (Fin d) (Fin d) ℝ}
   rw [h, map_zero] at this
   exact this.symm
 
-/-- **`A`-equivariance of the spectrum (a.e.).** For a.e. `x`, `spectrum A T x = spectrum A T (T x)`,
-hence `specCard` and `specList` agree (the latter as indexed functions over `Fin (specCard …)`).
--/
+variable [MeasurableSpace X] {μ : Measure X}
+
+/-- **`A`-equivariance of the spectrum (a.e.).** For a.e. `x`,
+`spectrum A T x = spectrum A T (T x)`, hence `specCard` and `specList` agree (the latter as
+indexed functions over `Fin (specCard …)`). -/
 theorem spectrum_equivariant_ae
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -349,16 +352,18 @@ theorem spectrum_equivariant_ae
       congr 1
       exact Aclm_inv_right hA x w
 
-/-- **L4.4 (d) — `A`-equivariance of the flag (a.e.).** For a.e. `x`, the action of `A x` maps
-each flag level at `x` onto the corresponding level at `T x` (the indices transport via the
-a.e. equality `spectrum A T x = spectrum A T (T x)`, which makes `specCard A T x = specCard A T (T x)`
-and `specList A T x = specList A T (T x)` after that rewrite). -/
+/-- **`A`-equivariance of the flag (a.e.).** For a.e. `x`, the action of `A x` maps each flag
+level at `x` onto the corresponding level at `T x` (the indices transport via the a.e.
+equality `spectrum A T x = spectrum A T (T x)`, which makes
+`specCard A T x = specCard A T (T x)` and `specList A T x = specList A T (T x)` after that
+rewrite). -/
 theorem Vflag_equivariant
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
     ∀ᵐ x ∂μ, ∀ t : ℝ,
-      Submodule.map (Aclm A x).toLinearMap (lambdaSublevel A T x t) = lambdaSublevel A T (T x) t := by
+      Submodule.map (Aclm A x).toLinearMap (lambdaSublevel A T x t) =
+        lambdaSublevel A T (T x) t := by
   filter_upwards [lambdaBar_equivariant_ae hT hA hAmeas hint hint',
     isUltrametricGrowth_lambdaBar hT hA hAmeas hint hint',
     hT.toMeasurePreserving.quasiMeasurePreserving.ae

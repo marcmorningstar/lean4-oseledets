@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.ForwardV
 import Oseledets.Lyapunov.SpectrumResiduals
 
@@ -10,13 +15,13 @@ consistently with `Matrix.IsHermitian.eigenvalues₀`.
 
 ## Main results
 
-* `limitEigenbasis` (D1) — the sorted orthonormal eigenbasis of `lambdaHat A T x`.
-* `limitEigenbasis_eigenpair` (D2) — the everywhere eigenpair identity, with eigenvalue
+* `limitEigenbasis` — the sorted orthonormal eigenbasis of `lambdaHat A T x`.
+* `limitEigenbasis_eigenpair` — the everywhere eigenpair identity, with eigenvalue
   `eigenvalues₀ ⟨e, …⟩`.
-* `limitEigenbasis_eigenpair_exp` (D3) — a.e. the eigenvalue is `Real.exp (lamSing A T x e)`.
-* `inner_limitEigenbasis_eq_zero_of_slow` (D4) — a.e., a sorted eigenvector is orthogonal to the
+* `limitEigenbasis_eigenpair_exp` — a.e. the eigenvalue is `Real.exp (lamSing A T x e)`.
+* `inner_limitEigenbasis_eq_zero_of_slow` — a.e., a sorted eigenvector is orthogonal to the
   slow subspace `Vslow A T (exp t) x` whenever its exponent strictly exceeds `t`.
-* `abs_inner_le_one_bases` (D5) — the trivial Cauchy–Schwarz bound for orthonormal bases.
+* `abs_inner_le_one_bases` — the trivial Cauchy–Schwarz bound for orthonormal bases.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -24,11 +29,9 @@ open scoped Matrix
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
 variable {X : Type*} [MeasurableSpace X] {μ : MeasureTheory.Measure X} {d : ℕ} {T : X → X}
 
-/-! ### D1 — the sorted limit eigenbasis -/
+/-! ### The sorted limit eigenbasis -/
 
 /-- **The sorted limit eigenbasis.**  The orthonormal eigenbasis of the everywhere self-adjoint
 sanitized limit `lambdaHat A T x`, reindexed by `Fin d` so that `limitEigenbasis A T x e` has
@@ -42,7 +45,7 @@ noncomputable def limitEigenbasis [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
     (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm).reindex
     (finCongr (Fintype.card_fin d)))
 
-/-! ### D2 — the everywhere eigenpair -/
+/-! ### The everywhere eigenpair -/
 
 /-- **The everywhere eigenpair.**  `limitEigenbasis A T x e` is an eigenvector of
 `toEuclideanLin (lambdaHat A T x)` with eigenvalue the sorted eigenvalue
@@ -51,7 +54,8 @@ theorem limitEigenbasis_eigenpair [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
     (e : Fin d) :
     Matrix.toEuclideanLin (lambdaHat A T x) (limitEigenbasis A T x e)
       = ((lambdaHat_isSelfAdjoint A T x).isHermitian.eigenvalues₀
-          ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩) • limitEigenbasis A T x e := by
+          ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩) •
+        limitEigenbasis A T x e := by
   set hM := (lambdaHat_isSelfAdjoint A T x).isHermitian with hMdef
   set e₁ : Fin d ≃ Fin (Fintype.card (Fin d)) :=
     (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm with he₁
@@ -73,9 +77,9 @@ theorem limitEigenbasis_eigenpair [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
       ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))) idx) = idx
     simp [Equiv.symm_apply_apply]
   rw [hidx] at hval
-  rw [← hval, Matrix.toEuclideanLin_apply, hM.mulVec_eigenvectorBasis]; rfl
+  rw [← hval, Matrix.toLpLin_apply, hM.mulVec_eigenvectorBasis]; rfl
 
-/-! ### D3 — a.e. eigenvalue identification as `exp (lamSing)` -/
+/-! ### Almost-everywhere eigenvalue identification as `exp (lamSing)` -/
 
 /-- **A.e. eigenvalue identification.**  On the a.e. set where the Oseledets limit is Hermitian,
 `lambdaHat = oseledetsLimit`, and the sorted eigenvalue equals `Real.exp (lamSing A T x e)`. -/
@@ -107,7 +111,7 @@ theorem limitEigenbasis_eigenpair_exp [MeasureTheory.IsProbabilityMeasure μ] [N
   rw [limitEigenbasis_eigenpair, hHeq,
     heig hH ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩]
 
-/-! ### D5 — the trivial Cauchy–Schwarz bound -/
+/-! ### The Cauchy–Schwarz bound for orthonormal bases -/
 
 /-- **The trivial inner-product bound between two orthonormal bases.**  `|⟪b₁ i, b₂ j⟫| ≤ 1`
 by Cauchy–Schwarz and the unit norms of orthonormal-basis vectors. -/
@@ -119,7 +123,7 @@ theorem abs_inner_le_one_bases (b₁ b₂ : OrthonormalBasis (Fin d) ℝ (Euclid
   rw [b₁.orthonormal.1 i, b₂.orthonormal.1 j, mul_one] at hcs
   exact hcs
 
-/-! ### D4 — slow orthogonality (the key consumer-facing lemma) -/
+/-! ### Orthogonality to the slow subspace -/
 
 /-- **Slow orthogonality.**  A.e., a sorted limit eigenvector `limitEigenbasis A T x e` whose
 exponent `lam0 e` strictly exceeds the cutoff `t` is orthogonal to every vector in the slow subspace
@@ -169,8 +173,9 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
     have hind : Set.indicator (Set.Iic (Real.exp t)) (1 : ℝ → ℝ)
         (Real.exp (lamSing A T x (e : ℕ))) = 0 :=
       Set.indicator_of_notMem (by simp only [Set.mem_Iic, not_le]; exact hgt) _
-    -- Apply the cfc-on-eigenvector lemma, using that `b` IS an eigenvector basis vector of lambdaHat.
-    -- Reduce `b` to the underlying `eigenvectorBasis` index and use `toEuclideanLin_cfc_eigenvectorBasis`.
+    -- Apply the cfc-on-eigenvector lemma, using that `b` is an eigenvector basis vector of
+    -- `lambdaHat`: reduce `b` to the underlying `eigenvectorBasis` index and use
+    -- `toEuclideanLin_cfc_eigenvectorBasis`.
     set hM := (lambdaHat_isSelfAdjoint A T x).isHermitian with hMdef
     set e₁ : Fin d ≃ Fin (Fintype.card (Fin d)) :=
       (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm with he₁
@@ -186,7 +191,8 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
       apply Fin.ext; rw [hidxdef, finCongr_symm_apply_coe]
     have hvaleq : hM.eigenvalues (e₁.symm idx)
         = Real.exp (lamSing A T x (e : ℕ)) := by
-      -- `eigenvalues (e₁.symm idx) = eigenvalues₀ idx`, and the eigenpair pins this to `exp (lamSing)`.
+      -- `eigenvalues (e₁.symm idx) = eigenvalues₀ idx`, and the eigenpair pins this to
+      -- `exp (lamSing)`.
       have h1 : hM.eigenvalues (e₁.symm idx) = hM.eigenvalues₀ idx := by
         rw [Matrix.IsHermitian.eigenvalues, he₁]
         congr 1
@@ -211,11 +217,5 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
     conv_lhs => rw [← hPv, hcoe]
     exact (hsa.isSymmetric.apply_clm b v).symm
   rw [hmove, ← hcoe, hPb, inner_zero_left]
-
-#print axioms limitEigenbasis
-#print axioms limitEigenbasis_eigenpair
-#print axioms limitEigenbasis_eigenpair_exp
-#print axioms abs_inner_le_one_bases
-#print axioms inner_limitEigenbasis_eq_zero_of_slow
 
 end Oseledets

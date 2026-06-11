@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Ergodic.MaximalErgodic
 import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
 import Mathlib.MeasureTheory.MeasurableSpace.Invariants
@@ -12,25 +17,27 @@ import Mathlib.MeasureTheory.Measure.QuasiMeasurePreserving
 /-!
 # The pointwise (Birkhoff) ergodic theorem
 
-The individual/pointwise ergodic theorem (layer `L1.3` / milestone `M3`) — `a.e.`
-convergence of the Birkhoff averages to the conditional expectation onto the invariant
-σ-algebra — is **absent** from Mathlib (only the L² von Neumann *mean* ergodic theorem
-exists). It is the bottom gate of the whole development.
+The individual (pointwise) ergodic theorem: for a measure-preserving map `T` of a finite
+measure space and an integrable `g`, the Birkhoff averages `birkhoffAverage ℝ T g n x`
+converge almost everywhere to the conditional expectation of `g` onto the σ-algebra of
+`T`-invariant sets. The proof combines the maximal ergodic inequality
+(`Oseledets.Ergodic.MaximalErgodic`), a Borel–Cantelli tail estimate for the orbital
+values of an integrable function, and the conditional-expectation API.
 
-This file also states the supporting commutation lemma `M2` (`condExp` commutes with a
+This file also proves the supporting commutation lemma (`condExp` commutes with a
 measure-preserving composition) and the ergodic corollary (the limit is the space
-average `∫ g dμ`).
+average `∫ g ∂μ`).
 
-## Status
+## Main results
 
-* `condExp_invariants_comp` (`M2`) — **proved**.
-* `tendsto_birkhoffAverage_ae` (`M3`) — **proved** for `[IsFiniteMeasure μ]` (the regime
-  in which the statement holds): the genuine pointwise Birkhoff theorem, via the maximal
-  ergodic inequality `M1`, a Borel–Cantelli tail estimate, and the `condExp` substrate.
-  The finiteness hypothesis is necessary (see the theorem docstring); the Oseledets MET
-  uses this only for probability measures.
-* `tendsto_birkhoffAverage_ae_integral` (ergodic corollary, probability measure) —
-  **proved**.
+* `Oseledets.condExp_invariants_comp`: the conditional expectation onto the invariant
+  σ-algebra commutes with composition by the measure-preserving map.
+* `Oseledets.ae_tendsto_orbit_div_atTop_zero`: for integrable `g`, the orbital tail
+  `n⁻¹ · g (T^[n] x)` tends to `0` almost everywhere.
+* `Oseledets.tendsto_birkhoffAverage_ae`: the pointwise ergodic theorem over a finite
+  measure. The finiteness hypothesis is necessary (see the theorem docstring).
+* `Oseledets.tendsto_birkhoffAverage_ae_integral`: the ergodic case over a probability
+  measure, where the a.e. limit is the space average `∫ g ∂μ`.
 -/
 
 open MeasureTheory Filter Topology
@@ -55,7 +62,7 @@ private theorem setIntegral_comp_of_invariants
     _ = ∫ y in s, h y ∂(Measure.map T μ) := (setIntegral_map hs hhmap hT.aemeasurable).symm
     _ = ∫ y in s, h y ∂μ := by rw [hmap]
 
-/-- **`condExp` commutes with a measure-preserving composition** (layer `L1.2` / `M2`):
+/-- **`condExp` commutes with a measure-preserving composition**:
 `μ[g ∘ T | invariants T] =ᵐ[μ] (μ[g | invariants T]) ∘ T`. -/
 theorem condExp_invariants_comp
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : X → ℝ} (hg : Integrable g μ) :
@@ -183,8 +190,8 @@ private theorem tsum_measure_threshold_ne_top {δ : ℝ} (hδ : 0 < δ) {g : X �
 /-- For integrable `g` and measure-preserving `T`, the orbital tail `n⁻¹ · g (T^[n] x)`
 tends to `0` almost everywhere. Proved by Borel–Cantelli: for each threshold `δ = 1/(k+1)`
 the series `∑ₙ μ {x | (n+1)δ ≤ |g (T^[n] x)|}` is finite (measure-preservation transfers
-`tsum_measure_threshold_ne_top`), so a.e. only finitely many `n` cross the threshold. Public:
-the tempered-cocycle layer (`OseledetsLimit`) reuses it for the one-step log-norm factor. -/
+`tsum_measure_threshold_ne_top`), so a.e. only finitely many `n` cross the threshold.
+This estimate is what makes the one-step log-norm factor of a cocycle subexponential. -/
 theorem ae_tendsto_orbit_div_atTop_zero
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) :
     ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * g (T^[n] x)) atTop (𝓝 0) := by
@@ -312,7 +319,8 @@ private theorem birkhoffSum_const (c : ℝ) (n : ℕ) (x : X) :
 
 omit [MeasurableSpace X] in
 /-- For `n ≥ 1`, having a positive Birkhoff sum of `g - c` is the same as the Birkhoff
-average of `g` exceeding `c`: `0 < birkhoffSum T (g - c) (n+1) x ↔ c < birkhoffAverage ℝ T g (n+1) x`. -/
+average of `g` exceeding `c`:
+`0 < birkhoffSum T (g - c) (n+1) x ↔ c < birkhoffAverage ℝ T g (n+1) x`. -/
 private theorem birkhoffSum_sub_const_pos_iff (c : ℝ) {g : X → ℝ} (n : ℕ) (x : X) :
     0 < birkhoffSum T (fun y => g y - c) (n + 1) x ↔
       c < birkhoffAverage ℝ T g (n + 1) x := by
@@ -335,7 +343,7 @@ private theorem mul_measure_le_setIntegral_maximal [IsFiniteMeasure μ]
     c * (μ {x | ∃ n : ℕ, c < birkhoffAverage ℝ T g (n + 1) x}).toReal
       ≤ ∫ x in {x | ∃ n : ℕ, c < birkhoffAverage ℝ T g (n + 1) x}, g x ∂μ := by
   set B : Set X := {x | ∃ n : ℕ, c < birkhoffAverage ℝ T g (n + 1) x} with hBdef
-  -- The M1 set for `g - c` equals `B`.
+  -- The maximal set for `g - c` equals `B`.
   have hset : {x | ∃ n : ℕ, 0 < birkhoffSum T (fun y => g y - c) (n + 1) x} = B := by
     ext x
     simp only [Set.mem_setOf_eq, hBdef]
@@ -451,7 +459,7 @@ theorem limsup_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
         rw [Real.dist_eq, sub_zero] at hn
         exact (abs_lt.1 hn).2
       filter_upwards [hev] with n hn
-      show a n ≤ b n + δ
+      change a n ≤ b n + δ
       linarith
     -- Let δ ↓ 0.
     by_contra hcon
@@ -497,8 +505,8 @@ private theorem limsup_birkhoffAverage_comp_ae [IsFiniteMeasure μ]
   have hbddAT := hT.quasiMeasurePreserving.tendsto_ae hbddA
   have hbddBT := hT.quasiMeasurePreserving.tendsto_ae hbddB
   filter_upwards [hbddA, hbddB, htail, hbddAT, hbddBT] with x hbA hbB htl hbAT hbBT
-  show Filter.limsup (fun n => birkhoffAverage ℝ T g n (T x)) atTop
-      = Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop
+  change Filter.limsup (fun n ↦ birkhoffAverage ℝ T g n (T x)) atTop
+      = Filter.limsup (fun n ↦ birkhoffAverage ℝ T g n x) atTop
   -- Reduce to limsup of the shifted (n+1) sequences.
   rw [← limsup_nat_add (fun n => birkhoffAverage ℝ T g n (T x)) 1,
     ← limsup_nat_add (fun n => birkhoffAverage ℝ T g n x) 1]
@@ -768,7 +776,7 @@ private theorem condExp_le_liminf_ae [IsFiniteMeasure μ]
   simp only [Pi.neg_apply] at hx
   linarith
 
-/-- **Pointwise (Birkhoff) ergodic theorem** (layer `L1.3` / `M3`): for a finite measure,
+/-- **Pointwise (Birkhoff) ergodic theorem**: for a finite measure,
 a measure-preserving `T`, and integrable `g`, the Birkhoff averages converge `μ`-a.e. to
 the conditional expectation of `g` onto the σ-algebra of `T`-invariant sets. Sandwiches
 the a.e. bounds `limsup ≤ μ[g|I]` and `μ[g|I] ≤ liminf` via

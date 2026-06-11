@@ -1,40 +1,51 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Fischer
 import Oseledets.Lyapunov.ExteriorNorm
 import Oseledets.Lyapunov.OseledetsLimit
 import Mathlib.Analysis.Matrix.PosDef
 
 /-!
-# ForwardFrames — the determinant/Gram/angle factorization (`hfact`) and the
-  fast-frame volume exponent bound (`hVF` upper half).
+# Gram determinant factorization and singular-value bounds for frame images
 
-This file attacks the two open inputs of `SqueezeData` (committed in
+This file proves two ingredients of the determinant-squeeze argument for the Oseledets
+spectral upper bound (the `hfact` and `hVF` inputs of `Oseledets.SqueezeData`, defined in
 `Oseledets/Lyapunov/ForwardSqueezeData.lean`):
 
-* **hfact** — the EXACT (every `n`) determinant/Gram/angle factorization along the orbit, via the
-  squared-determinant Gram identity and the (definitional) inter-block sine.
-* **hVF (upper half)** — the fast-frame volume exponent is bounded by the top-`k` singular-value
-  product, hence its `limsup` is bounded by the `Γ_k`-type exponent supplied by the committed
-  exterior-Kingman layer.
+* **the exact factorization** — for every matrix `M` and every two-block frame `Y`, the Gram
+  determinant of the image `M · Y` factors as the product of the block image Gram determinants
+  times the squared inter-block sine, giving the exact log identity
+  `½ log det Gram(M Y) = ½ log det Gram(M Y_F) + ½ log det Gram(M Y_S) + log √θ²`;
+* **the fast-frame volume bound** — for an orthonormal frame block, the image Gram determinant
+  is at most the squared product of the top-`k` singular values of `M`, so the normalized
+  fast-frame volume exponent is bounded by the top-`k` singular-value-product exponent, and
+  its `limsup` by the corresponding ergodic limit.
 
 ## Main results
 
-### Linear-algebra core (positivity + factorization)
+### Linear-algebra core (positivity and factorization)
 
 * `Frames.det_gram_pos` — for a full-column-rank real frame `W`, `0 < det (Wᵀ W)`.
 * `Frames.det_gram_nonneg` — `0 ≤ det (Wᵀ W)` always.
-* `Frames.image_block_inl/inr` — `(M·Y).submatrix id Sum.inl = M · Y_F` (the image of a block).
-* `Frames.thetaSq`, `Frames.thetaSq_nonneg`, `Frames.thetaSq_le_one` — the inter-block squared sine
-  `θ² := det Gram(M Y) / (det Gram(M Y_F)·det Gram(M Y_S))`, with `0 ≤ θ² ≤ 1` (Fischer).
-* `Frames.det_gram_eq_blocks_mul_thetaSq` — the EXACT identity
+* `Frames.image_block_inl`, `Frames.image_block_inr` — the blocks of the image frame:
+  `(M·Y).submatrix id Sum.inl = M · Y_F`.
+* `Frames.thetaSq`, `Frames.thetaSq_nonneg`, `Frames.thetaSq_le_one` — the inter-block squared
+  sine `θ² := det Gram(M Y) / (det Gram(M Y_F)·det Gram(M Y_S))`, with `0 ≤ θ² ≤ 1` (by
+  Fischer's inequality).
+* `Frames.det_gram_eq_blocks_mul_thetaSq` — the exact identity
   `det Gram(M Y) = det Gram(M Y_F) · det Gram(M Y_S) · θ²`.
-* `Frames.log_det_factorization` — the **exact log factorization** (`hfact`, route (c)):
+* `Frames.log_det_factorization` — the exact log factorization
   `½ log det Gram(M Y) = ½ log det Gram(M Y_F) + ½ log det Gram(M Y_S) + log √θ²`.
 
-### `hVF` upper bound
+### The fast-frame volume bound
 
 * `Frames.det_gram_le_prod_singularValues_sq` — `det Gram(M Y_F) ≤ (∏_{i<k} σᵢ(M))²` for an
   orthonormal left frame block.
-* `Frames.VF_le_logSprod` — the per-`n` exponent bound.
+* `Frames.VF_le_logSprod` — the per-`n` volume exponent bound.
+* `Frames.limsup_VF_le_GammaK` — the `limsup` bound against the ergodic limit.
 -/
 
 open MeasureTheory Filter Topology
@@ -132,7 +143,8 @@ theorem gramFull_pos (M : Matrix (Fin d) (Fin d) ℝ) (Y : Matrix (Fin d) (Fin p
     0 < gramFull M Y :=
   det_gram_pos _ hinj
 
-/-- The block image Gram determinants relate to the submatrix Gram determinants Fischer uses. -/
+/-- The block image Gram determinant equals the submatrix Gram determinant appearing in
+Fischer's inequality (`Fischer.sin_sq_le_one`). -/
 theorem gramF_eq_submatrix (M : Matrix (Fin d) (Fin d) ℝ)
     (Y : Matrix (Fin d) (Fin p ⊕ Fin q) ℝ) :
     gramF M Y = (((M * Y).submatrix id Sum.inl)ᵀ * (M * Y).submatrix id Sum.inl).det := by
@@ -177,7 +189,7 @@ theorem det_gram_eq_blocks_mul_thetaSq (M : Matrix (Fin d) (Fin d) ℝ)
 
 end Factorization
 
-/-! ## 3. The exact log factorization (`hfact`, route (c)) -/
+/-! ## 3. The exact log factorization -/
 
 section LogFactorization
 
@@ -191,20 +203,19 @@ theorem thetaSq_pos (M : Matrix (Fin d) (Fin d) ℝ) (Y : Matrix (Fin d) (Fin p 
   unfold thetaSq
   exact div_pos hFull (mul_pos hF hS)
 
-/-- **The exact log factorization (`hfact`, route (c)).** For a square `M` and a frame `Y` whose
-full image and two image blocks have full column rank (so all three Gram determinants are positive),
-the following EXACT identity holds (for every such `M`, no asymptotics):
+/-- **The exact log factorization.** For a square `M` and a frame `Y` whose full image and two
+image blocks have full column rank (so all three Gram determinants are positive), the following
+exact identity holds (for every such `M`, no asymptotics):
 
   `½ log det Gram(M Y) = ½ log det Gram(M Y_F) + ½ log det Gram(M Y_S) + log √θ²`,
 
 where `√θ² = √(det Gram(M Y) / (det Gram(M Y_F)·det Gram(M Y_S)))` is the image splitting angle.
 
-This is the splitting `D n = VF n + VS n + S n` of `SqueezeData.hfact`, with
-`D n := ½ log det Gram(M Y)` (equal to `(1/n)·... ` after dividing by `n`, but here stated
-per-step before normalization), `VF := ½ log det Gram(M Y_F)`, `VS := ½ log det Gram(M Y_S)`, and
-`S := log √θ²`. The proof: take `log` of the factorization
-`det Gram(M Y) = det Gram(M Y_F)·det Gram(M Y_S)·θ²`, split with `Real.log_mul`, and fold the `½`
-into a `√` on the `θ²` term. -/
+This is the splitting `D n = VF n + VS n + S n` required by `Oseledets.SqueezeData.hfact`, stated
+per step before normalization by `n`, with `D := ½ log det Gram(M Y)`,
+`VF := ½ log det Gram(M Y_F)`, `VS := ½ log det Gram(M Y_S)`, and `S := log √θ²`. The proof
+takes `log` of the factorization `det Gram(M Y) = det Gram(M Y_F)·det Gram(M Y_S)·θ²`, splits
+with `Real.log_mul`, and folds the `½` into a `√` on the `θ²` term. -/
 theorem log_det_factorization (M : Matrix (Fin d) (Fin d) ℝ)
     (Y : Matrix (Fin d) (Fin p ⊕ Fin q) ℝ)
     (hFull : 0 < gramFull M Y) (hF : 0 < gramF M Y) (hS : 0 < gramS M Y) :
@@ -222,13 +233,14 @@ theorem log_det_factorization (M : Matrix (Fin d) (Fin d) ℝ)
 
 end LogFactorization
 
-/-! ## 4. `hVF` upper bound: fast-frame Gram det ≤ (∏ top-k σ)²
+/-! ## 4. The fast-frame Gram determinant bound
 
-For an ORTHONORMAL left frame block (`Y_Fᵀ Y_F = 1`, so the fast frame is an orthonormal basis of
-the fast subspace), the image Gram determinant `det Gram(M Y_F)` is at most the squared product of
-the top-`k` singular values of `M`: `det Gram(M Y_F) ≤ (∏_{i<k} σᵢ(M))²`. This is the exterior-norm
-/ compound-matrix bound: `√det Gram(M Y_F) = ‖⋀^k M · (Y_F-wedge)‖ ≤ ‖⋀^k M‖ = ∏σ` for the unit
-wedge of an orthonormal frame. -/
+For an orthonormal left frame block (`Y_Fᵀ Y_F = 1`, so the fast frame is an orthonormal basis
+of the fast subspace), the image Gram determinant `det Gram(M Y_F)` is at most the squared
+product of the top-`k` singular values of `M`: `det Gram(M Y_F) ≤ (∏_{i<k} σᵢ(M))²`. This is
+the exterior-norm / compound-matrix bound:
+`√det Gram(M Y_F) = ‖⋀^k M · (Y_F-wedge)‖ ≤ ‖⋀^k M‖ = ∏σ` for the unit wedge of an orthonormal
+frame. -/
 
 section VFUpper
 
@@ -241,7 +253,7 @@ variable {d : ℕ}
 theorem colE_mul_eq {k : ℕ} (M : Matrix (Fin d) (Fin d) ℝ) (YF : Matrix (Fin d) (Fin k) ℝ)
     (j : Fin k) :
     colE (M * YF) j = Matrix.toEuclideanLin M (colE YF j) := by
-  rw [Matrix.toEuclideanLin_apply]
+  rw [Matrix.toLpLin_apply]
   ext a
   simp only [colE, Matrix.mul_apply, Matrix.mulVec]
   rfl
@@ -261,14 +273,16 @@ theorem normSq_hodge_wedge_ortho {k : ℕ} (YF : Matrix (Fin d) (Fin k) ℝ)
     (exteriorPower.ιMulti ℝ k (fun j => colE YF j))), hnormsq]
 
 set_option maxHeartbeats 800000 in
-/-- **`hVF` upper bound (Gram form).** For an orthonormal left frame block `YF` (`YFᵀ YF = 1`), the
-image Gram determinant `det((M YF)ᵀ (M YF))` is at most the squared product of the top-`k` singular
-values of `M`: `det Gram(M YF) ≤ (∏_{i<k} σᵢ(M))²`.
+-- elaboration of the `⋀[ℝ]^k (EuclideanSpace ℝ (Fin d))` statements below is expensive
+/-- **The fast-frame Gram determinant bound.** For an orthonormal left frame block `YF`
+(`YFᵀ YF = 1`), the image Gram determinant `det((M YF)ᵀ (M YF))` is at most the squared product
+of the top-`k` singular values of `M`: `det Gram(M YF) ≤ (∏_{i<k} σᵢ(M))²`.
 
 Route: `det Gram(M YF) = ‖hodge(ιMulti(colE(M YF)))‖²` (`det_transpose_mul_eq_inner_hodge` with
-`U = V`); the wedge `ιMulti(colE(M YF)) = ⋀^k(toEuclideanLin M)(ιMulti(colE YF))` (`map_apply_ιMulti`
-+ `colE_mul_eq`); the Hodge-trivialized image is `conjExteriorMap` applied to the trivialized source
-wedge, so its norm is `≤ exteriorOpNorm·‖hodge(source wedge)‖ = (∏σ)·1` (the bridge
+`U = V`); the wedge `ιMulti(colE(M YF)) = ⋀^k(toEuclideanLin M)(ιMulti(colE YF))`
+(`map_apply_ιMulti` + `colE_mul_eq`); the Hodge-trivialized image is `conjExteriorMap` applied
+to the trivialized source wedge, so its norm is
+`≤ exteriorOpNorm·‖hodge(source wedge)‖ = (∏σ)·1` (the bridge
 `exteriorOpNorm_hodge_eq_prod_singularValues` + orthonormality `‖hodge wedge‖ = 1`). -/
 theorem det_gram_le_prod_singularValues_sq {k : ℕ} (M : Matrix (Fin d) (Fin d) ℝ)
     (YF : Matrix (Fin d) (Fin k) ℝ) (hortho : YFᵀ * YF = 1) :
@@ -331,8 +345,8 @@ end VFUpper
 /-! ## 5. From the Gram bound to the volume exponent and its `limsup`
 
 The fast-frame volume exponent `VF n := (1/n)·½·log det Gram(M_n W_F)` is bounded by
-`(1/n)·log (∏_{i<k} σᵢ(M_n))`, and the latter converges (a.e.) to the ergodic `Γ_k`-type constant by
-the committed `tendsto_GammaK_of_integrableLogNorm`. Hence `limsup VF ≤ Γ_k`. -/
+`(1/n)·log (∏_{i<k} σᵢ(M_n))`, and the latter converges almost everywhere to the ergodic
+constant `Γ_k` by `tendsto_GammaK_of_integrableLogNorm`. Hence `limsup VF ≤ Γ_k`. -/
 
 section VFExponent
 
@@ -340,14 +354,14 @@ open Oseledets
 
 variable {X : Type*} [MeasurableSpace X] {T : X → X} {d : ℕ}
 
-/-- **The per-step volume/singular-value bound.** For an orthonormal fast frame `YF` (`YFᵀ YF = 1`)
-with positive image Gram determinant, `½ log det Gram(M YF) ≤ log (∏_{i<k} σᵢ(M))`. From
-`det Gram(M YF) ≤ (∏σ)²` (`det_gram_le_prod_singularValues_sq`) by taking `½ log` (monotone), using
-`∏σ > 0`. -/
+/-- **The per-step volume/singular-value bound.** For an orthonormal fast frame `YF`
+(`YFᵀ YF = 1`) with positive image Gram determinant,
+`½ log det Gram(M YF) ≤ log (∏_{i<k} σᵢ(M))`. From `det Gram(M YF) ≤ (∏σ)²`
+(`det_gram_le_prod_singularValues_sq`) by taking `½ log` (monotone). -/
 theorem half_log_det_gram_le_log_prod {k : ℕ} (M : Matrix (Fin d) (Fin d) ℝ)
     (YF : Matrix (Fin d) (Fin k) ℝ) (hortho : YFᵀ * YF = 1)
     (hgrampos : 0 < ((M * YF)ᵀ * (M * YF)).det)
-    (hprodpos : 0 < ∏ i ∈ Finset.range k, (Matrix.toEuclideanLin M).singularValues i) :
+    (_hprodpos : 0 < ∏ i ∈ Finset.range k, (Matrix.toEuclideanLin M).singularValues i) :
     (1 / 2) * Real.log (((M * YF)ᵀ * (M * YF)).det)
       ≤ Real.log (∏ i ∈ Finset.range k, (Matrix.toEuclideanLin M).singularValues i) := by
   have hbound := det_gram_le_prod_singularValues_sq M YF hortho
@@ -376,10 +390,10 @@ theorem VF_le_logSprod {k : ℕ} {A : X → Matrix (Fin d) (Fin d) ℝ}
   rw [hSprod_eq]
   exact mul_le_mul_of_nonneg_left hbound (by positivity)
 
-/-- **`hVF` limsup upper bound.** If the fast-volume exponent `VF n` is eventually `≤` the
-top-`k` singular-value-product exponent `Sexp n := (1/n) log Sprod_k`, and `Sexp → Γ_k` (the
-committed ergodic limit), and `VF` is eventually bounded below (so its `limsup` is cobounded
-above), then `limsup VF ≤ Γ_k`. -/
+/-- **The `limsup` bound for the volume exponent.** If the fast-volume exponent `VF n` is
+eventually `≤` the top-`k` singular-value-product exponent `Sexp n := (1/n) log Sprod_k`, and
+`Sexp → Γ_k` (the ergodic limit), and `VF` is eventually bounded below (so its `limsup` is
+cobounded above), then `limsup VF ≤ Γ_k`. -/
 theorem limsup_VF_le_GammaK {VF Sexp : ℕ → ℝ} {Γk : ℝ}
     (hle : ∀ᶠ n in atTop, VF n ≤ Sexp n)
     (hS : Tendsto Sexp atTop (𝓝 Γk))
@@ -395,12 +409,3 @@ theorem limsup_VF_le_GammaK {VF Sexp : ℕ → ℝ} {Γk : ℝ}
 end VFExponent
 
 end Frames
-
--- Axiom audit for the main theorems.
-#print axioms Frames.det_gram_pos
-#print axioms Frames.log_det_factorization
-#print axioms Frames.thetaSq_le_one
-#print axioms Frames.det_gram_eq_blocks_mul_thetaSq
-#print axioms Frames.det_gram_le_prod_singularValues_sq
-#print axioms Frames.VF_le_logSprod
-#print axioms Frames.limsup_VF_le_GammaK

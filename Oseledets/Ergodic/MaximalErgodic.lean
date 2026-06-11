@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Mathlib.Dynamics.BirkhoffSum.Average
 import Mathlib.Dynamics.Ergodic.MeasurePreserving
 import Mathlib.MeasureTheory.Integral.Bochner.Set
@@ -5,14 +10,12 @@ import Mathlib.MeasureTheory.Order.Lattice
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 
 /-!
-# The maximal ergodic inequality (Hopf / Garsia)
-
-The maximal ergodic inequality is the analytic gate to the pointwise (Birkhoff)
-ergodic theorem (layer `L1.1` / milestone `M1`). It is **absent** from Mathlib.
+# The maximal ergodic inequality (Hopf/Garsia)
 
 For an integrable `f` and a measure-preserving `T`, on the set where some forward
 Birkhoff sum is positive the integral of `f` is nonnegative:
-`0 ≤ ∫_{ {x | ∃ n, 0 < birkhoffSum T f (n+1) x} } f dμ`.
+`0 ≤ ∫_{ {x | ∃ n, 0 < birkhoffSum T f (n+1) x} } f dμ`. This inequality is the
+analytic gateway to the pointwise (Birkhoff) ergodic theorem.
 
 The proof follows Garsia's short combinatorial argument. We introduce the
 *maximal function* `maxBirkhoff T g N x = max_{0 ≤ k ≤ N} birkhoffSum T g k x`
@@ -20,6 +23,22 @@ for a measurable representative `g` of `f`, establish the pointwise Garsia
 inequality `maxBirkhoff … x - maxBirkhoff … (T x) ≤ g x` on the set where the
 maximal function is positive, integrate it, pass to the limit `N → ∞`, and
 transfer back from `g` to `f`.
+
+## Main results
+
+* `Oseledets.maxBirkhoff`: Garsia's maximal function
+  `maxBirkhoff T g N x = max_{0 ≤ k ≤ N} birkhoffSum T g k x`.
+* `Oseledets.maxBirkhoff_le_add`: Garsia's pointwise inequality
+  `maxBirkhoff T g N x ≤ g x + maxBirkhoff T g N (T x)` on the set where the maximal
+  function is positive.
+* `Oseledets.setIntegral_maxBirkhoff_pos_nonneg`: Garsia's inequality at a fixed
+  level `N`.
+* `Oseledets.setIntegral_birkhoffSum_pos_nonneg`: the maximal ergodic inequality.
+
+## References
+
+* A. M. Garsia, *A simple proof of E. Hopf's maximal ergodic theorem*,
+  J. Math. Mech. 14 (1965), 381–382.
 -/
 
 open MeasureTheory Filter Finset Topology

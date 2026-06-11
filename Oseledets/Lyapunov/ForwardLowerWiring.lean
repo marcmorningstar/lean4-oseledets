@@ -1,22 +1,36 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.FiltrationAssembly
 import Oseledets.Lyapunov.FiltrationAssemblyBridge
 import Oseledets.Lyapunov.ForwardAngle
 import Oseledets.Cocycle.FurstenbergKesten
 
 /-!
-# `ForwardLowerWiring` — discharging `hlb`/`hbdd` for `hgrowth_of_upper_lower`
+# Two-sided bounds for the log-growth of cocycle iterates on flag strata
 
-This scratch file supplies the two remaining hypotheses of the committed
-`Oseledets.hgrowth_of_upper_lower` (in `FiltrationAssemblyBridge.lean`):
+For an ergodic cocycle `A⁽ⁿ⁾ = cocycle A T n` of invertible matrices over `(X, μ, T)`, this
+file controls the normalized log-growth sequence `n ↦ (1/n) log‖A⁽ⁿ⁾ v‖` of a vector `v`
+lying on a stratum of the Oseledets flag (`v ∈ Vflag A T x i.castSucc`, `v ∉ Vflag A T x i.succ`).
+Together with the per-vector limsup upper bound, the results here are the inputs of
+`Oseledets.hgrowth_of_upper_lower` (in `Oseledets.Lyapunov.FiltrationAssemblyBridge`), which
+upgrades them to the exact growth limit `specList A T x i` on each stratum.
 
-* `hbdd_of_fk` — the two-sided `IsBoundedUnder` side-conditions on the normalized log-growth
-  sequence `(1/n) log‖A⁽ⁿ⁾ v‖`, discharged *unconditionally* from the standing hypotheses by the
-  Furstenberg–Kesten extremal exponents (top and bottom).
+## Main results
 
-* `hlb_of_bandProjector` — the per-vector liminf lower bound, reduced to the band-projector
-  convergence datum (the L11 connection of `Vflag` membership to the spectral band structure),
-  taken here as the minimal cleanly-typed hypothesis and forwarded to the committed analytic core
-  `log_le_liminf_log_cocycle_apply`.
+* `Oseledets.isBoundedUnder_log_norm_cocycle_apply`: almost everywhere, for every `v ≠ 0`, the
+  sequence `(1/n) log‖A⁽ⁿ⁾ v‖` is bounded above and below, squeezed between the two convergent
+  Furstenberg–Kesten envelopes `(1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖` and
+  `-(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.
+* `Oseledets.hbdd_of_fk`: the same two-sided boundedness for every stratum vector of the
+  Oseledets flag (such a vector is automatically nonzero).
+* `Oseledets.hlb_of_bandProjector`: the per-vector liminf lower bound
+  `specList A T x i ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`, derived from a band-projector convergence
+  hypothesis via `Oseledets.log_le_liminf_log_cocycle_apply`.
+* `Oseledets.hgrowth_of_fk_and_band`: the exact per-vector growth limit, combining the limsup
+  upper bound, the two-sided boundedness, and the liminf lower bound.
 -/
 
 open MeasureTheory Filter Topology
@@ -24,10 +38,7 @@ open scoped Matrix Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {d : ℕ}
-
-set_option linter.deprecated false
-set_option linter.unusedSectionVars false
+variable {X : Type*} {d : ℕ}
 
 /-! ## Helper norm bounds (apply-norm sandwiched by operator norm) -/
 
@@ -44,7 +55,7 @@ theorem toEuclideanLin_inv_cocycle_apply {T : X → X} (A : X → Matrix (Fin d)
     (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
     Matrix.toEuclideanLin (cocycle A T n x)⁻¹
       (Matrix.toEuclideanLin (cocycle A T n x) v) = v := by
-  rw [Matrix.toEuclideanLin_apply, Matrix.ofLp_toEuclideanLin_apply,
+  rw [Matrix.toLpLin_apply, Matrix.ofLp_toLpLin, Matrix.toLin'_apply,
     Matrix.mulVec_mulVec, Matrix.nonsing_inv_mul _ (Ne.isUnit (det_cocycle_ne_zero hA n x)),
     Matrix.one_mulVec]
 
@@ -61,6 +72,8 @@ theorem norm_le_norm_inv_cocycle_mul {T : X → X} (A : X → Matrix (Fin d) (Fi
         exact (Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x)⁻¹).le_opNorm _
 
 /-! ## The two-sided boundedness from Furstenberg–Kesten -/
+
+variable [MeasurableSpace X]
 
 /-- The normalized log-norm of `v` along the cocycle is eventually `≤` the convergent envelope
 `(1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖` and eventually `≥` the convergent envelope
@@ -128,8 +141,8 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
       -- `log‖v‖ ≤ log‖(A⁽ⁿ⁾)⁻¹‖ + log‖A⁽ⁿ⁾ v‖`, i.e. `-log‖(A⁽ⁿ⁾)⁻¹‖ + log‖v‖ ≤ log‖A⁽ⁿ⁾ v‖`.
       have hge : -Real.log ‖(cocycle A T n x)⁻¹‖ + Real.log ‖v‖
           ≤ Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
-        have hlogle : Real.log ‖v‖
-            ≤ Real.log ‖(cocycle A T n x)⁻¹‖ + Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
+        have hlogle : Real.log ‖v‖ ≤ Real.log ‖(cocycle A T n x)⁻¹‖
+            + Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
           rw [← Real.log_mul (ne_of_gt hposi) (ne_of_gt hposv)]
           exact Real.log_le_log hvpos (norm_le_norm_inv_cocycle_mul A hA n x v)
         linarith
@@ -139,12 +152,13 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
         _ ≤ (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ :=
             mul_le_mul_of_nonneg_left hge hninv
 
-/-! ## Deliverable A — `hbdd` -/
+/-! ## Two-sided boundedness on each stratum -/
 
-/-- **`hbdd` from Furstenberg–Kesten.**  Discharges the two-sided `IsBoundedUnder` side-conditions
-of `hgrowth_of_upper_lower` *unconditionally* from the standing hypotheses.  On each stratum the
-vector is nonzero (`0` lies in every flag level, so `v ∉ Vflag i.succ ⟹ v ≠ 0`), and the
-log-growth sequence is squeezed between the two convergent Furstenberg–Kesten envelopes. -/
+/-- **Two-sided boundedness from Furstenberg–Kesten.**  The two-sided `IsBoundedUnder`
+side-conditions of `hgrowth_of_upper_lower` hold almost everywhere for every stratum vector.
+On each stratum the vector is nonzero (`0` lies in every flag level, so
+`v ∉ Vflag i.succ ⟹ v ≠ 0`), and the log-growth sequence is squeezed between the two
+convergent Furstenberg–Kesten envelopes. -/
 theorem hbdd_of_fk {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
     (A : X → Matrix (Fin d) (Fin d) ℝ) (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -162,23 +176,24 @@ theorem hbdd_of_fk {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
   have hv : v ≠ 0 := fun h => hvnot (h ▸ Submodule.zero_mem _)
   exact hx v hv
 
-/-! ## Deliverable B — `hlb`
+/-! ## The per-vector liminf lower bound
 
-The per-vector liminf lower bound is the committed analytic core
+The per-vector liminf lower bound rests on the analytic core
 `log_le_liminf_log_cocycle_apply`: at threshold `c = e^{specList i} > 0`, if the band projectors
 for `(c, ∞)` converge to a limit `P` with `P v ≠ 0`, then `specList i = log c ≤ liminf …`.  The
 remaining `IsCoboundedUnder (· ≥ ·)` side-condition is exactly the lower boundedness already
 furnished by `hbdd_of_fk` (a bounded-below sequence is cobounded-below).
 
-The band-projector convergence datum (`hP`, `hPv`) is the L11 spectral-band identification of
+The band-projector convergence datum (`hP`, `hPv`) is the spectral-band identification of
 `Vflag` membership — `v ∉ Vflag i.succ` says `v` has a nonzero component in the band at level
 `≥ specList i`, i.e. `P v ≠ 0` for the limit projector at threshold `e^{specList i}`.  That
-identification is not yet committed in the repo, so it is taken here as the minimal cleanly-typed
-hypothesis `hband`; once a committed `Vflag`-to-band lemma exists it discharges `hband` directly. -/
+identification is taken here as the minimal cleanly-typed hypothesis `hband`; any
+`Vflag`-to-band lemma of this shape discharges `hband` directly. -/
 
-/-- **`hlb` from band-projector convergence.**  Given, a.e. and per stratum-vector, the band
-projector convergence datum at threshold `e^{specList i}` (`hband`) and the lower boundedness of the
-log-growth sequence (from `hbdd_of_fk`), the per-vector lower bound `specList i ≤ liminf …` holds.
+/-- **Liminf lower bound from band-projector convergence.**  Given, a.e. and per stratum-vector,
+the band projector convergence datum at threshold `e^{specList i}` (`hband`) and the lower
+boundedness of the log-growth sequence (from `hbdd_of_fk`), the per-vector lower bound
+`specList i ≤ liminf …` holds.
 
 The cobounded-below side-condition of `log_le_liminf_log_cocycle_apply` is supplied by the same
 `IsBoundedUnder (· ≥ ·)` already proved in `hbdd_of_fk` (`IsBoundedUnder.isCoboundedUnder_ge`,
@@ -215,11 +230,12 @@ theorem hlb_of_bandProjector [NeZero d] {μ : Measure X} {T : X → X}
   have := log_le_liminf_log_cocycle_apply A T hA hc hP hPv hcob
   rwa [Real.log_exp] at this
 
-/-! ## Type-compatibility check: feed both deliverables into `hgrowth_of_upper_lower` -/
+/-! ## The exact per-vector growth limit -/
 
-/-- Sanity wiring: `hbdd_of_fk` and `hlb_of_bandProjector` have exactly the types consumed by the
-committed `hgrowth_of_upper_lower`.  Given the (parallel-worker) upper bound `hub` and the
-band-projector datum `hband`, the per-vector exact growth interface `hgrowth` follows. -/
+/-- The exact per-vector growth limit: given the limsup upper bound `hub` and the
+band-projector datum `hband`, the normalized log-growth sequence of every stratum vector
+converges to the corresponding exponent.  This feeds `hbdd_of_fk` and `hlb_of_bandProjector`
+into `hgrowth_of_upper_lower`. -/
 theorem hgrowth_of_fk_and_band [NeZero d] {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
     (A : X → Matrix (Fin d) (Fin d) ℝ) (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -245,11 +261,5 @@ theorem hgrowth_of_fk_and_band [NeZero d] {μ : Measure X} [IsProbabilityMeasure
           atTop (𝓝 (specList A T x i)) :=
   have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
   hgrowth_of_upper_lower A hub (hlb_of_bandProjector A hA hband hbdd) hbdd
-
-/-! ## Axiom audit -/
-
-#print axioms hbdd_of_fk
-#print axioms hlb_of_bandProjector
-#print axioms hgrowth_of_fk_and_band
 
 end Oseledets

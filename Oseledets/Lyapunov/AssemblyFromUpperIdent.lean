@@ -1,13 +1,25 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.AssemblyFromUpper
 import Oseledets.Lyapunov.SpectrumResiduals
 
 /-!
-# Assembly from the upper bound, via the spectral-identification residual
+# Assembly from the upper bound, via the spectral-identification hypothesis
 
-Identical to the committed `Oseledets.oseledets_filtration_of_upper`, except the defective
-band-projector residual `hband` is replaced by the sound `hident` residual, and the `hlb`
-sub-step is routed through `hlb_of_slowflag_ident` (fed `hident` and the `hslowflag` already
-computed earlier in the proof) instead of `hlb_of_bandProjector`.
+This file proves a variant of `Oseledets.oseledets_filtration_of_upper` in which the
+band-projector convergence hypothesis `hband` is replaced by the spectral-identification
+hypothesis `hident`, and the lower-bound step `hlb` is accordingly obtained from
+`hlb_of_slowflag_ident` (fed `hident` and the slow-flag datum `hslowflag` computed earlier
+in the proof) instead of `hlb_of_bandProjector`.
+
+## Main results
+
+* `Oseledets.oseledets_filtration_of_upper'`: the Oseledets filtration theorem, conditional
+  on the a.e. spectral upper bound over the slow flag, the reverse slow-flag inclusion, the
+  two spectrum inclusions, and the spectral-identification band-projector limit.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -15,14 +27,12 @@ open scoped Matrix Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
 variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
-/-- **Oseledets filtration theorem, composer variant via the sound `hident` route.**
+/-- **Oseledets filtration theorem, via the spectral-identification hypothesis.**
 
-Same as `oseledets_filtration_of_upper` but with the unsatisfiable band-projector residual
-`hband` swapped for the sound spectral-identification residual `hident`, consumed by
+Same as `oseledets_filtration_of_upper`, but with the band-projector hypothesis `hband`
+replaced by the spectral-identification hypothesis `hident`, consumed by
 `hlb_of_slowflag_ident`. -/
 theorem oseledets_filtration_of_upper'
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
@@ -30,27 +40,27 @@ theorem oseledets_filtration_of_upper'
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
-    -- The FIXED spectral-upper-bound node delivered by the parallel worker (verbatim shape).
+    -- The spectral upper bound: vectors of the slow subspace grow at most at the cut rate.
     (hupper : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       Filter.limsup (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) Filter.atTop ≤ t)
-    -- Residual 1: the reverse slow-flag inclusion (slow growth ⟹ in Λ-slow-space).
+    -- The reverse slow-flag inclusion: slow growth implies membership in the slow subspace.
     (hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x)
-    -- Residual 2: spectrum upper Finset inclusion (every realized exponent is deterministic).
+    -- Spectrum upper inclusion: every realized exponent is a deterministic one.
     (hub_spec : ∀ lam0 : ℕ → ℝ,
       (∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Tendsto
         (fun n : ℕ => (n : ℝ)⁻¹ *
           Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i))
         atTop (𝓝 (lam0 i))) →
       ∀ᵐ x ∂μ, spectrum A T x ⊆ distinctExp lam0 d)
-    -- Residual 3: spectrum lower Finset inclusion (every deterministic exponent is attained).
+    -- Spectrum lower inclusion: every deterministic exponent is attained.
     (hlb_spec : ∀ lam0 : ℕ → ℝ,
       (∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Tendsto
         (fun n : ℕ => (n : ℝ)⁻¹ *
           Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i))
         atTop (𝓝 (lam0 i))) →
       ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x)
-    -- Residual 4 (SOUND route): the spectral-identification band-projector datum.
+    -- The spectral-identification band-projector convergence hypothesis.
     (hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c → (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
       Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
         Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x)))) :
@@ -73,22 +83,19 @@ theorem oseledets_filtration_of_upper'
   -- The deterministic singular-value exponents.
   obtain ⟨lam0, _hmono, hlam0⟩ :=
     exists_lam_tendsto_singularValue hT hA hAmeas hint hint'
-  -- `hspec` from the two residual spectrum inclusions.
+  -- `hspec` from the two spectrum inclusions.
   have hspec := hspec_standing hT A hA hAmeas hint hint' lam0
     (hub_spec lam0 hlam0) (hlb_spec lam0 hlam0)
   -- `hslowflag` from `hupper` and the reverse inclusion.
   have hslowflag := hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
-  -- `hgrowth` from upper (`Vflag`) + lower (sound `hident` route) + boundedness (FK).
+  -- `hgrowth` from the upper bound (`Vflag`), the lower bound (via `hident`), and the
+  -- Furstenberg–Kesten boundedness.
   have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
   have hub := hub_of_growthFunction hT hA hAmeas hint hint'
   have hlb := hlb_of_slowflag_ident hT hA hAmeas hint hint' hident hslowflag
   have hgrowth := hgrowth_of_upper_lower A hub hlb hbdd
-  -- Assemble through the committed capstone.
+  -- Assemble through `oseledets_filtration_of_slowflag`.
   exact oseledets_filtration_of_slowflag hT A hA hAmeas hTmeas hint hint' lam0
     hspec hslowflag hgrowth
-
-/-! ## Axiom audit -/
-
-#print axioms oseledets_filtration_of_upper'
 
 end Oseledets

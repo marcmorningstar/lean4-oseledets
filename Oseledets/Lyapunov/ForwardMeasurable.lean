@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Measurable
 
 /-!
@@ -18,8 +23,10 @@ Consequently a measurable family of self-adjoint idempotent matrices induces a
 
 ## Main results
 
-* `orthProjMatrix_range_toEuclideanCLM` — Deliverable A, the projector/range bridge.
-* `measurableSubspace_range_of_measurable` — Deliverable B, measurability of the range family.
+* `orthProjMatrix_range_toEuclideanCLM` — the projector/range bridge: for a self-adjoint
+  idempotent `P`, the orthogonal-projection matrix of the range of `toEuclideanCLM P` is `P`.
+* `measurableSubspace_range_of_measurable` — a measurable family of self-adjoint idempotent
+  matrices induces a `MeasurableSubspace` family of range subspaces.
 
 The crux uses the Mathlib lemma
 `ContinuousLinearMap.isStarProjection_iff_eq_starProjection_range`

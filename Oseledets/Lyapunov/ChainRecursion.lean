@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.RuelleCore
 import Oseledets.Lyapunov.OseledetsLimit
 import Oseledets.Lyapunov.Forward
@@ -5,15 +10,16 @@ import Oseledets.Lyapunov.ForwardAngle
 import Oseledets.Lyapunov.SpectrumResiduals
 
 /-!
-# Chain-recursion infrastructure for the fast-band-mass envelope (Ruelle Lemma 1.4, step 2)
+# Chain recursion for the fast-band-mass envelope
 
-Deterministic engine for the uniform-in-`m` fast-band-mass envelope: the slow/fast
-orthogonal decomposition over an `SVDData`, the one-step band-leakage recursion
-(`oneStep_recursion`, wiring the committed `oneStep_sandwich`), the contraction-free
-chain solver (`chain_geometric_sum`), and the band↔SVD adapter identifying
-`bandProjector` with the explicit fast projection (`toEuclideanLin_bandProjector_eq_fastProj`),
-plus band-mass monotonicity in the cut and the lower-bound lemma
-`bandProjector_mass_ge_abs_inner_of_fix`.
+Deterministic engine for the uniform-in-`m` fast-band-mass envelope appearing in Ruelle's
+proof of the multiplicative ergodic theorem (the proof of Lemma 1.4 in [Ruelle, *Ergodic
+theory of differentiable dynamical systems*]): the slow/fast orthogonal decomposition over
+an `SVDData`, the one-step band-leakage recursion (`oneStep_recursion`, an application of
+`oneStep_sandwich`), the contraction-free chain solver (`chain_geometric_sum`), and the
+band↔SVD adapter identifying `bandProjector` with the explicit fast projection
+(`toEuclideanLin_bandProjector_eq_fastProj`), plus band-mass monotonicity in the cut and
+the lower-bound lemma `bandProjector_mass_ge_abs_inner_of_fix`.
 
 NOTE: the lower-bound lemma shows the envelope at an *arbitrary* cut
 `c₀ ∈ (exp λ_a, exp λ_e)` is unprovable when an intermediate stratum
@@ -22,61 +28,85 @@ direction, whose overlap with `u_a(n)` decays only at rate `λ_c − λ_a`). The
 statement restricts the cut to the top gap below `λ_e`; the engine here closes that
 corrected envelope.
 
-## Paper proof (Ruelle, Publ. IHES 50, 1979, proof of Lemma 1.4)
+## Main results
 
-Fix `x` in the a.e.-good set.  Write `σ_j(t) = (toEuclideanLin (cocycle A T t x)).singularValues j`
-(antitone in `j`), `u_a(n) = sortedGramEigenbasis A T n x ⟨a⟩` (a unit right-singular vector of
+* `Ruelle13.SVDData.oneStep_recursion`: the deterministic one-step band-leakage recursion
+  for the fast-band mass along an SVD chain.
+* `Ruelle13.SVDData.chain_geometric_sum`: the contraction-free chain solver — a recursion
+  `a (i+1) ≤ a i + R·ρ^i` with `a 0 = 0` is bounded by `R/(1−ρ)` uniformly in the index.
+* `Oseledets.toEuclideanLin_bandProjector_eq_fastProj`: the band projector equals the
+  explicit fast projection over the SVD chain `Oseledets.chainSVD`.
+* `Oseledets.norm_bandProjector_mono`: band mass is monotone in the cut.
+* `Oseledets.bandProjector_mass_ge_abs_inner_of_fix`: a uniform band-mass bound dominates
+  the overlap with any unit vector fixed by the limit projector (the obstruction lemma for
+  the arbitrary-cut envelope).
+
+## The argument (following Ruelle)
+
+Fix `x` in the a.e.-good set.  Write
+`σ_j(t) = (toEuclideanLin (cocycle A T t x)).singularValues j` (antitone in `j`),
+`u_a(n) = sortedGramEigenbasis A T n x ⟨a⟩` (a unit right-singular vector of
 `cocycle A T n x`), `λ_j = lam0 j`.
 
-We are given a *gap pair* `λ_a < λ_e`, a cut `c₀` with `exp λ_a < c₀ < exp λ_e`, and we must bound,
-uniformly in `m ≥ n`,
+We are given a *gap pair* `λ_a < λ_e`, a cut `c₀` with `exp λ_a < c₀ < exp λ_e`, and we
+must bound, uniformly in `m ≥ n`,
   `‖P^{>c₀}_m u_a(n)‖ ≤ C·exp(−n(λ_e − λ_a − δ))`,
-where `P^{>c₀}_m = bandProjector A T (indicator (Ioi c₀) 1) m x` is the orthogonal projector onto the
-span of the time-`m` Gram eigenvectors `u_j(m)` whose exp-scale eigenvalue `σ_j(m)^{1/m}` exceeds
-`c₀`.
+where `P^{>c₀}_m = bandProjector A T (indicator (Ioi c₀) 1) m x` is the orthogonal
+projector onto the span of the time-`m` Gram eigenvectors `u_j(m)` whose exp-scale
+eigenvalue `σ_j(m)^{1/m}` exceeds `c₀`.
 
 ### The deterministic SVD chain (`Ruelle13.SVDData`)
 
-Instantiate `Ruelle13.SVDData (EuclideanSpace ℝ (Fin d)) (card (Fin d))` at the point `x` by:
-* `e t := sortedGramEigenbasis A T t x` — the time-`t` Gram eigenbasis (right-singular basis);
+Instantiate `Ruelle13.SVDData (EuclideanSpace ℝ (Fin d)) (card (Fin d))` at the point `x`
+by:
+* `e t := sortedGramEigenbasis A T t x` — the time-`t` Gram eigenbasis (right-singular
+  basis);
 * `σ t j := σ_j(t)` — the time-`t` singular values;
 * `apply t u := toEuclideanLin (cocycle A T t x) u`.
-The Parseval field is `norm_sq_cocycle_apply_eq_sum_singularValues` (with `real_inner_comm` to flip
-the inner-product order to RuelleCore's `⟪e j, u⟫`).
+The Parseval field is `norm_sq_cocycle_apply_eq_sum_singularValues` (with
+`real_inner_comm` to flip the inner-product order to the `⟪e j, u⟫` convention of
+`Oseledets.Lyapunov.RuelleCore`).
 
 For this `S`:
-* `S.fastProj m hi u = Σ_{j∈hi} ⟪e m j, u⟫ • e m j` and, when `hi = hiBand m := {j : c₀ < σ_j(m)^{1/m}}`,
-  `‖S.fastProj m hi u‖ = ‖toEuclideanLin (P^{>c₀}_m) u‖` (the band projector is the orthogonal
-  projection onto exactly this span — proved in `bandProjector_apply_eq_fastProj`).
+* `S.fastProj m hi u = Σ_{j∈hi} ⟪e m j, u⟫ • e m j` and, when
+  `hi = hiBand m := {j : c₀ < σ_j(m)^{1/m}}`,
+  `‖S.fastProj m hi u‖ = ‖toEuclideanLin (P^{>c₀}_m) u‖` (the band projector is the
+  orthogonal projection onto exactly this span — proved in
+  `toEuclideanLin_bandProjector_eq_fastProj`).
 
 ### The recursion
 
-`u := u_a(n)` lies in the time-`n` slow span `loBand n := {j : σ_j(n)^{1/n} ≤ c₀}` (it equals the
-single basis vector `u_a(n)`, and eventually `σ_a(n)^{1/n} < c₀` so `a ∈ loBand n`).  For each step
-`t = n+k → t+1`:
-* the slow cap at time `t` for the slow span is `s_t := c₀^t` (every slow eigenvalue `σ_j(t) ≤ c₀^t`);
+`u := u_a(n)` lies in the time-`n` slow span `loBand n := {j : σ_j(n)^{1/n} ≤ c₀}` (it
+equals the single basis vector `u_a(n)`, and eventually `σ_a(n)^{1/n} < c₀` so
+`a ∈ loBand n`).  For each step `t = n+k → t+1`:
+* the slow cap at time `t` for the slow span is `s_t := c₀^t` (every slow eigenvalue
+  `σ_j(t) ≤ c₀^t`);
 * the fast floor at time `t+1` for the fast band is `tt_{t+1} := c₀^{t+1}`;
 * the one-step bound is `‖A⁽ᵗ⁺¹⁾u‖ ≤ b_t ‖A⁽ᵗ⁾u‖` with `b_t := ‖A(Tᵗx)‖`.
 `oneStep_sandwich` then gives
   `c₀^{t+1}·‖fastProj(t+1) u‖ ≤ b_t · c₀^t · ‖u‖`  i.e.  `‖fastProj(t+1) u‖ ≤ (b_t/c₀)·‖u‖`.
-This is too lossy on its own (the `b_t` are only tempered, `b_t ≤ exp(tη)`).  Ruelle's improvement:
-the *slow part of `u` at time `t`* — not all of `u` — feeds the fast band at `t+1`, and the slow
-part's mass is what `fastProj(t) u` already controls.  The correct one-step recursion (his displayed
-computation) is, with `a_k := ‖fastProj(n+k) u‖`:
+This is too lossy on its own (the `b_t` are only tempered, `b_t ≤ exp(tη)`).  Ruelle's
+improvement: the *slow part of `u` at time `t`* — not all of `u` — feeds the fast band at
+`t+1`, and the slow part's mass is what `fastProj(t) u` already controls.  The correct
+one-step recursion (his displayed computation) is, with `a_k := ‖fastProj(n+k) u‖`:
   `a_{k+1} ≤ exp(−γ̄)·a_k + R·exp(−k γ')`,
-where `γ̄ = λ_e − λ_a − δ*` is the per-step gap survival and `R·exp(−kγ')` the freshly-injected slow
-leakage.  `chain_leakage_exp` solves this:
+where `γ̄ = λ_e − λ_a − δ*` is the per-step gap survival and `R·exp(−kγ')` the
+freshly-injected slow leakage.  `chain_leakage_exp` solves this:
   `a_k ≤ exp(−kγ̄)·a_0 + R·k·exp(−(k−1)·min γ̄ γ')`.
-With `a_0 = 0` (Step 0: at `m=n`, `u_a(n)` is orthogonal to the fast band, since eventually
-`σ_a(n)^{1/n} < c₀`), `a_k ≤ R·k·exp(−(k−1)·min γ̄ γ')`, and since `a_k` is measured at absolute time
-`m = n+k`, this carries the `exp(−n γ)` prefactor.  The polynomial `k` and the `exp(−kγ̄)` tail give a
-constant uniform in `k = m − n`.
+With `a_0 = 0` (at `m = n`, `u_a(n)` is orthogonal to the fast band, since eventually
+`σ_a(n)^{1/n} < c₀`), `a_k ≤ R·k·exp(−(k−1)·min γ̄ γ')`, and since `a_k` is measured at
+absolute time `m = n+k`, this carries the `exp(−n γ)` prefactor.  The polynomial `k` and
+the `exp(−kγ̄)` tail give a constant uniform in `k = m − n`.
 
-The δ*/stratum-gap and c₀-endpoint subtleties are handled at the wiring layer (see comments inline).
+The `δ*`/stratum-gap and `c₀`-endpoint subtleties are handled where this engine is
+consumed.  The deterministic recursion engine itself (`oneStep_sandwich`,
+`chain_leakage_exp`) is proved in `Oseledets.Lyapunov.RuelleCore`; this file builds the
+band / SVDData adapter on top of it.
 
-This file is the formal wiring.  The deterministic recursion engine (`oneStep_sandwich`,
-`chain_leakage_exp`) is committed in `RuelleCore`; here we build the a.e. localization and the band /
-SVDData adapter.
+## References
+
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*,
+  Publ. Math. IHÉS **50** (1979), 27–58 (the proof of Lemma 1.4).
 -/
 
 open Filter Topology MeasureTheory
@@ -252,7 +282,7 @@ theorem toEuclideanLin_bandProjector_sortedGramEigenbasis [NeZero d]
     have h1 : hG.eigenvalues (e.symm j) = hG.eigenvalues₀ j := by
       rw [Matrix.IsHermitian.eigenvalues, he]
       congr 1
-      show (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
+      change (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
         ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))) j) = j
       simp [Equiv.symm_apply_apply]
     rw [hp, h1]
@@ -330,9 +360,9 @@ theorem toEuclideanLin_bandProjector_eq_fastProj [NeZero d]
     Pi.one_apply]
   rw [hχ1, one_smul, hb]
 
-/-- **Band monotonicity in the cut.**  If `c₁ ≤ c₀` then the higher-cut band mass is dominated by the
-lower-cut band mass:  `‖P^{>c₀}_m u‖ ≤ ‖P^{>c₁}_m u‖`.  (Higher cut ⟹ smaller fast index set ⟹
-smaller projection.) -/
+/-- **Band monotonicity in the cut.**  If `c₁ ≤ c₀` then the higher-cut band mass is dominated
+by the lower-cut band mass:  `‖P^{>c₀}_m u‖ ≤ ‖P^{>c₁}_m u‖`.  (Higher cut ⟹ smaller fast
+index set ⟹ smaller projection.) -/
 theorem norm_bandProjector_mono [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (m : ℕ) (x : X) {c₁ c₀ : ℝ} (hc : c₁ ≤ c₀)
     (u : EuclideanSpace ℝ (Fin d)) :
@@ -359,37 +389,41 @@ theorem norm_bandProjector_mono [NeZero d]
   nlinarith [norm_nonneg (S.fastProj m (hiBand A T m x c₀) u),
     norm_nonneg (S.fastProj m (hiBand A T m x c₁) u), hsq]
 
-/-! ## Obstruction: the frozen `hchain` envelope is too strong under intermediate strata
+/-! ## Obstruction: the arbitrary-cut envelope is too strong under intermediate strata
 
-The deterministic chain (above) shows the fast-band mass `‖P^{>c₀}_m u_a(n)‖` decays at the rate of
-the *first* `lam0`-stratum strictly above `log c₀`.  But the frozen `hchain` statement claims decay at
-the rate `λ_e − λ_a` for an **arbitrary** cut `c₀ ∈ (exp λ_a, exp λ_e)`.  When a third stratum `λ_c`
-satisfies `λ_a < λ_c < λ_e`, a cut `c₀ ∈ (exp λ_a, exp λ_c)` produces a band that *contains* the
-`λ_c` Oseledets direction, so the band mass is `≍ exp(−n(λ_c − λ_a))`, which is asymptotically
-**larger** than the claimed `C·exp(−n(λ_e − λ_a − δ))` (for `δ < λ_e − λ_c`).  Hence the envelope at
-that cut is false.
+The deterministic chain (above) shows the fast-band mass `‖P^{>c₀}_m u_a(n)‖` decays at the
+rate of the *first* `lam0`-stratum strictly above `log c₀`.  An envelope claiming decay at
+the rate `λ_e − λ_a` for an **arbitrary** cut `c₀ ∈ (exp λ_a, exp λ_e)` is strictly
+stronger.  When a third stratum `λ_c` satisfies `λ_a < λ_c < λ_e`, a cut
+`c₀ ∈ (exp λ_a, exp λ_c)` produces a band that *contains* the `λ_c` Oseledets direction,
+so the band mass is `≍ exp(−n(λ_c − λ_a))`, which is asymptotically **larger** than the
+claimed `C·exp(−n(λ_e − λ_a − δ))` (for `δ < λ_e − λ_c`).  Hence the envelope at that cut
+is false.
 
-The lemma below makes the obstruction precise and citable: the uniform-in-`m` band-mass envelope
-dominates the overlap with *any* unit vector that the limit projector `Pinf` fixes — including an
-intermediate-stratum limit eigenvector `b'_c` (which `Pinf` fixes because `exp λ_c > c₀`).  So
-`hchain` at this cut FORCES
+The lemma below makes the obstruction precise: the uniform-in-`m` band-mass envelope
+dominates the overlap with *any* unit vector that the limit projector `Pinf` fixes —
+including an intermediate-stratum limit eigenvector `b'_c` (which `Pinf` fixes because
+`exp λ_c > c₀`).  So the arbitrary-cut envelope at this cut forces
 
     |⟪b'_c, u_a(n)⟫|  ≤  C · exp(−n(λ_e − λ_a − δ)) .
 
-But the genuine graded-overlap rate between the *adjacent* strata `λ_a < λ_c` is only `λ_c − λ_a`
-(this is exactly the conclusion `forward_graded_overlap` proves for the pair `(a,c)`, and the
-overlap is generically of that exact order — nonzero leading coefficient).  Whenever the adjacent
-overlap is non-degenerate (the generic case), `|⟪b'_c, u_a(n)⟫| ≍ exp(−n(λ_c − λ_a))`, which exceeds
-`C·exp(−n(λ_e − λ_a − δ))` for all large `n` (take `δ < λ_e − λ_c`).  Hence the frozen `hchain`
-envelope is **not provable** in general: it is a strictly stronger claim than the band-mass actually
-satisfies at cuts `c₀ ∈ (exp λ_a, exp λ_c)` whenever a third stratum `λ_c ∈ (λ_a, λ_e)` exists.
+But the genuine graded-overlap rate between the *adjacent* strata `λ_a < λ_c` is only
+`λ_c − λ_a` (this is exactly the conclusion `forward_graded_overlap` proves for the pair
+`(a,c)`, and the overlap is generically of that exact order — nonzero leading coefficient).
+Whenever the adjacent overlap is non-degenerate (the generic case),
+`|⟪b'_c, u_a(n)⟫| ≍ exp(−n(λ_c − λ_a))`, which exceeds `C·exp(−n(λ_e − λ_a − δ))` for all
+large `n` (take `δ < λ_e − λ_c`).  Hence the arbitrary-cut envelope is **not provable** in
+general: it is a strictly stronger claim than the band mass actually satisfies at cuts
+`c₀ ∈ (exp λ_a, exp λ_c)` whenever a third stratum `λ_c ∈ (λ_a, λ_e)` exists.
 
-NOTE.  The downstream conclusion of `forward_graded_overlap` is *still correct* (the `λ_e`-eigenvector
-overlap `|⟪b'_e, u_a(n)⟫|` does decay at `λ_e − λ_a`); only the ROUTE through `hchain` — bounding that
-overlap by the band mass at an arbitrary cut and claiming the band mass also decays at `λ_e − λ_a` —
-is unsound when intermediate strata are present.  A correct `hchain` must restrict the cut to lie
-above the *immediately preceding* stratum below `λ_e` (i.e. `c₀ ∈ (exp λ_{e−1}, exp λ_e)`), OR the
-consumer must transfer to the band at the cut whose first stratum above is exactly `λ_e`. -/
+NOTE.  The conclusion of `forward_graded_overlap` is *still correct* (the
+`λ_e`-eigenvector overlap `|⟪b'_e, u_a(n)⟫|` does decay at `λ_e − λ_a`); only the route
+through the arbitrary-cut envelope — bounding that overlap by the band mass at an
+arbitrary cut and claiming the band mass also decays at `λ_e − λ_a` — is unsound when
+intermediate strata are present.  A sound envelope must restrict the cut to lie above the
+*immediately preceding* stratum below `λ_e` (i.e. `c₀ ∈ (exp λ_{e−1}, exp λ_e)`), or the
+consumer must transfer to the band at the cut whose first stratum above is exactly
+`λ_e`. -/
 theorem bandProjector_mass_ge_abs_inner_of_fix {d : ℕ}
     {P : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
     (hP : Filter.Tendsto P Filter.atTop (𝓝 Pinf)) (hPinfsa : IsSelfAdjoint Pinf)
@@ -406,7 +440,7 @@ theorem bandProjector_mass_ge_abs_inner_of_fix {d : ℕ}
   have hcontapply : Filter.Tendsto (fun m => Matrix.toEuclideanLin (P m) u) Filter.atTop
       (𝓝 (Matrix.toEuclideanLin Pinf u)) := by
     have hcont : Continuous (fun M : Matrix (Fin d) (Fin d) ℝ => Matrix.toEuclideanLin M u) := by
-      simp only [Matrix.toEuclideanLin_apply]
+      simp only [Matrix.toLpLin_apply]
       fun_prop
     exact (hcont.tendsto Pinf).comp hP
   have htend : Filter.Tendsto
@@ -425,12 +459,3 @@ theorem bandProjector_mass_ge_abs_inner_of_fix {d : ℕ}
   rw [hkey]; exact hlim
 
 end Oseledets
-
-/-! ## Axiom audit (deterministic core + adapter) -/
-
-#print axioms Ruelle13.SVDData.oneStep_recursion
-#print axioms Ruelle13.SVDData.chain_geometric_sum
-#print axioms Oseledets.toEuclideanLin_bandProjector_sortedGramEigenbasis
-#print axioms Oseledets.toEuclideanLin_bandProjector_eq_fastProj
-#print axioms Oseledets.norm_bandProjector_mono
-#print axioms Oseledets.bandProjector_mass_ge_abs_inner_of_fix

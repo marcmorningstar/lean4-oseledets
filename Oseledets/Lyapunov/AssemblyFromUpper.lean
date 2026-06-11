@@ -1,50 +1,53 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.SlowFlagBridge
 import Oseledets.Lyapunov.SpectrumConstancy
 import Oseledets.Lyapunov.ForwardLowerWiring
 
 /-!
-# M5 — the FINAL COMPOSER for the Oseledets filtration theorem
+# The Oseledets filtration theorem from the spectral upper bound
 
-This file composes all committed assets into the headline Oseledets filtration theorem
-`oseledets_filtration_of_upper`, deriving everything from the single fixed analytic node
-`hupper` (the per-vector spectral upper bound, delivered verbatim by the parallel worker) together
-with a *minimized* set of precisely-typed residual hypotheses that capture exactly the deep
-Λ-spectral identification (L7d / L11) which is genuinely not yet committed in the repository.
+This file assembles the Oseledets filtration theorem `oseledets_filtration_of_upper` from a
+single analytic input `hupper` — the per-vector spectral upper bound: every nonzero vector of
+the slow space `Vslow A T (Real.exp t) x` has upper growth exponent at most `t` — together
+with a minimized set of precisely typed residual hypotheses capturing the spectral
+identification of the Oseledets limit operator.
 
-## Strategy
-
-The committed capstone `Oseledets.oseledets_filtration_of_slowflag` consumes three a.e. interfaces:
-`hspec`, `hslowflag`, and `hgrowth`.  We discharge each as far as the committed assets and `hupper`
-allow, isolating the irreducible uncommitted content into named residual hypotheses.
+The assembly proceeds through `Oseledets.oseledets_filtration_of_slowflag`, which consumes
+three almost-everywhere interfaces: `hspec`, `hslowflag`, and `hgrowth`.  Each is discharged
+as far as `hupper` allows, isolating the remaining content into named residual hypotheses:
 
 * **`hslowflag`** (`Vslow (exp t) = lambdaSublevel t`).  The forward inclusion
-  `Vslow (exp t) ⊆ lambdaSublevel t` is *derived from `hupper`* (a slow Λ-vector grows slowly, hence
-  lies in the growth-sublevel) — `vslow_subset_lambdaSublevel_of_upper` below.  The reverse inclusion
-  is the genuinely uncommitted Λ-spectral direction, taken as the typed residual `hslowrev`.
+  `Vslow (exp t) ≤ lambdaSublevel t` is derived from `hupper`: a vector in the slow space grows
+  slowly, hence lies in the growth sublevel (`vslow_subset_lambdaSublevel_of_upper`).  The
+  reverse inclusion is taken as the typed residual hypothesis `hslowrev`.
 
-* **`hgrowth`** via `Oseledets.hgrowth_of_upper_lower`.  The upper half `hub` is *derived from
-  `hupper`* through the slow-flag identification (`hub_of_upper` below).  The lower bound `hlb` and
-  the boundedness `hbdd` come from the committed `Oseledets.hbdd_of_fk` (unconditional) and the
-  band-projector lower-bound layer; the band-projector convergence datum is the typed residual
-  `hband`.
+* **`hgrowth`** via `Oseledets.hgrowth_of_upper_lower`.  The upper half `hub` holds
+  unconditionally on the `IsUltrametricGrowth` good set (`hub_of_growthFunction`); the
+  boundedness `hbdd` comes from the Furstenberg–Kesten layer (`Oseledets.hbdd_of_fk`); the
+  lower bound `hlb` comes from the band-projector layer (`Oseledets.hlb_of_bandProjector`),
+  fed the residual band-projector convergence datum `hband`.
 
-* **`hspec`** via `Oseledets.hspec_standing` (the two Finset inclusions).  Both inclusions are the
-  deep spectral identification of the deterministic exponent set; they are taken as the typed
-  residuals `hub_spec` / `hlb_spec`.
+* **`hspec`** via `Oseledets.hspec_standing`.  The two `Finset` inclusions between the
+  realized exponent set `spectrum` and the deterministic exponent set `distinctExp lam0 d`
+  are taken as the typed residuals `hub_spec` and `hlb_spec`.
 
-## Residual hypotheses (the irreducible uncommitted Λ-spectral identification)
+The residual hypotheses `hslowrev`, `hband`, `hub_spec`, `hlb_spec` are each the minimal
+cleanly typed shape of a single spectral fact about the Oseledets limit operator; none is
+derivable from `hupper` alone.
 
-Beyond `hupper` the composition needs exactly the following, all precisely typed:
+## Main results
 
-* `hslowrev` — reverse inclusion `lambdaSublevel t ⊆ Vslow (exp t)` a.e. (the slow-growth ⟹ in
-  Λ-slow-space direction);
-* `hband` — band-projector convergence with nonzero fast component on each stratum (the L7d
-  `Vflag`-to-band identification feeding the committed liminf lower bound);
-* `hub_spec`, `hlb_spec` — the two Finset spectrum inclusions (`spectrum ⊆/⊇ distinctExp lam0 d`).
-
-Each is the minimal cleanly-typed shape of a single uncommitted spectral fact; none is derivable from
-the committed assets plus `hupper` alone (they require the spectral structure of the Oseledets limit
-operator `Λ`, whose projector-range/growth identification is the parallel L7d work).
+* `Oseledets.vslow_subset_lambdaSublevel_of_upper`: the forward slow-flag inclusion
+  `Vslow (exp t) ≤ lambdaSublevel t` from the spectral upper bound.
+* `Oseledets.hub_of_growthFunction`: the per-stratum `limsup` upper bound, almost everywhere.
+* `Oseledets.hslowflag_of_upper`: the slow-flag identification
+  `Vslow (exp t) = lambdaSublevel t` from the spectral upper bound and the reverse inclusion.
+* `Oseledets.oseledets_filtration_of_upper`: the Oseledets filtration theorem, assembled from
+  the spectral upper bound and the residual spectral-identification hypotheses.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -52,12 +55,11 @@ open scoped Matrix Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
 variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
 /-! ## Forward inclusion of `hslowflag` from `hupper` -/
 
+omit [NeZero d] in
 /-- **`Vslow (exp t) ⊆ lambdaSublevel t` from `hupper`.**  A nonzero vector in the Λ-slow band at
 level `e^t` has, by `hupper`, `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ t`; that `limsup` *is* `lambdaBar A T x v`
 (`limsup_log_norm_cocycle_eq_lambdaBar`), so `lambdaBar A T x v ≤ t`, i.e. `v ∈ lambdaSublevel t`.
@@ -86,6 +88,7 @@ The upper half `hub` of `Oseledets.hgrowth_of_upper_lower` is, in fact, *uncondi
 (`limsup_log_norm_cocycle_eq_lambdaBar`).  So `limsup ≤ specList i` holds (with equality) and `hub`
 needs no separate analytic input. -/
 
+omit [NeZero d] in
 /-- **`hub` from `Vflag` membership (a.e.).**  On the `IsUltrametricGrowth` good set the per-stratum
 `limsup` equals the exact exponent `specList i`, so in particular `limsup ≤ specList i` — the upper
 half consumed by `Oseledets.hgrowth_of_upper_lower`. -/
@@ -107,7 +110,7 @@ theorem hub_of_growthFunction
 
 /-- **`hslowflag` from `hupper` and the reverse inclusion.**  Combines the forward inclusion
 `Vslow (exp t) ⊆ lambdaSublevel t` (derived from `hupper` via
-`vslow_subset_lambdaSublevel_of_upper`) with the uncommitted reverse inclusion `hslowrev`
+`vslow_subset_lambdaSublevel_of_upper`) with the reverse inclusion `hslowrev`
 (`lambdaSublevel t ⊆ Vslow (exp t)`) into the per-point identification
 `Vslow (exp t) = lambdaSublevel t` consumed by `oseledets_filtration_of_slowflag`. -/
 theorem hslowflag_of_upper
@@ -125,36 +128,35 @@ theorem hslowflag_of_upper
   intro t
   exact le_antisymm (vslow_subset_lambdaSublevel_of_upper hx (hupperx) t) (hrevx t)
 
-/-! ## The capstone composition -/
+/-! ## The composed filtration theorem -/
 
 /-- **Oseledets filtration theorem, composed from the spectral upper bound `hupper`.**
 
-The complete Oseledets measurable-filtration conclusion, assembled from the committed capstone
-`oseledets_filtration_of_slowflag` and the parallel worker's per-vector spectral upper bound
-`hupper`.  The deterministic exponent data `lam0` is taken from the committed
-`exists_lam_tendsto_singularValue`.  The three a.e. interfaces are discharged as follows:
+The complete Oseledets measurable-filtration conclusion, assembled through
+`oseledets_filtration_of_slowflag` from the per-vector spectral upper bound `hupper`.  The
+deterministic exponent data `lam0` is taken from `exists_lam_tendsto_singularValue`.  The
+three a.e. interfaces are discharged as follows:
 
-* `hslowflag` — forward inclusion derived from `hupper` (`hslowflag_of_upper`), reverse inclusion the
-  residual `hslowrev`;
-* `hgrowth` — `hub` derived from `Vflag` membership (`hub_of_growthFunction`), `hbdd` from the
-  committed `hbdd_of_fk`, `hlb` from the committed `hlb_of_bandProjector` fed the residual band datum
-  `hband`;
-* `hspec` — the committed `hspec_standing` fed the two residual Finset spectrum inclusions
+* `hslowflag` — forward inclusion derived from `hupper` (`hslowflag_of_upper`), reverse
+  inclusion the residual `hslowrev`;
+* `hgrowth` — `hub` derived from `Vflag` membership (`hub_of_growthFunction`), `hbdd` from
+  `hbdd_of_fk`, `hlb` from `hlb_of_bandProjector` fed the residual band datum `hband`;
+* `hspec` — `hspec_standing` fed the two residual `Finset` spectrum inclusions
   `hub_spec` / `hlb_spec`.
 
-The residual hypotheses `hslowrev`, `hband`, `hub_spec`, `hlb_spec` are exactly the irreducible
-uncommitted Λ-spectral identification content (L7d / L11); see the module docstring. -/
+The residual hypotheses `hslowrev`, `hband`, `hub_spec`, `hlb_spec` capture exactly the
+spectral identification of the Oseledets limit operator; see the module docstring. -/
 theorem oseledets_filtration_of_upper
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ) (hTmeas : Measurable T)
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
-    -- The FIXED spectral-upper-bound node delivered by the parallel worker (verbatim shape).
+    -- The per-vector spectral upper bound.
     (hupper : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       Filter.limsup (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) Filter.atTop ≤ t)
-    -- Residual 1: the reverse slow-flag inclusion (slow growth ⟹ in Λ-slow-space).
+    -- Residual 1: the reverse slow-flag inclusion (slow growth implies slow-space membership).
     (hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x)
     -- Residual 2: spectrum upper Finset inclusion (every realized exponent is deterministic).
     (hub_spec : ∀ lam0 : ℕ → ℝ,
@@ -170,7 +172,7 @@ theorem oseledets_filtration_of_upper
           Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i))
         atTop (𝓝 (lam0 i))) →
       ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x)
-    -- Residual 4: the band-projector convergence datum feeding the committed liminf lower bound.
+    -- Residual 4: the band-projector convergence datum feeding the liminf lower bound.
     (hband : ∀ᵐ x ∂μ, ∀ i : Fin (specCard A T x),
       ∀ v ∈ (Vflag A T x i.castSucc : Set (EuclideanSpace ℝ (Fin d))),
         v ∉ Vflag A T x i.succ →
@@ -202,20 +204,13 @@ theorem oseledets_filtration_of_upper
     (hub_spec lam0 hlam0) (hlb_spec lam0 hlam0)
   -- `hslowflag` from `hupper` and the reverse inclusion.
   have hslowflag := hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
-  -- `hgrowth` from upper (`Vflag`) + lower (band) + boundedness (FK).
+  -- `hgrowth` from upper (`Vflag`) + lower (band) + boundedness (Furstenberg–Kesten).
   have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
   have hub := hub_of_growthFunction hT hA hAmeas hint hint'
   have hlb := hlb_of_bandProjector A hA hband hbdd
   have hgrowth := hgrowth_of_upper_lower A hub hlb hbdd
-  -- Assemble through the committed capstone.
+  -- Assemble through `oseledets_filtration_of_slowflag`.
   exact oseledets_filtration_of_slowflag hT A hA hAmeas hTmeas hint hint' lam0
     hspec hslowflag hgrowth
-
-/-! ## Axiom audit -/
-
-#print axioms vslow_subset_lambdaSublevel_of_upper
-#print axioms hub_of_growthFunction
-#print axioms hslowflag_of_upper
-#print axioms oseledets_filtration_of_upper
 
 end Oseledets

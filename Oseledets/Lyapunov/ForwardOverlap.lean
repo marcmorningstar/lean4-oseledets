@@ -1,7 +1,12 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Forward
 
 /-!
-# The block-specific overlap bound (the final Oseledets crux)
+# The block-specific overlap bound
 
 For `μ`-a.e. `x` and a vector `v` with top Λ-exponent `≤ λᵢ` (i.e. `P∞^{cᵢ} v = 0`, where `P∞` is
 the limit band projector straddling block `i−1 / i`), and a fast sorted index `j`
@@ -9,36 +14,33 @@ the limit band projector straddling block `i−1 / i`), and a fast sorted index 
 
     limsup_n (1/n) log |⟪v, uⱼ(n)⟫_ℝ|  ≤  λᵢ − λ_{block(j)}.
 
-The route telescopes the FINITE-`n` frame overlaps MULTIPLICATIVELY across the adjacent gaps, so
+The route telescopes the finite-`n` frame overlaps multiplicatively across the adjacent gaps, so
 the rate is the sum of adjacent gaps `Σ_k (λₖ − λₖ₋₁) = λᵢ − λ_{block(j)}`.
 
-## Ladder
+## Main results
 
-* **LOW `inner_eq_single_cut_residual`** — pure algebra single-cut residual identity (adapts
-  `inner_eq_inner_bandProjector_sub_limit` of `scratch_s4core.lean`).
-* **LOW `leak_le_bandProjector_diff`** — `‖Q∞ u‖ ≤ ‖Pₙ − P∞‖_op` operator-level leak.
-* **MED `limsup_logTail_le`** / **`single_gap_coupling_logLimit`** — the tail-rate lemma: summable
-  increments with `(1/n) log bₙ → L < 0` give `limsup (1/n) log ‖Σ_{m≥n} incr‖ ≤ L`; specialised to
-  the band-projector tail `‖Pₙ − P∞‖`.
-* **HIGH `telescope_overlap_limsup_le`** — the multiplicative composition across the adjacent gaps.
+* `inner_eq_single_cut_residual` — the single-cut residual identity: if `P∞ v = 0` and
+  `Pₙ u = u`, then `⟪v, u⟫ = ⟪v, (Pₙ − P∞) u⟫`.
+* `leak_le_bandProjector_diff` — the operator-level leak `‖(Pₙ − P∞) u‖ ≤ ‖Pₙ − P∞‖ · ‖u‖`.
+* `limsup_logTail_le` / `single_gap_coupling_logLimit` — the tail-rate lemma: summable
+  increments with `(1/n) log bₙ → L < 0` give `limsup (1/n) log ‖Σ_{m≥n} incr‖ ≤ L`; specialised
+  to the band-projector tail `‖Pₙ − P∞‖`.
+* `telescope_overlap_limsup_le` — the multiplicative composition across the adjacent gaps.
 -/
 
 open MeasureTheory Filter Topology
 open scoped Matrix InnerProductSpace Matrix.Norms.L2Operator
 
-set_option linter.unusedSectionVars false
-
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {T : X → X}
 variable {d : ℕ}
 
-/-! ## LOW 1 — single-cut residual identity (pure algebra) -/
+/-! ## The single-cut residual identity -/
 
-/-- **LOW 1 (`inner_eq_single_cut_residual`).** If `v` is killed by the limit projector
-`P∞` (`toEuclideanLin P∞ v = 0`) and `u` lies in the step-`n` band of `Pₙ`
-(`toEuclideanLin Pₙ u = u`), then the overlap is the residual overlap against the band-projector
-tilt: `⟪v, u⟫ = ⟪v, (Pₙ − P∞) u⟫`. Both projectors are self-adjoint. -/
+/-- If `v` is killed by the limit projector `P∞` (`toEuclideanLin P∞ v = 0`) and `u` lies in the
+step-`n` band of `Pₙ` (`toEuclideanLin Pₙ u = u`), then the overlap is the residual overlap
+against the band-projector tilt: `⟪v, u⟫ = ⟪v, (Pₙ − P∞) u⟫`. Only the symmetry of `P∞` is
+used. -/
 theorem inner_eq_single_cut_residual [NeZero d]
     {Pn Pinf : Matrix (Fin d) (Fin d) ℝ}
     (hPinfsa : Pinfᵀ = Pinf)
@@ -58,20 +60,20 @@ theorem inner_eq_single_cut_residual [NeZero d]
     rw [map_sub, LinearMap.sub_apply]
   rw [hsplit, inner_sub_right, hPinfu, sub_zero, hband]
 
-/-! ## LOW 2 — the leak is bounded by the band-projector difference -/
+/-! ## The leak is bounded by the band-projector difference -/
 
-/-- **LOW 2 (`leak_le_bandProjector_diff`).** With `u` in the step-`n` band (`Pₙ u = u`) and the
-limit projector `P∞` killing it up to the residual, the residual `‖(Pₙ − P∞) u‖` is bounded by the
-operator norm of `Pₙ − P∞` times `‖u‖`. (Operator-norm tilt control; in the application `‖u‖ = 1`.)
-This is the per-step leak whose normalized log telescopes at the gap rate. -/
+/-- With `u` in the step-`n` band (`Pₙ u = u`) and the limit projector `P∞` killing it up to the
+residual, the residual `‖(Pₙ − P∞) u‖` is bounded by the operator norm of `Pₙ − P∞` times `‖u‖`.
+(Operator-norm tilt control; in the application `‖u‖ = 1`.) This is the per-step leak whose
+normalized log telescopes at the gap rate. -/
 theorem leak_le_bandProjector_diff [NeZero d]
     {Pn Pinf : Matrix (Fin d) (Fin d) ℝ}
     {u : EuclideanSpace ℝ (Fin d)} :
     ‖Matrix.toEuclideanLin (Pn - Pinf) u‖ ≤ ‖Pn - Pinf‖ * ‖u‖ :=
   ExteriorNorm.norm_toEuclideanLin_apply_le (Pn - Pinf) u
 
-/-- **LOW 2′ (overlap ≤ tilt, unit `u`).** Combining LOW 1, Cauchy–Schwarz and LOW 2 for a unit
-band vector `u`: `|⟪v, u⟫| ≤ ‖v‖ · ‖Pₙ − P∞‖`. -/
+/-- Combining `inner_eq_single_cut_residual`, the Cauchy–Schwarz inequality and
+`leak_le_bandProjector_diff` for a unit band vector `u`: `|⟪v, u⟫| ≤ ‖v‖ · ‖Pₙ − P∞‖`. -/
 theorem abs_inner_le_norm_mul_bandProjector_diff [NeZero d]
     {Pn Pinf : Matrix (Fin d) (Fin d) ℝ}
     (hPinfsa : Pinfᵀ = Pinf)
@@ -86,7 +88,7 @@ theorem abs_inner_le_norm_mul_bandProjector_diff [NeZero d]
         mul_le_mul_of_nonneg_left (leak_le_bandProjector_diff) (norm_nonneg _)
     _ = ‖v‖ * ‖Pn - Pinf‖ := by rw [hu, mul_one]
 
-/-! ## MED — the tail-rate lemma
+/-! ## The tail-rate lemma
 
 The single-gap coupling: the band-projector tilt `‖Pₙ − P∞‖` is a *tail* of the summable
 increments `incr m = P_{m+1} − P_m`, namely `P∞ − Pₙ = ∑_{m≥n} incr m`, so
@@ -95,9 +97,9 @@ increments `incr m = P_{m+1} − P_m`, namely `P∞ − Pₙ = ∑_{m≥n} incr 
 `limsup (1/n) log (∑_{m≥n} bₘ) ≤ L`. We prove this sharply (rate `L`, not `L/2`) via the per-`ε`
 geometric envelope `bₘ ≤ exp(m (L+ε))`. -/
 
-/-- **MED core (`tail_le_geometric_envelope`).** If eventually `bₘ ≤ exp(m·s)` with `s < 0`, then
-for `n` in that eventual regime the tail `∑_{m≥n} b (n + m)` is bounded by the geometric tail
-`exp(n·s) / (1 − exp s)`. (Here `b` is nonneg and the tail is `∑' m, b (n+m)`.) -/
+/-- If eventually `bₘ ≤ exp(m·s)` with `s < 0`, then for `n` in that eventual regime the tail
+`∑_{m≥n} b (n + m)` is bounded by the geometric tail `exp(n·s) / (1 − exp s)`. (Here `b` is
+nonneg and the tail is `∑' m, b (n+m)`.) -/
 theorem tail_le_geometric_envelope (b : ℕ → ℝ) (hb : ∀ n, 0 ≤ b n) {s : ℝ} (hs : s < 0)
     {N : ℕ} (hN : ∀ m, N ≤ m → b m ≤ Real.exp ((m : ℝ) * s)) {n : ℕ} (hn : N ≤ n) :
     ∑' m : ℕ, b (n + m) ≤ Real.exp ((n : ℝ) * s) / (1 - Real.exp s) := by
@@ -124,8 +126,8 @@ theorem tail_le_geometric_envelope (b : ℕ → ℝ) (hb : ∀ n, 0 ≤ b n) {s 
     _ = Real.exp ((n : ℝ) * s) * (1 - ρ)⁻¹ := by rw [tsum_geometric_of_lt_one (le_of_lt hρ0) hρ1]
     _ = Real.exp ((n : ℝ) * s) / (1 - ρ) := by rw [div_eq_mul_inv]
 
-/-- **MED (`eventually_le_exp_envelope_of_tendsto`).** From the log-limit `(1/n) log bₙ → L`, for
-every `ε > 0` eventually `bₙ ≤ exp(n (L + ε))`. (Tendsto form of the root-test envelope.) -/
+/-- From the log-limit `(1/n) log bₙ → L`, for every `ε > 0` eventually
+`bₙ ≤ exp(n (L + ε))`. (Tendsto form of the root-test envelope.) -/
 theorem eventually_le_exp_envelope_of_tendsto {b : ℕ → ℝ} (hb : ∀ n, 0 ≤ b n) {L : ℝ}
     (hlog : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (b n)) atTop (𝓝 L))
     (ε : ℝ) (hε : 0 < ε) :
@@ -142,11 +144,11 @@ theorem eventually_le_exp_envelope_of_tendsto {b : ℕ → ℝ} (hb : ∀ n, 0 �
     calc b n = Real.exp (Real.log (b n)) := (Real.exp_log hpos).symm
       _ ≤ Real.exp ((n : ℝ) * (L + ε)) := Real.exp_le_exp.mpr (le_of_lt hloglt)
 
-/-- **MED (`limsup_logTail_le`).** The sharp tail-rate lemma. For a nonnegative `b` with
-`(1/n) log bₙ → L < 0`, the geometric tail `∑_{m≥n} b (n+m)` has
-`limsup_n (1/n) log (∑' m, b (n+m)) ≤ L`. This is the single-gap coupling rate: the band-projector
-tilt `‖Pₙ − P∞‖`, being a tail of the summable per-step increments dominated by `bₘ = bCocycle`,
-inherits the rate `L = λₖ − λₖ₋₁`. The cobounded side-condition is passed explicitly. -/
+/-- The sharp tail-rate lemma. For a nonnegative `b` with `(1/n) log bₙ → L < 0`, the geometric
+tail `∑_{m≥n} b (n+m)` has `limsup_n (1/n) log (∑' m, b (n+m)) ≤ L`. This is the single-gap
+coupling rate: the band-projector tilt `‖Pₙ − P∞‖`, being a tail of the summable per-step
+increments dominated by `bₘ = bCocycle`, inherits the rate `L = λₖ − λₖ₋₁`. The cobounded
+side-condition is passed explicitly. -/
 theorem limsup_logTail_le {b : ℕ → ℝ} (hb : ∀ n, 0 ≤ b n) {L : ℝ} (hL : L < 0)
     (hbpos : ∀ᶠ n : ℕ in atTop, 0 < b n)
     (hlog : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (b n)) atTop (𝓝 L))
@@ -237,13 +239,12 @@ theorem limsup_logTail_le {b : ℕ → ℝ} (hb : ∀ n, 0 ≤ b n) {L : ℝ} (h
     _ ≤ s + (y - s) := by linarith
     _ = y := by ring
 
-/-! ## MED — the band-projector tilt is bounded by the increment tail -/
+/-! ## The band-projector tilt is bounded by the increment tail -/
 
-/-- **MED (`norm_bandProjector_sub_limit_le_tail`).** A normed-space tail bound: if `f n → a` and the
-consecutive increments are dominated by a summable nonnegative `b` (`‖f n − f (n+1)‖ ≤ b n`), then
-`‖f n − a‖ ≤ ∑' m, b (n + m)`. Specialised to `f = Pₙ`, `a = P∞`, `b = bCocycle` this is the tilt
-tail bound `‖Pₙ − P∞‖ ≤ ∑_{m≥n} bₘ`. Direct from Mathlib's
-`dist_le_tsum_of_dist_le_of_tendsto`. -/
+/-- A normed-space tail bound: if `f n → a` and the consecutive increments are dominated by a
+summable nonnegative `b` (`‖f n − f (n+1)‖ ≤ b n`), then `‖f n − a‖ ≤ ∑' m, b (n + m)`.
+Specialised to `f = Pₙ`, `a = P∞`, `b = bCocycle` this is the tilt tail bound
+`‖Pₙ − P∞‖ ≤ ∑_{m≥n} bₘ`. Direct from Mathlib's `dist_le_tsum_of_dist_le_of_tendsto`. -/
 theorem norm_sub_limit_le_tail {E : Type*} [NormedAddCommGroup E]
     (f : ℕ → E) (b : ℕ → ℝ) (hstep : ∀ n, ‖f n - f (n + 1)‖ ≤ b n) (hsum : Summable b)
     {a : E} (ha : Tendsto f atTop (𝓝 a)) (n : ℕ) :
@@ -253,16 +254,16 @@ theorem norm_sub_limit_le_tail {E : Type*} [NormedAddCommGroup E]
   have h := dist_le_tsum_of_dist_le_of_tendsto b hdist hsum ha n
   rwa [dist_eq_norm] at h
 
-/-- **MED (`single_gap_coupling_overlap_le`).** The single-gap coupling, in the form the overlap
-assembly consumes. For a unit step-`n` band vector `uⱼ(n)` and `v` killed by the limit projector,
-the overlap is bounded by the increment tail:
+/-- The single-gap coupling, in the form the overlap assembly consumes. For a unit step-`n` band
+vector `uⱼ(n)` and `v` killed by the limit projector, the overlap is bounded by the increment
+tail:
 
     |⟪v, uⱼ(n)⟫|  ≤  ‖v‖ · (∑' m, b (n + m)),
 
-where `b` (`= bCocycle`) dominates the band-projector increments `‖Pₙ − Pₙ₊₁‖ ≤ bₙ` and is summable
-(here from `Pₙ → P∞`). Combined with `limsup_logTail_le`, the increment tail carries the sharp
-single-gap rate `L = λₖ − λₖ₋₁`. We expose both the pointwise bound and the tail-rate so the overlap
-exponent can be assembled via `scratch_s4core`'s `limsup_normLog_overlap_le` (with `t n = tail` —
+where `b` (`= bCocycle`) dominates the band-projector increments `‖Pₙ − Pₙ₊₁‖ ≤ bₙ` and is
+summable (here from `Pₙ → P∞`). Combined with `limsup_logTail_le`, the increment tail carries the
+sharp single-gap rate `L = λₖ − λₖ₋₁`. We expose both the pointwise bound and the tail-rate so
+the overlap exponent can be assembled via `limsup_normLog_overlap_le` (with `t n = tail` —
 eventually positive, so no `log 0` artifact). -/
 theorem overlap_le_norm_mul_tail [NeZero d]
     {Pn : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
@@ -280,16 +281,16 @@ theorem overlap_le_norm_mul_tail [NeZero d]
     _ ≤ ‖v‖ * ∑' m : ℕ, b (n + m) :=
         mul_le_mul_of_nonneg_left (norm_sub_limit_le_tail Pn b hstep hsum hP n) (norm_nonneg _)
 
-/-- **MED (`single_gap_coupling_logLimit`).** Packaging the single-gap coupling at the log level
-(the `scratch_s4core` shape). With the per-step increment bound, the tail-rate (`limsup_logTail_le`,
-`L = λₖ − λₖ₋₁ < 0`), the unit band vector and the kill hypothesis, the overlap exponent has
+/-- Packaging the single-gap coupling at the log level. With the per-step increment bound, the
+tail-rate (`limsup_logTail_le`, `L = λₖ − λₖ₋₁ < 0`), the unit band vector and the kill
+hypothesis, the overlap exponent has
 
     limsup (1/n) log |⟪v, uⱼ(n)⟫|  ≤  L.
 
 Built by feeding `overlap_le_norm_mul_tail` and `limsup_logTail_le` into the abstract
-`Oseledets.limsup_normLog_overlap_le` of `scratch_s4core.lean`, with the (eventually positive)
-increment tail as the controlling sequence `t n`. The `‖v‖`-vanishing, eventual positivity of the
-overlap, and boundedness/coboundedness side-conditions are passed explicitly. -/
+`Oseledets.limsup_normLog_overlap_le`, with the (eventually positive) increment tail as the
+controlling sequence `t n`. The `‖v‖`-vanishing, eventual positivity of the overlap, and
+boundedness/coboundedness side-conditions are passed explicitly. -/
 theorem single_gap_coupling_logLimit [NeZero d]
     {Pn : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
     (hPinfsa : Pinfᵀ = Pinf)
@@ -331,31 +332,30 @@ theorem single_gap_coupling_logLimit [NeZero d]
   exact limsup_normLog_overlap_le (a := fun n => |(inner ℝ v (uj n) : ℝ)|) (t := t)
     hbound hapos hvpos htpos hnvvanish htilt hcob hcobT hbddT
 
-/-! ## HIGH — the multiplicative telescope (composition of single-gap couplings)
+/-! ## The multiplicative telescope (composition of single-gap couplings)
 
 The target rate `λᵢ − λ_{block(j)}` for a fast index `j` whose block is *several* gaps below `i`
-equals the sum of the adjacent gaps `Σ_{k} (λₖ − λₖ₋₁)`. The single-gap couplings (MED) supply each
+equals the sum of the adjacent gaps `Σ_{k} (λₖ − λₖ₋₁)`. The single-gap couplings supply each
 `limsup (1/n) log ℓₖ(n) ≤ λₖ − λₖ₋₁` for the per-gap leak factor `ℓₖ(n)`; composing them
-MULTIPLICATIVELY over the finite-`n` frame overlaps gives the full rate.
+multiplicatively over the finite-`n` frame overlaps gives the full rate.
 
-We split HIGH into:
+This splits into:
 
-* **`limsup_log_finset_prod_le`** — the abstract composition engine (FULLY PROVED): given a finite
-  family of eventually-positive factors `ℓₖ` with `limsup (1/n) log ℓₖ ≤ rₖ`, a subexponential
-  prefactor `C(n)` (`(1/n) log C(n) → 0`), and the product bound `a n ≤ C(n) · ∏ₖ ℓₖ(n)`
-  (eventually, with `a ≥ 0`), the overlap exponent has `limsup (1/n) log a ≤ Σₖ rₖ`.
+* `limsup_log_finset_prod_le` — the abstract composition engine: given a finite family of
+  eventually-positive factors `ℓₖ` with `limsup (1/n) log ℓₖ ≤ rₖ`, a subexponential prefactor
+  `C(n)` (`(1/n) log C(n) → 0`), and the product bound `a n ≤ C(n) · ∏ₖ ℓₖ(n)` (eventually,
+  with `a ≥ 0`), the overlap exponent has `limsup (1/n) log a ≤ Σₖ rₖ`.
 
-* **`telescope_overlap_limsup_le`** — the Oseledets specialization: instantiates the engine with
-  `rₖ = λₖ − λₖ₋₁`, `Σₖ rₖ = λᵢ − λ_{block(j)}`, the per-gap leaks `ℓₖ` from MED, and the
-  finite-`n` frame product bound (the single remaining analytic input, stated precisely). -/
+* `telescope_overlap_limsup_le` — the Oseledets specialization: instantiates the engine with
+  `rₖ = λₖ − λₖ₋₁`, `Σₖ rₖ = λᵢ − λ_{block(j)}`, the per-gap leaks `ℓₖ` from the single-gap
+  coupling, and the finite-`n` frame product bound (taken as a hypothesis, stated precisely). -/
 
-/-- **HIGH engine (`limsup_log_finset_prod_le`).** The abstract multiplicative composition. Over a
-finite index set `s`, let `ℓ : s → ℕ → ℝ` be eventually-positive factors with
-`limsup (1/n) log (ℓₖ n) ≤ r k` (boundedness side-conditions supplied), let `C : ℕ → ℝ` be a
-subexponential prefactor (`(1/n) log (C n) → 0`, `C ≥ 0`), and suppose the nonnegative target `a`
-obeys the product bound `a n ≤ C n · ∏ₖ ℓₖ n` eventually. Then
-`limsup (1/n) log (a n) ≤ ∑ₖ r k`. This is the telescope: the σ-ratios multiply, logs add, and the
-limsup of the sum is bounded by the sum of the rates. -/
+/-- The abstract multiplicative composition. Over a finite index set `s`, let `ℓ : s → ℕ → ℝ` be
+eventually-positive factors with `limsup (1/n) log (ℓₖ n) ≤ r k` (boundedness side-conditions
+supplied), let `C : ℕ → ℝ` be a subexponential prefactor (`(1/n) log (C n) → 0`, `C ≥ 0`), and
+suppose the nonnegative target `a` obeys the product bound `a n ≤ C n · ∏ₖ ℓₖ n` eventually.
+Then `limsup (1/n) log (a n) ≤ ∑ₖ r k`. This is the telescope: the σ-ratios multiply, logs add,
+and the limsup of the sum is bounded by the sum of the rates. -/
 theorem limsup_log_finset_prod_le {s : Type*} [Fintype s]
     (ℓ : s → ℕ → ℝ) (r : s → ℝ) (a C : ℕ → ℝ)
     (_hann : ∀ n, 0 ≤ a n) (hCnn : ∀ n, 0 ≤ C n)
@@ -446,21 +446,20 @@ theorem limsup_log_finset_prod_le {s : Type*} [Fintype s]
     _ = R + ε := by rw [← mul_assoc, inv_mul_cancel₀ (ne_of_gt hnpos), one_mul]
     _ = y := by rw [hεdef]; ring
 
-/-- **HIGH (`telescope_overlap_limsup_le`) — the block-specific overlap bound.** The final crux,
-assembled from the composition engine `limsup_log_finset_prod_le`. Indexing the adjacent gaps by a
-finite type `s` (the gaps `block(j)+1, …, i`), with per-gap leak factors `ℓₖ(n) = ‖Πₖⁿ − Πₖ^∞‖`
-(eventually positive, log-limsup `≤ λₖ − λₖ₋₁ =: rₖ`, the MED single-gap rate from
-`limsup_logTail_le`), a subexponential prefactor `C(n)` (`‖v‖` and the frame-overlap normalizers),
-and the **finite-`n` multiplicative frame-overlap bound** `|⟪v, uⱼ(n)⟫| ≤ C(n) · ∏ₖ ℓₖ(n)` (the
-telescope: the σ-ratios multiply across the finite-`n` adjacent frame overlaps), the overlap
-exponent has
+/-- **The block-specific overlap bound**, assembled from the composition engine
+`limsup_log_finset_prod_le`. Indexing the adjacent gaps by a finite type `s` (the gaps
+`block(j)+1, …, i`), with per-gap leak factors `ℓₖ(n) = ‖Πₖⁿ − Πₖ^∞‖` (eventually positive,
+log-limsup `≤ λₖ − λₖ₋₁ =: rₖ`, the single-gap rate from `limsup_logTail_le`), a subexponential
+prefactor `C(n)` (`‖v‖` and the frame-overlap normalizers), and the **finite-`n` multiplicative
+frame-overlap bound** `|⟪v, uⱼ(n)⟫| ≤ C(n) · ∏ₖ ℓₖ(n)` (the telescope: the σ-ratios multiply
+across the finite-`n` adjacent frame overlaps), the overlap exponent has
 
     limsup (1/n) log |⟪v, uⱼ(n)⟫|  ≤  ∑ₖ rₖ  =  λᵢ − λ_{block(j)}.
 
-This is exactly the consumer form `hov` (after the budget identity `∑ₖ (λₖ − λₖ₋₁) = λᵢ − λⱼ`). The
-hypotheses are the precise reduction of the crux to the single remaining analytic input — the
-finite-`n` frame product bound `hprod` — every other ingredient (per-gap rates, positivity,
-boundedness) being supplied by the banked LOW/MED machinery. -/
+After the budget identity `∑ₖ (λₖ − λₖ₋₁) = λᵢ − λⱼ` this is the overlap-rate input to the
+filtration assembly. The only analytic hypothesis is the finite-`n` frame product bound `hprod`;
+every other ingredient (per-gap rates, positivity, boundedness) is supplied by the lemmas
+above. -/
 theorem telescope_overlap_limsup_le {s : Type*} [Fintype s]
     (ℓ : s → ℕ → ℝ) (lam : s → ℝ) (lamPrev : s → ℝ)
     (overlap : ℕ → ℝ) (C : ℕ → ℝ)
@@ -468,10 +467,10 @@ theorem telescope_overlap_limsup_le {s : Type*} [Fintype s]
     (hov_pos : ∀ᶠ n : ℕ in atTop, 0 < overlap n)
     (hℓpos : ∀ k, ∀ᶠ n : ℕ in atTop, 0 < ℓ k n)
     (hℓbdd : ∀ k, IsBoundedUnder (· ≤ ·) atTop (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (ℓ k n)))
-    -- the MED single-gap rate for each adjacent gap `k`:
+    -- the single-gap rate for each adjacent gap `k`:
     (hℓlim : ∀ k, limsup (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (ℓ k n)) atTop ≤ lam k - lamPrev k)
     (hC : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (C n)) atTop (𝓝 0))
-    -- the finite-`n` multiplicative frame-overlap bound (the remaining analytic input):
+    -- the finite-`n` multiplicative frame-overlap bound:
     (hprod : ∀ᶠ n : ℕ in atTop, overlap n ≤ C n * ∏ k : s, ℓ k n)
     (hbdd : IsBoundedUnder (· ≤ ·) atTop (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (overlap n)))
     (hcobdd : IsCoboundedUnder (· ≤ ·) atTop (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (overlap n)))

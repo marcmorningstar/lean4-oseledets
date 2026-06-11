@@ -1,97 +1,66 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.Filtration
 import Oseledets.Lyapunov.GrowthFunction
 
 /-!
-# `scratch_daviskahan` — closing the block-rate overlap node (the non-circular route)
+# Block-rate overlap bounds against sorted Gram singular directions
 
-This file CLOSES the single irreducible analytic node of the Oseledets MET upper bound — the
-block-specific overlap rate consumed by `Oseledets.block_overlap_limsup_le` (`scratch_overlap2.lean`)
-and ultimately by the spectral split of `Oseledets/Lyapunov/Forward.lean`:
+This file proves the block-specific overlap decay rate consumed by the spectral split of the
+Oseledets multiplicative ergodic theorem: writing `A⁽ⁿ⁾ = cocycle A T n x`,
 
-    limsup_{n} (1/n)·log |⟪v, uⱼ(n)⟫|  ≤  λᵢ − λ_{block(j)},
+    limsup_n (1/n) · log |⟪v, uⱼ(n)⟫| ≤ λᵢ − λ_l,
 
-where `v` is a *slow* vector (top Λ-exponent `lambdaBar v ≤ λᵢ`) and `uⱼ(n) = sortedGramEigenbasis A T n x j`
-is a *fast* sorted Gram singular vector (singular exponent `λ_{block(j)} > λᵢ`). The rate is the FULL
-multi-gap difference `λᵢ − λ_{block(j)}`, the SUM of all adjacent gaps from `block(j)` up to `i`.
+where `v` is a *slow* vector (upper Lyapunov growth `lambdaBar A T x v ≤ λᵢ`) and
+`uⱼ(n) = sortedGramEigenbasis A T n x j` is a sorted Gram singular vector whose singular value
+`σⱼ(n)` has exponent `λ_l`. For a fast direction (`λ_l > λᵢ`) the rate is the full multi-gap
+difference `λᵢ − λ_l`, the sum of all adjacent spectral gaps between the two exponents.
 
-## The genuine finding: the circularity is broken by the limsup-flag, not by perturbation theory
+Eigenvector-perturbation arguments (Davis–Kahan / sin-Θ bounds) only reach the nearest adjacent
+gap, because the residual leak at a nested cut is cut-invariant. The proof here instead goes
+through the sharp Gram-eigenvector cross bound `|⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾ v‖ / σⱼ(n)`. The required
+slow-growth input `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` is not an output of the spectral split it
+feeds: it is the inequality `lambdaBar A T x v ≤ λᵢ`, the defining property of membership in
+the limsup flag (`Oseledets.Vflag`, `Oseledets/Lyapunov/Filtration.lean`), which is established
+strictly upstream of the overlap split. No circularity arises.
 
-A prior rigorous analysis (`scratch_htilt.lean`) established that BOTH sharp routes to the block rate
-appear to hit a wall:
+## Main results
 
-* the **projector/eigenvector-tilt** (Davis–Kahan / sin-Θ) side gives only the NEAREST gap, because
-  the residual leak is *cut-invariant* (`inner_eq_residual_at_nested_cut`) — no operator telescope
-  realizes the product of intermediate gap ratios; and
-* the **Gram-eigenvector** side gives the block rate via the sharp bound
-  `|⟪uⱼ, v⟫| ≤ ‖A⁽ⁿ⁾v‖ / σⱼ`, BUT was deemed *circular* because the slow growth
-  `(1/n)log‖A⁽ⁿ⁾v‖ → λᵢ` was believed to be only available as the OUTPUT of the very spectral split
-  (`Forward.lean`, `limsup_inv_mul_log_norm_cocycle_apply_le`) it would feed.
-
-This file resolves the circularity. NUMERICAL dissection (mpmath, dps=200, this investigation) further
-established that the obstruction is a genuine FIXED POINT: for a *limit* slow vector, the slow-growth
-upper bound and the block-rate leak are mutually EQUIVALENT (the dominant term of `‖A⁽ⁿ⁾e_b‖²` is
-exactly the cross-overlap squared `σ₀²⟪u₀,e_b⟫²`). So no amount of limit-subspace perturbation theory
-breaks it; the block rate is the fixed point of the leak↔growth recursion.
-
-The break comes from the OBSERVATION that the slow growth `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ` is **not**
-the output of the spectral split — it is `lambdaBar A T x v ≤ λᵢ`, which is the DEFINITION of `v`
-being slow (`Oseledets.lambdaBar A T x v = limsup_n (1/n) log‖A⁽ⁿ⁾v‖`, `Filtration.lean`), and the
-filtration module `Oseledets/Lyapunov/Filtration.lean` (where slow membership lives) is **strictly
-upstream** of the overlap split `Forward.lean` (it does not import it). The slow growth is available
-unconditionally from the limsup-flag, proven via the ultrametric growth structure, NOT via the
-spectral overlaps. The circle is broken.
-
-## What this file delivers (NO `sorry`, clean axioms)
-
-1. **`abs_inner_gramEig_le_norm_div_singularValue`** — the abstract Gram-eigenvector cross bound
-   `|⟪u, v⟫| ≤ ‖f v‖ / √μ` for a unit `Q`-eigenvector `u` (`Q = adjoint f ∘ f`, eigenvalue `μ > 0`).
-   Pure linear algebra (adjoint + Cauchy–Schwarz); NO perturbation theory, NO symmetry.
-
-2. **`abs_inner_sortedGramEigenbasis_le_cocycle`** — the concrete per-`n` Oseledets overlap bound
-   `|⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾v‖ / σⱼ(n)`, instantiating (1) at the genuine `sortedGramEigenbasis` and the
-   cocycle map, with `σⱼ(n) = singularValues j` the genuine `j`-th singular value.
-
-3. **`limsup_log_div_le_of_limsup_le_of_tendsto`** — the rate-assembly lemma: if `aₙ ≤ pₙ/qₙ` (all
-   eventually positive), `limsup (1/n)log pₙ ≤ P`, and `(1/n)log qₙ → Q`, then
-   `limsup (1/n)log aₙ ≤ P − Q`. The genuine `limsup` arithmetic that turns the per-`n` bound into the
-   block rate.
-
-4. **`overlap_limsup_le_of_slow_growth`** — the CLOSURE: from the slow growth (as a `limsup`
-   hypothesis on `‖A⁽ⁿ⁾v‖`) and the singular-value convergence `(1/n)log σⱼ(n) → λ_l`, concludes
-   `limsup (1/n)log|⟪v, uⱼ(n)⟫| ≤ λᵢ − λ_l`. The slow-growth hypothesis is `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ`,
-   i.e. `lambdaBar A T x v ≤ λᵢ` — supplied NON-circularly by the limsup-flag filtration.
-
-The deliverable (4) is precisely the conclusion of `block_overlap_limsup_le`, now proven from the
-filtration's slow-growth bound rather than from the unproven `htilt` tilt-rate hypothesis: it closes
-the node.
-
-Everything below is sorry-free with the standard axioms `[propext, Classical.choice, Quot.sound]`.
+* `abs_inner_gramEig_le_norm_div_singularValue`: for a linear map `f` on a finite-dimensional
+  real inner product space and a unit eigenvector `u` of the Gram operator `adjoint f ∘ₗ f`
+  with eigenvalue `μ > 0`, every vector `v` satisfies `|⟪u, v⟫| ≤ ‖f v‖ / √μ`.
+* `abs_inner_sortedGramEigenbasis_le_cocycle`: the cocycle instance
+  `|⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾ v‖ / σⱼ(n)`.
+* `limsup_log_div_le_of_limsup_le_of_tendsto`: if `aₙ ≤ pₙ / qₙ` eventually (all three
+  sequences eventually positive), `limsup (1/n) log pₙ ≤ P`, and `(1/n) log qₙ → Q`, then
+  `limsup (1/n) log aₙ ≤ P − Q`.
+* `overlap_limsup_le_of_slow_growth` and `overlap_limsup_le_of_lambdaBar`: the block-rate
+  overlap bound, with the slow-growth hypothesis stated as a `limsup` bound and in its native
+  `lambdaBar` form respectively.
 -/
 
 open MeasureTheory Filter Topology
 open scoped Matrix InnerProductSpace Matrix.Norms.L2Operator
 
-set_option linter.unusedSectionVars false
-
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {T : X → X}
-variable {d : ℕ}
+variable {X : Type*} [MeasurableSpace X] {d : ℕ}
 
-/-! ## 1. The abstract Gram-eigenvector cross bound -/
+/-! ## The abstract Gram-eigenvector cross bound -/
 
-/-- **`abs_inner_gramEig_le_norm_div_singularValue`.**
-Abstract Gram-eigenvector overlap bound. Let `f : E →ₗ[ℝ] E` on a finite-dimensional real inner
-product space, `Q := adjoint f ∘ f` the Gram operator. If `u` is a unit `Q`-eigenvector with
-eigenvalue `μ > 0` (`adjoint f (f u) = μ • u`), then for every `v`:
+/-- Let `f : E →ₗ[ℝ] E` be a linear map on a finite-dimensional real inner product space and
+`u` a unit eigenvector of the Gram operator `adjoint f ∘ₗ f` with eigenvalue `μ > 0`
+(`adjoint f (f u) = μ • u`). Then every vector `v` satisfies
 
-    |⟪u, v⟫|  ≤  ‖f v‖ / √μ.
+    |⟪u, v⟫| ≤ ‖f v‖ / √μ.
 
-Proof: `μ·⟪u,v⟫ = ⟪Q u, v⟫ = ⟪f u, f v⟫` (adjoint), so `|⟪u,v⟫| = |⟪fu,fv⟫|/μ ≤ ‖fu‖·‖fv‖/μ`
-(Cauchy–Schwarz), and `‖fu‖² = ⟪fu,fu⟫ = ⟪Qu,u⟫ = μ` for unit `u`, so `‖fu‖ = √μ`. Pure linear
-algebra. The sharp source of the BLOCK rate `λᵢ − λ_{block(j)}` once `‖f v‖` (slow growth `λᵢ`) and
-`√μ = σⱼ` (singular value, exponent `λ_{block(j)}`) are fed in. -/
+Indeed `μ · ⟪u, v⟫ = ⟪adjoint f (f u), v⟫ = ⟪f u, f v⟫`, so Cauchy–Schwarz gives
+`|⟪u, v⟫| ≤ ‖f u‖ · ‖f v‖ / μ`, and `‖f u‖² = ⟪adjoint f (f u), u⟫ = μ` for unit `u`, so
+`‖f u‖ = √μ`. Pure linear algebra: no perturbation theory and no symmetry of `f` is used. -/
 theorem abs_inner_gramEig_le_norm_div_singularValue
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     (f : E →ₗ[ℝ] E) {u v : E} (hu : ‖u‖ = 1) {μ : ℝ} (hμ : 0 < μ)
@@ -121,16 +90,17 @@ theorem abs_inner_gramEig_le_norm_div_singularValue
         rw [div_eq_div_iff (ne_of_gt hμ) (ne_of_gt hsqrt_pos)]
         nlinarith [hμsqrt, norm_nonneg (f v)]
 
-/-! ## 2. The concrete Oseledets per-`n` overlap bound -/
+/-! ## The per-`n` cocycle overlap bound -/
 
-/-- **`abs_inner_sortedGramEigenbasis_le_cocycle`.** For the genuine sorted Gram singular vector
-`uⱼ(n) = sortedGramEigenbasis A T n x j` and ANY fixed vector `v`:
+/-- For the sorted Gram singular vector `uⱼ(n) = sortedGramEigenbasis A T n x j` and any fixed
+vector `v`:
 
-    |⟪uⱼ(n), v⟫|  ≤  ‖A⁽ⁿ⁾·v‖ / σⱼ(n),
+    |⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾ · v‖ / σⱼ(n),
 
-where `σⱼ(n) = (toEuclideanLin (cocycle A T n x)).singularValues j` is the genuine `j`-th singular
-value of `A⁽ⁿ⁾` and `‖A⁽ⁿ⁾·v‖` the cocycle growth of the FIXED `v`. The eigenvalue
-`μⱼ(n) = eigenvalues₀(gram) j = σⱼ(n)²`, so `√μⱼ(n) = σⱼ(n)`. -/
+where `σⱼ(n) = (toEuclideanLin (cocycle A T n x)).singularValues j` is the `j`-th singular
+value of `A⁽ⁿ⁾` and `‖A⁽ⁿ⁾ · v‖` the cocycle growth of the fixed `v`. This instantiates
+`abs_inner_gramEig_le_norm_div_singularValue` at the Gram eigenvalue
+`μⱼ(n) = eigenvalues₀ (gram) j = σⱼ(n)²`, so that `√(μⱼ(n)) = σⱼ(n)`. -/
 theorem abs_inner_sortedGramEigenbasis_le_cocycle [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X)
     (j : Fin (Fintype.card (Fin d))) (v : EuclideanSpace ℝ (Fin d))
@@ -153,8 +123,7 @@ theorem abs_inner_sortedGramEigenbasis_le_cocycle [NeZero d]
       Matrix.conjTranspose_eq_transpose_of_trivial]
   have hgram : (LinearMap.adjoint f) ∘ₗ f = Matrix.toEuclideanLin (gram A T n x) := by
     rw [hadj, hf, gram]
-    ext w i
-    simp only [LinearMap.comp_apply, Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+    exact (Matrix.toLpLin_mul_same 2 _ _).symm
   have heig : (LinearMap.adjoint f) (f u) = μ • u := by
     have h := sortedGramEigenbasis_eigenpair A T n x j
     rw [← hgram] at h
@@ -163,15 +132,15 @@ theorem abs_inner_sortedGramEigenbasis_le_cocycle [NeZero d]
   have hbnd := abs_inner_gramEig_le_norm_div_singularValue f (u := u) (v := v) hunorm hμpos heig
   rwa [hsqrtμ] at hbnd
 
-/-! ## 3. The rate-assembly lemma -/
+/-! ## The rate-assembly lemma -/
 
-/-- **`limsup_log_div_le_of_limsup_le_of_tendsto`.** The genuine `limsup` arithmetic behind the block
-rate. If `aₙ ≤ pₙ / qₙ` eventually (with `aₙ, pₙ, qₙ` eventually positive), `limsup (1/n)log pₙ ≤ P`,
-and `(1/n)log qₙ → Q`, then `limsup (1/n)log aₙ ≤ P − Q`.
+/-- The `limsup` arithmetic behind the block rate. If `aₙ ≤ pₙ / qₙ` eventually (with
+`aₙ, pₙ, qₙ` eventually positive), `limsup (1/n) log pₙ ≤ P`, and `(1/n) log qₙ → Q`, then
+`limsup (1/n) log aₙ ≤ P − Q`.
 
-Mechanism: `(1/n)log aₙ ≤ (1/n)log pₙ − (1/n)log qₙ` eventually; `limsup` of the RHS is
-`≤ limsup (1/n)log pₙ + limsup (−(1/n)log qₙ) = P + (−Q)` (the second `limsup` is `−Q` since
-`(1/n)log qₙ → Q`). -/
+Mechanism: `(1/n) log aₙ ≤ (1/n) log pₙ − (1/n) log qₙ` eventually; the `limsup` of the
+right-hand side is `≤ limsup (1/n) log pₙ + limsup (−(1/n) log qₙ) = P + (−Q)` (the second
+`limsup` is `−Q` since `(1/n) log qₙ → Q`). -/
 theorem limsup_log_div_le_of_limsup_le_of_tendsto
     {a p q : ℕ → ℝ} {P Q : ℝ}
     (hbound : ∀ᶠ n : ℕ in atTop, a n ≤ p n / q n)
@@ -198,9 +167,10 @@ theorem limsup_log_div_le_of_limsup_le_of_tendsto
       _ ≤ (n : ℝ)⁻¹ * (Real.log (p n) - Real.log (q n)) :=
           mul_le_mul_of_nonneg_left hlogle hninv
       _ = lp n - lq n := by rw [mul_sub]
-  -- We avoid any lower bound on `lp` by an `ε`-argument: for every `ε > 0`, eventually `lq n > Q - ε`,
-  -- hence `la n ≤ lp n - lq n < lp n - (Q - ε) = lp n + (ε - Q)`, and `limsup (lp + const) =
-  -- limsup lp + const ≤ P + (ε - Q)`. Then `ε → 0` gives `limsup la ≤ P - Q`.
+  -- We avoid any lower bound on `lp` by an `ε`-argument: for every `ε > 0`, eventually
+  -- `lq n > Q - ε`, hence `la n ≤ lp n - lq n < lp n - (Q - ε) = lp n + (ε - Q)`, and
+  -- `limsup (lp + const) = limsup lp + const ≤ P + (ε - Q)`. Then `ε → 0` gives
+  -- `limsup la ≤ P - Q`.
   rw [show P - Q = P + (- Q) by ring]
   refine le_of_forall_pos_le_add (fun ε hε => ?_)
   -- eventually `la n ≤ lp n + (ε - Q)`.
@@ -225,25 +195,23 @@ theorem limsup_log_div_le_of_limsup_le_of_tendsto
     _ ≤ P + (ε - Q) := by gcongr
     _ = P + (- Q) + ε := by ring
 
-/-! ## 4. The closure: block-rate overlap from the slow-growth limsup -/
+/-! ## The block-rate overlap bound from the slow-growth limsup -/
 
-/-- **`overlap_limsup_le_of_slow_growth` — the closure of the block-rate overlap node.**
+/-- The block-rate overlap bound. For the sorted Gram singular vector
+`uⱼ(n) = sortedGramEigenbasis A T n x j` and a slow vector `v`, with:
 
-For the genuine sorted Gram singular vector `uⱼ(n) = sortedGramEigenbasis A T n x j` and a slow
-vector `v`, with:
+* the **slow growth** `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` — this is `lambdaBar A T x v ≤ λᵢ`,
+  the defining property of `v` being slow, supplied by the limsup-flag filtration
+  (`Oseledets/Lyapunov/Filtration.lean`), which is strictly upstream of the overlap split;
+* the **singular exponent** `(1/n) log σⱼ(n) → λ_l` (see `tendsto_log_singularValue`);
 
-* the **slow growth** `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ` (this is `lambdaBar A T x v ≤ λᵢ`, the DEFINITION
-  of `v` being slow — supplied NON-circularly by the limsup-flag filtration `Filtration.lean`, which
-  is strictly upstream of the overlap split);
-* the **singular exponent** `(1/n)log σⱼ(n) → λ_l` (`tendsto_log_singularValue`, the fast block rate);
+the overlap exponent obeys the block rate
 
-the overlap exponent obeys the BLOCK rate
+    limsup (1/n) log |⟪v, uⱼ(n)⟫| ≤ λᵢ − λ_l.
 
-    limsup (1/n) log |⟪v, uⱼ(n)⟫|  ≤  λᵢ − λ_l.
-
-This is exactly the conclusion of `block_overlap_limsup_le`, proven WITHOUT the `htilt` tilt-rate
-hypothesis. The per-`n` engine is `abs_inner_sortedGramEigenbasis_le_cocycle`
-(`|⟪uⱼ,v⟫| ≤ ‖A⁽ⁿ⁾v‖/σⱼ`, sharp); the rate is assembled by `limsup_log_div_le_of_limsup_le_of_tendsto`. -/
+The per-`n` input is `abs_inner_sortedGramEigenbasis_le_cocycle`
+(`|⟪uⱼ, v⟫| ≤ ‖A⁽ⁿ⁾ v‖ / σⱼ`, sharp); the rate is assembled by
+`limsup_log_div_le_of_limsup_le_of_tendsto`. -/
 theorem overlap_limsup_le_of_slow_growth [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (j : Fin (Fintype.card (Fin d))) {v : EuclideanSpace ℝ (Fin d)} {lamI lamL : ℝ}
@@ -275,17 +243,19 @@ theorem overlap_limsup_le_of_slow_growth [NeZero d]
   exact limsup_log_div_le_of_limsup_le_of_tendsto hbound hovpos hvgrowpos hσpos
     hslow hslowbdd hslowcob hsing hovcob
 
-/-! ## 5. The connector: the slow-growth `limsup` IS `lambdaBar` (the bridge that breaks the circle)
+/-! ## The `lambdaBar` form
 
 The slow-growth `limsup` hypothesis of `overlap_limsup_le_of_slow_growth` is, up to the
-`toEuclideanCLM`/`toEuclideanLin` coercion, EXACTLY `lambdaBar A T x v` (`GrowthFunction.lean`,
-`lambdaBar_eq_limsup_growthSeq`). This connector rewrites the closure into the filtration's native
-slow-vector hypothesis `lambdaBar A T x v ≤ λᵢ`, making explicit that the slow growth is supplied by
-`Filtration.lean` (`lambdaBar_eq_on_stratum` / `mem_Vflag`), strictly upstream of the overlap split —
-NOT by the spectral split it feeds. -/
+`toEuclideanCLM`/`toEuclideanLin` coercion, exactly `lambdaBar A T x v`
+(`lambdaBar_eq_limsup_growthSeq` in `Oseledets/Lyapunov/GrowthFunction.lean`). The connector
+below restates the overlap bound with the filtration's native slow-vector hypothesis
+`lambdaBar A T x v ≤ λᵢ`, making explicit that the slow growth is supplied by
+`Oseledets/Lyapunov/Filtration.lean` (`lambdaBar_eq_on_stratum` / `mem_Vflag`), strictly
+upstream of the overlap split — not by the spectral split it feeds. -/
 
+omit [MeasurableSpace X] in
 /-- The `lambdaBar` form of the slow-growth `limsup`: the cocycle map's `toEuclideanLin` and
-`toEuclideanCLM` agree, so `limsup (1/n)log‖toEuclideanLin (cocycle) v‖ = lambdaBar A T x v`. -/
+`toEuclideanCLM` agree, so `limsup (1/n) log ‖toEuclideanLin (cocycle) v‖ = lambdaBar A T x v`. -/
 theorem limsup_log_norm_cocycle_eq_lambdaBar
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
     limsup (fun n : ℕ => (n : ℝ)⁻¹ *
@@ -298,10 +268,11 @@ theorem limsup_log_norm_cocycle_eq_lambdaBar
     rw [← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin]; rfl
   simp_rw [hpt]
 
-/-- **`overlap_limsup_le_of_lambdaBar` — the closure in the filtration's native form.**
-The block-rate overlap bound from the SLOW-VECTOR hypothesis `lambdaBar A T x v ≤ λᵢ` (the genuine
-"`v` is slow" datum, from `Filtration.lean`, upstream of the spectral split). The two boundedness
-side-conditions on the cocycle growth are exactly `GrowthFunction.growthSeq_bounded`. -/
+/-- The block-rate overlap bound in the filtration's native form: from the slow-vector
+hypothesis `lambdaBar A T x v ≤ λᵢ` (the genuine "`v` is slow" datum, from
+`Oseledets/Lyapunov/Filtration.lean`, upstream of the spectral split). The two boundedness
+side-conditions on the cocycle growth are supplied by Furstenberg–Kesten-type bounds on the
+growth sequence. -/
 theorem overlap_limsup_le_of_lambdaBar [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (j : Fin (Fintype.card (Fin d))) {v : EuclideanSpace ℝ (Fin d)} {lamI lamL : ℝ}

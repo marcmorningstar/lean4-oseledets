@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 
@@ -5,15 +10,22 @@ import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 # Measurable families of subspaces
 
 Mathlib has no measurable structure on `Submodule`/`Module.Grassmannian`/`Flag`, so we
-introduce the project's working notion of a measurably-varying subspace.
+introduce a notion of a measurably-varying subspace.
 
 A subspace `K ≤ EuclideanSpace ℝ (Fin d)` is encoded by the **matrix of its orthogonal
 projection** `orthProjMatrix K`, and a subspace-valued map `V : X → Submodule …` is
 declared `MeasurableSubspace` when `x ↦ orthProjMatrix (V x)` is measurable (matrices
 carry the Pi/Borel measurable structure, `Oseledets.instMeasurableSpaceMatrix`).
 
-This is layer `L4.5` / milestone `M7` of the plan; the lemmas relating this notion to
-spans, sums, and selections are stated in the measurability phase.
+The lemmas relating this notion to spans, sums, and selections are developed in
+`Oseledets.Lyapunov.Measurable`.
+
+## Main definitions
+
+* `Oseledets.orthProjMatrix`: the matrix of the orthogonal projection of
+  `EuclideanSpace ℝ (Fin d)` onto a subspace.
+* `Oseledets.MeasurableSubspace`: a subspace-valued map is measurable iff its
+  orthogonal-projection matrix is.
 -/
 
 open scoped Matrix.Norms.L2Operator

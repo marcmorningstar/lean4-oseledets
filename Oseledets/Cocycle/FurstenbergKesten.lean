@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Oseledets.Cocycle.Norm
 import Oseledets.Ergodic.Kingman
@@ -6,19 +11,37 @@ import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 /-!
 # The Furstenberg–Kesten theorem (extremal Lyapunov exponents)
 
-Applying Kingman's theorem to `gₙ = log‖A⁽ⁿ⁾‖` (a subadditive cocycle by
-submultiplicativity of the operator norm) yields the **top Lyapunov exponent**
+Applying Kingman's subadditive ergodic theorem to `gₙ = log‖A⁽ⁿ⁾‖` (a subadditive cocycle
+by submultiplicativity of the operator norm) yields the **top Lyapunov exponent**
 `λ₁ = lim (1/n) log‖A⁽ⁿ⁾(x)‖`; applying it to the inverse cocycle `gₙ = log‖(A⁽ⁿ⁾)⁻¹‖`
 yields the (negative of the) **bottom exponent** `λ_k`. These are the extremal cases of
-the Oseledets spectrum (layer `L3` / milestone `M5`), and the first genuine
-proof-of-concept landing on top of Kingman.
+the Oseledets spectrum.
 
-The whole layer is plumbing on top of `tendsto_kingman_ergodic`: we build the two
-subadditive cocycles, verify the three Kingman hypotheses (subadditive / integrable /
-bounded-below), and read off the a.e.-constant limit. The cocycle entries are required to
-be invertible (`det ≠ 0`) and both `log⁺‖A‖` and `log⁺‖A⁻¹‖` are required to be
-integrable; the second integrability is what keeps the bounded-below proviso (hence the
-limit) finite in `ℝ` for the *top* exponent.
+The proofs build the two subadditive cocycles, verify the three hypotheses of
+`tendsto_kingman_ergodic` (subadditivity, integrability of each level, bounded-below
+normalized means), and read off the a.e.-constant limit. The cocycle entries are required
+to be invertible (`det ≠ 0`) and both `log⁺‖A‖` and `log⁺‖A⁻¹‖` are required to be
+integrable; the second integrability hypothesis is what keeps the bounded-below proviso
+(hence the limit) finite in `ℝ` for the *top* exponent.
+
+## Main results
+
+* `Oseledets.furstenbergKesten_top`: for an ergodic measure-preserving `T` and an
+  everywhere-invertible measurable generator `A` with integrable `log⁺‖A‖` and
+  `log⁺‖A⁻¹‖`, the normalized log norms `(1/n) log‖A⁽ⁿ⁾(x)‖` converge `μ`-a.e. to a
+  constant (the top Lyapunov exponent).
+* `Oseledets.furstenbergKesten_bot`: the analogous a.e. limit for the inverse cocycle
+  `(1/n) log‖(A⁽ⁿ⁾(x))⁻¹‖` (the negative of the bottom Lyapunov exponent).
+* `Oseledets.isSubadditiveCocycle_logNorm` and `Oseledets.isSubadditiveCocycle_logNorm_inv`:
+  subadditivity of the two log-norm cocycles.
+* `Oseledets.logNorm_cocycle_le_birkhoffSum` and
+  `Oseledets.neg_birkhoffSum_le_logNorm_cocycle`: Birkhoff-sum sandwich bounds, driving
+  both the integrability and the bounded-below hypotheses.
+
+## References
+
+* H. Furstenberg and H. Kesten, *Products of random matrices*,
+  Ann. Math. Statist. **31** (1960), 457–469.
 -/
 
 open MeasureTheory Filter Topology
@@ -26,9 +49,7 @@ open scoped Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X} {d : ℕ}
+variable {X : Type*} {T : X → X} {d : ℕ}
 
 /-! ### Positivity of the iterate norms (needs invertibility and `NeZero d`) -/
 
@@ -70,6 +91,10 @@ theorem norm_one_matrix [NeZero d] :
 
 /-! ### Measurability of the (inverse) log-norm cocycle -/
 
+section Measurability
+
+variable [MeasurableSpace X]
+
 /-- `x ↦ log‖A⁽ⁿ⁾(x)‖` is measurable. -/
 theorem measurable_logNorm_cocycle {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : Measurable A) (hT : Measurable T) (n : ℕ) :
@@ -83,14 +108,16 @@ theorem measurable_logNorm_inv_cocycle {A : X → Matrix (Fin d) (Fin d) ℝ}
   Real.measurable_log.comp
     (measurable_l2_opNorm.comp (measurable_inv_matrix.comp (measurable_cocycle hA hT n)))
 
+end Measurability
+
 /-! ### Subadditivity of the two log-norm cocycles -/
 
 /-- **The top subadditive cocycle.** `gₙ = log‖A⁽ⁿ⁾‖` is subadditive over `T`. -/
 theorem isSubadditiveCocycle_logNorm {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) [NeZero d] :
     IsSubadditiveCocycle T (fun n x => Real.log ‖cocycle A T n x‖) := by
-  refine ⟨fun m n x => ?_⟩
-  show Real.log ‖cocycle A T (m + n) x‖ ≤ _
+  refine ⟨fun m n x ↦ ?_⟩
+  change Real.log ‖cocycle A T (m + n) x‖ ≤ _
   rw [Nat.add_comm m n, cocycle_add]
   have hpos1 : 0 < ‖cocycle A T n (T^[m] x)‖ := norm_cocycle_pos hA n _
   have hpos2 : 0 < ‖cocycle A T m x‖ := norm_cocycle_pos hA m _
@@ -107,8 +134,8 @@ theorem isSubadditiveCocycle_logNorm {A : X → Matrix (Fin d) (Fin d) ℝ}
 theorem isSubadditiveCocycle_logNorm_inv {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) [NeZero d] :
     IsSubadditiveCocycle T (fun n x => Real.log ‖(cocycle A T n x)⁻¹‖) := by
-  refine ⟨fun m n x => ?_⟩
-  show Real.log ‖(cocycle A T (m + n) x)⁻¹‖ ≤ _
+  refine ⟨fun m n x ↦ ?_⟩
+  change Real.log ‖(cocycle A T (m + n) x)⁻¹‖ ≤ _
   rw [Nat.add_comm m n, cocycle_add, Matrix.mul_inv_rev]
   have hpos1 : 0 < ‖(cocycle A T m x)⁻¹‖ := norm_inv_cocycle_pos hA m _
   have hpos2 : 0 < ‖(cocycle A T n (T^[m] x))⁻¹‖ := norm_inv_cocycle_pos hA n _
@@ -193,6 +220,10 @@ theorem neg_birkhoffSum_le_logNorm_cocycle {A : X → Matrix (Fin d) (Fin d) ℝ
   linarith
 
 /-! ### Integrability of each level, and the Birkhoff integral identity -/
+
+section Integrability
+
+variable [MeasurableSpace X] {μ : Measure X}
 
 /-- The integral of a Birkhoff sum equals `n` times the integral, for measure-preserving
 `T` (each composition with `T^[k]` is integral-preserving). -/
@@ -371,5 +402,7 @@ theorem furstenbergKesten_bot
     rw [integral_birkhoffSum hmp hint (n + 1), nsmul_eq_mul] at hmono
     push_cast at hmono ⊢
     nlinarith [hmono]
+
+end Integrability
 
 end Oseledets

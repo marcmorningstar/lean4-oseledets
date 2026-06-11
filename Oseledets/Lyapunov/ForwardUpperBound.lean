@@ -1,52 +1,71 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.ForwardAngle
 import Oseledets.Lyapunov.Filtration
 import Oseledets.Lyapunov.GrowthFunction
 
 /-!
-# `scratch_viana` — the spectral upper bound via Viana's one-sided MET route
+# The Lyapunov spectral upper bound via a two-term band split
 
-## What this file proves (no `sorry`, axioms `[propext, Classical.choice, Quot.sound]`)
+This file proves the spectral upper bound of the multiplicative ergodic theorem along Viana's
+one-sided route: a **two-term split** of the cocycle quadratic form against the band projector
+`Pₙ = bandProjector A T 𝟙_{(c,∞)} n x` at threshold `c = e^{λᵢ}` (the fast singular-block
+projector of `qpow A T n x`).
 
-Viana's one-sided MET upper bound, faithfully replicated as a **two-term split** of the cocycle
-quadratic form against the band projector `Pₙ = bandProjector A T 𝟙_{(c,∞)} n x` at threshold
-`c = e^{λᵢ}` (the fast singular-block projector of `qpow A T n x`):
+* The **slow band** contributes `≤ c^{2n}‖w‖²`: the slow Gram eigenvalues are `≤ c^{2n}`, so the
+  slow quadratic form is bounded by `c^{2n}‖w‖²` with no angle or tilt estimate. This is the
+  restricted-operator-norm bound `‖A⁽ⁿ⁾|_{slow}‖ ≤ cⁿ`, realized directly through the continuous
+  functional calculus on the positive-semidefinite `qpow` rather than through Kingman's theorem
+  on a skew-product.
+* The **fast band** contributes `≤ ‖A⁽ⁿ⁾‖²·‖Pₙ w‖²`, since every spectral value `t` of `qpow`
+  satisfies `t^{2n} ≤ ‖A⁽ⁿ⁾‖²`.
 
-1. `inner_slow_band_le` — the **SLOW band** contributes `≤ c^{2n}‖w‖²`.  *Clean*: the slow Gram
-   eigenvalues are `≤ c^{2n}`, so the slow quadratic form is bounded by `c^{2n}‖w‖²` with NO angle
-   or tilt estimate. This is Viana's "`‖A⁽ⁿ⁾|_{slow}‖ ≤ c`" — the restricted-operator-norm bound,
-   here realized directly through the CFC/PSD calculus rather than Kingman on a skew-product.
-2. `rpow_mem_spectrum_qpow_le` — every `qpow` spectral value `t` has `t^{2n} ≤ ‖A⁽ⁿ⁾‖²`.
-3. `inner_fast_band_le` — the **FAST band** contributes `≤ ‖A⁽ⁿ⁾‖²·‖Pₙ w‖²`.
-4. `norm_sq_cocycle_apply_le_split` — the **MASTER INEQUALITY**
-   `‖A⁽ⁿ⁾ v‖² ≤ ‖A⁽ⁿ⁾‖²·‖Pₙ v‖² + c^{2n}·‖v‖²`.
-5. `limsup_log_cocycle_apply_le_of_angle` — assembles (4) into the **SPECTRAL UPPER BOUND**
-   `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, *conditional on the single angle input*
-   `limsup (1/n) log(‖A⁽ⁿ⁾‖·‖Pₙ v‖) ≤ λᵢ`.
-6. `angle_of_tilt_decay` — reduces that angle input, via the Furstenberg–Kesten top exponent
-   `(1/n)log‖A⁽ⁿ⁾‖ → λ₁`, to the **tilt-decay residual** `limsup (1/n) log‖Pₙ v‖ ≤ λᵢ − λ₁`.
-7. `lambdaBar_le_of_tilt_decay` — the **CAPSTONE**: from the tilt-decay residual, `lambdaBar A T x v
-   ≤ λᵢ` (equivalently the target `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ λᵢ`), in committed `lambdaBar` API.
+Adding the two halves yields the master inequality
+`‖A⁽ⁿ⁾ v‖² ≤ ‖A⁽ⁿ⁾‖²·‖Pₙ v‖² + c^{2n}·‖v‖²`, from which the spectral upper bound
+`limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ λᵢ` follows, conditional on the single angle input
+`limsup (1/n) log(‖A⁽ⁿ⁾‖·‖Pₙ v‖) ≤ λᵢ`. Via the Furstenberg–Kesten top exponent
+`(1/n)log‖A⁽ⁿ⁾‖ → λ₁`, that angle input is in turn equivalent to the tilt-decay residual
+`limsup (1/n) log‖Pₙ v‖ ≤ λᵢ − λ₁`.
 
-## How the fixed-point circularity is defeated (the precise mechanism)
+## Main results
 
-The fixed point is: slow growth `g ≤ λᵢ` ⇄ small overlap `oⱼ ≤ g − λⱼ` (Cauchy–Schwarz), composing
-vacuously to `g ≤ g`. Viana's split sidesteps the per-overlap recursion entirely: the **slow half**
-(`inner_slow_band_le`) gives `λᵢ` *unconditionally* — it never references an overlap, only the
-spectral ceiling `c` of the slow Gram block. The growth is therefore reduced to a SINGLE scalar
-quantity, the fast-band projection `‖Pₙ v‖`, whose decay (`htilt`) is the genuine slow–fast ANGLE
-estimate — NOT a per-vector overlap fed back into the growth. There is no longer a feedback loop:
-`htilt` is an external geometric input about the *projector sequence*, independent of `g`.
+* `Oseledets.inner_slow_band_le`: the slow-band quadratic form is `≤ c^{2n}‖w‖²`.
+* `Oseledets.rpow_mem_spectrum_qpow_le`: every `qpow` spectral value `t` has `t^{2n} ≤ ‖A⁽ⁿ⁾‖²`.
+* `Oseledets.inner_fast_band_le`: the fast-band quadratic form is `≤ ‖A⁽ⁿ⁾‖²·‖Pₙ w‖²`.
+* `Oseledets.norm_sq_cocycle_apply_le_split`: the master inequality
+  `‖A⁽ⁿ⁾ v‖² ≤ ‖A⁽ⁿ⁾‖²·‖Pₙ v‖² + c^{2n}·‖v‖²`.
+* `Oseledets.limsup_log_cocycle_apply_le_of_angle`: the spectral upper bound
+  `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, conditional on the angle input.
+* `Oseledets.angle_of_tilt_decay`: the angle input follows from the Furstenberg–Kesten top
+  exponent together with the tilt-decay residual.
+* `Oseledets.lambdaBar_le_of_tilt_decay`: the combination, in `lambdaBar` form — from the
+  tilt-decay residual, `lambdaBar A T x v ≤ λᵢ`.
 
-## The residual (honest)
+## Implementation notes
 
-The one non-elementary input is `htilt`: `limsup (1/n) log‖Pₙ v‖ ≤ λᵢ − λ₁` for the LIMIT-slow
-vector `v` (`P v = 0`, `P = limₙ Pₙ`). This is the slow–fast tempering/angle decay at the FULL
-multi-gap rate `λᵢ − λ₁`.  The committed `summable_norm_bandProjector_succ_sub` supplies
-`‖Pₙ₊₁ − Pₙ‖` summability at the NEAREST-gap rate `λᵢ − λ_{i−1}` only; closing `htilt` at the full
-rate `λᵢ − λ₁` is the multi-gap telescope flagged in `ForwardAngle.lean` — the piece the
-tempering/exterior routes target. This file makes that the SOLE remaining node, fully
-de-circularized.
+A naive per-overlap recursion is circular: slow growth `g ≤ λᵢ` and small overlaps
+`oⱼ ≤ g − λⱼ` (Cauchy–Schwarz) compose vacuously to `g ≤ g`. The two-term split sidesteps the
+per-overlap recursion entirely: the slow half (`inner_slow_band_le`) gives `λᵢ`
+*unconditionally* — it never references an overlap, only the spectral ceiling `c` of the slow
+Gram block. The growth is thereby reduced to a single scalar quantity, the fast-band projection
+`‖Pₙ v‖`, whose decay (`htilt`) is a genuine slow–fast angle estimate about the projector
+sequence, independent of `g`; there is no feedback loop.
+
+The one non-elementary input is `htilt`: `limsup (1/n) log‖Pₙ v‖ ≤ λᵢ − λ₁` for the limit-slow
+vector `v` (`P v = 0`, `P = limₙ Pₙ`), the slow–fast angle decay at the full multi-gap rate
+`λᵢ − λ₁`. It is kept as an explicit hypothesis in this file. The summability estimate
+`summable_norm_bandProjector_succ_sub` (in `Oseledets.Lyapunov.OseledetsLimit`) supplies
+`‖Pₙ₊₁ − Pₙ‖` summability at the nearest-gap rate `λᵢ − λ_{i−1}`; upgrading it to the full rate
+is a multi-gap telescope carried out elsewhere in the library.
+
+## References
+
+* Marcelo Viana, *Lectures on Lyapunov exponents*, Cambridge Studies in Advanced
+  Mathematics 145, Cambridge University Press, 2014
 -/
 
 open MeasureTheory Filter Topology
@@ -54,10 +73,9 @@ open scoped Matrix InnerProductSpace Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {T : X → X}
-variable {d : ℕ}
+variable {X : Type*} [MeasurableSpace X] {d : ℕ}
 
-/-! ## The slow-band growth bound (the CLEAN half of Viana's split)
+/-! ## The slow-band growth bound (the clean half of the split)
 
 `A⁽ⁿ⁾` restricted to the SLOW Gram-eigenspace (singular values `≤ c`) has operator norm `≤ c`.
 Concretely, for the complementary band projector `Q_n = I - P_n` (projection onto eigenvalues
@@ -122,7 +140,7 @@ theorem inner_slow_band_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T 
   -- quadratic form of `cfc h Q` is `≥ 0`, expand.
   have hdot : ⟪Matrix.toEuclideanLin (cfc h Q) w, w⟫_ℝ
       = star (w : Fin d → ℝ) ⬝ᵥ ((cfc h Q) *ᵥ (w : Fin d → ℝ)) := by
-    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toEuclideanLin_apply]; simp only [star_trivial]
+    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toLpLin_apply]; simp only [star_trivial]
   have hPSDnn : (0 : ℝ) ≤ ⟪Matrix.toEuclideanLin (cfc h Q) w, w⟫_ℝ := by
     rw [hdot]; exact hhPSD.dotProduct_mulVec_nonneg _
   -- `algebraMap (c^{2n}) = c^{2n} • 1` as a matrix, and its quadratic form is `c^{2n} ‖w‖²`.
@@ -134,11 +152,11 @@ theorem inner_slow_band_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T 
     rw [hsplit, halg, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, inner_sub_left,
       real_inner_smul_left]
     congr 2
-    rw [Matrix.toEuclideanLin_apply]
+    rw [Matrix.toLpLin_apply]
     simp only [Matrix.one_mulVec, real_inner_self_eq_norm_sq]
   rw [hexp] at hPSDnn
   -- goal is `⟪cfc g Q w, w⟫ ≤ c^{2n} ‖w‖²`
-  show ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ ≤ c ^ (2 * (n : ℝ)) * ‖w‖ ^ 2
+  change ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ ≤ c ^ (2 * (n : ℝ)) * ‖w‖ ^ 2
   linarith
 
 /-- **Spectral bound on `qpow`.** Every `t` in the spectrum of `qpow A T n x` satisfies
@@ -176,13 +194,13 @@ theorem rpow_mem_spectrum_qpow_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
   rw [hgramnorm] at hμle
   linarith
 
-/-! ## The fast-band bound (the angle term, kept clean) -/
+/-! ## The fast-band bound (the angle term) -/
 
-/-- **Fast-band upper bound.** The FAST quadratic form of the cocycle (part of `‖A⁽ⁿ⁾ w‖²`
-supported on `qpow`-eigenvalues `> c`) is `≤ ‖A⁽ⁿ⁾‖² · ‖P_n w‖²`, where `P_n w = bandProjector` of
-the fast band applied to `w`.  The eigenvalues `t^{2n}` on the fast band are `≤ ‖A⁽ⁿ⁾‖²`
-(`rpow_mem_spectrum_qpow_le`), so `cfc(t^{2n}χ) ⪯ ‖A⁽ⁿ⁾‖²·cfc(χ)` (PSD), and `⟪cfc(χ)w,w⟫ = ‖P_n w‖²`
-(self-adjoint idempotent). -/
+/-- **Fast-band upper bound.** The fast quadratic form of the cocycle (part of `‖A⁽ⁿ⁾ w‖²`
+supported on `qpow`-eigenvalues `> c`) is `≤ ‖A⁽ⁿ⁾‖² · ‖P_n w‖²`, where `P_n w = bandProjector`
+of the fast band applied to `w`.  The eigenvalues `t^{2n}` on the fast band are `≤ ‖A⁽ⁿ⁾‖²`
+(`rpow_mem_spectrum_qpow_le`), so `cfc(t^{2n}χ) ⪯ ‖A⁽ⁿ⁾‖²·cfc(χ)` (PSD), and
+`⟪cfc(χ)w,w⟫ = ‖P_n w‖²` (self-adjoint idempotent). -/
 theorem inner_fast_band_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {n : ℕ} (hn : 1 ≤ n) (x : X) (c : ℝ) (w : EuclideanSpace ℝ (Fin d)) :
     ⟪Matrix.toEuclideanLin
@@ -207,7 +225,8 @@ theorem inner_fast_band_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T 
     · simp [Set.indicator_of_mem ht]
     · simp [Set.indicator_of_notMem ht]
   -- `‖P_n w‖² = ⟪cfc χ Q w, w⟫`.
-  have hPsq : ‖Matrix.toEuclideanLin (cfc χ Q) w‖ ^ 2 = ⟪Matrix.toEuclideanLin (cfc χ Q) w, w⟫_ℝ := by
+  have hPsq : ‖Matrix.toEuclideanLin (cfc χ Q) w‖ ^ 2
+      = ⟪Matrix.toEuclideanLin (cfc χ Q) w, w⟫_ℝ := by
     have hidem : (_root_.spectrum ℝ Q).EqOn (fun t => χ t * χ t) χ := by
       intro t _; by_cases ht : t ∈ Set.Ioi c
       · simp [hχ, Set.indicator_of_mem ht]
@@ -241,16 +260,17 @@ theorem inner_fast_band_le [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T 
     rw [hk', cfc_const_mul B χ Q hcontχ]
   have hdot : ⟪Matrix.toEuclideanLin (cfc k Q) w, w⟫_ℝ
       = star (w : Fin d → ℝ) ⬝ᵥ ((cfc k Q) *ᵥ (w : Fin d → ℝ)) := by
-    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toEuclideanLin_apply]; simp only [star_trivial]
+    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toLpLin_apply]; simp only [star_trivial]
   have hPSDnn : (0 : ℝ) ≤ ⟪Matrix.toEuclideanLin (cfc k Q) w, w⟫_ℝ := by
     rw [hdot]; exact hkPSD.dotProduct_mulVec_nonneg _
   have hexp : ⟪Matrix.toEuclideanLin (cfc k Q) w, w⟫_ℝ
-      = B * ⟪Matrix.toEuclideanLin (cfc χ Q) w, w⟫_ℝ - ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ := by
+      = B * ⟪Matrix.toEuclideanLin (cfc χ Q) w, w⟫_ℝ
+        - ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ := by
     rw [hsplit, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, inner_sub_left,
       real_inner_smul_left]
   rw [hexp] at hPSDnn
   -- conclude
-  show ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ ≤ B * ‖Matrix.toEuclideanLin (cfc χ Q) w‖ ^ 2
+  change ⟪Matrix.toEuclideanLin (cfc g Q) w, w⟫_ℝ ≤ B * ‖Matrix.toEuclideanLin (cfc χ Q) w‖ ^ 2
   rw [hPsq]
   -- goal: ⟪cfc g Q w,w⟫ ≤ B * ⟪cfc χ Q w, w⟫  (bandProjector = cfc χ Q by def)
   have hbp : bandProjector A T (Set.indicator (Set.Ioi c) 1) n x = cfc χ Q := rfl
@@ -314,15 +334,16 @@ The slow term contributes `λᵢ` for free. The fast term `‖A⁽ⁿ⁾‖·‖
 ANGLE/tilt input: its normalized-log `limsup` must be `≤ λᵢ`. Given that single hypothesis, the
 spectral upper bound `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ` follows. -/
 
-/-- **Spectral upper bound (assembled, conditional on the angle input).** For `v ≠ 0` and threshold
-`c = exp λᵢ`, IF the fast term satisfies the angle bound
-`limsup (1/n) log (‖A⁽ⁿ⁾‖ · ‖P_n v‖) ≤ λᵢ`, THEN `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`.
+/-- **Spectral upper bound (assembled, conditional on the angle input).** For `v ≠ 0` and
+threshold `c = exp λᵢ`, if the fast term satisfies the angle bound
+`limsup (1/n) log (‖A⁽ⁿ⁾‖ · ‖P_n v‖) ≤ λᵢ`, then `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`.
 
-This is Viana's two-term split: the SLOW band gives `λᵢ` unconditionally (`norm_sq_cocycle_apply_le_split`,
-the `c^{2n}‖v‖²` term); the FAST band is controlled by the angle hypothesis `hangle`. The only
-genuinely non-elementary input is `hangle` (the slow–fast tempering/angle decay of `‖P_n v‖`). -/
+This is the two-term split: the slow band gives `λᵢ` unconditionally
+(`norm_sq_cocycle_apply_le_split`, the `c^{2n}‖v‖²` term); the fast band is controlled by the
+angle hypothesis `hangle`. The only genuinely non-elementary input is `hangle` (the slow–fast
+tempering/angle decay of `‖P_n v‖`). -/
 theorem limsup_log_cocycle_apply_le_of_angle [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ)
-    (T : X → X) {n₀ : ℕ} (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) {lamI : ℝ}
+    (T : X → X) (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) {lamI : ℝ}
     (hangle : limsup (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log (‖cocycle A T n x‖
           * ‖Matrix.toEuclideanLin (bandProjector A T
@@ -450,17 +471,19 @@ theorem limsup_log_cocycle_apply_le_of_angle [NeZero d] (A : X → Matrix (Fin d
       _ = y := by rw [hεdef]; ring
   exact this
 
-/-! ## Connector 1 — the angle hypothesis from a tilt-decay rate on `‖P_n v‖`
+/-! ## The angle hypothesis from a tilt-decay rate on `‖P_n v‖`
 
-The angle input `hangle` of `limsup_log_cocycle_apply_le_of_angle` is the slow–fast tempering decay:
-`limsup (1/n) log (‖A⁽ⁿ⁾‖ · ‖P_n v‖) ≤ λᵢ`. With the Furstenberg–Kesten top exponent
-`(1/n) log ‖A⁽ⁿ⁾‖ → λ₁`, this is EQUIVALENT to the tilt-decay rate
-`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁`. This connector packages that equivalence: the genuine
+The angle input `hangle` of `limsup_log_cocycle_apply_le_of_angle` is the slow–fast tempering
+decay `limsup (1/n) log (‖A⁽ⁿ⁾‖ · ‖P_n v‖) ≤ λᵢ`. With the Furstenberg–Kesten top exponent
+`(1/n) log ‖A⁽ⁿ⁾‖ → λ₁`, this is equivalent to the tilt-decay rate
+`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁`. This section packages that equivalence: the genuine
 non-elementary content is exactly the tilt-decay `htilt`. -/
 
-/-- **Angle from tilt-decay.** If the FK top exponent is `λ₁` (`htop`) and the fast-band projection
-`‖P_n v‖` decays at the tempering rate `limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁` (`htilt`), then the angle
-hypothesis of `limsup_log_cocycle_apply_le_of_angle` holds. -/
+omit [MeasurableSpace X] in
+/-- **Angle from tilt-decay.** If the Furstenberg–Kesten top exponent is `λ₁` (`htop`) and the
+fast-band projection `‖P_n v‖` decays at the tempering rate
+`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁` (`htilt`), then the angle hypothesis of
+`limsup_log_cocycle_apply_le_of_angle` holds. -/
 theorem angle_of_tilt_decay [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     {v : EuclideanSpace ℝ (Fin d)} {lamI lam1 : ℝ}
     (htop : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖) atTop (𝓝 lam1))
@@ -510,26 +533,27 @@ theorem angle_of_tilt_decay [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T
     _ ≤ lam1 + (lamI - lam1) := add_le_add hla_lim.limsup_eq.le htilt
     _ = lamI := by ring
 
-/-! ## Capstone — the spectral upper bound from the tilt-decay residual
+/-! ## The spectral upper bound from the tilt-decay residual
 
-Assembling Viana's split (`limsup_log_cocycle_apply_le_of_angle`) with the FK-top reduction
-(`angle_of_tilt_decay`) yields the SPECTRAL UPPER BOUND in `lambdaBar` form: for a `Λ`-slow vector
-`v` (its top fast-band projection decays at the tempering rate), `lambdaBar A T x v ≤ λᵢ`.
+Assembling the two-term split (`limsup_log_cocycle_apply_le_of_angle`) with the
+Furstenberg–Kesten reduction (`angle_of_tilt_decay`) yields the spectral upper bound in
+`lambdaBar` form: for a `Λ`-slow vector `v` (its top fast-band projection decays at the
+tempering rate), `lambdaBar A T x v ≤ λᵢ`.
 
-The SINGLE genuinely non-elementary hypothesis is `htilt`: the slow–fast tempering/angle decay
-`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁`. Everything else (the slow-band `c^{2n}` bound, the FK top
-exponent, the limsup arithmetic) is supplied here unconditionally. -/
+The single genuinely non-elementary hypothesis is `htilt`: the slow–fast tempering/angle decay
+`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁`. Everything else (the slow-band `c^{2n}` bound, the
+Furstenberg–Kesten top exponent, the limsup arithmetic) is supplied here unconditionally. -/
 
-/-- **Capstone (the spectral upper bound, `lambdaBar` form).** For a nonzero `v`, the FK top
-exponent `λ₁` (`htop`), and the tilt-decay residual `htilt`
+/-- **The spectral upper bound, `lambdaBar` form.** For a nonzero `v`, the Furstenberg–Kesten
+top exponent `λ₁` (`htop`), and the tilt-decay residual `htilt`
 (`limsup (1/n) log ‖P_n v‖ ≤ λᵢ − λ₁`, the slow–fast angle estimate), together with the routine
 boundedness/positivity side conditions, the growth exponent obeys the spectral upper bound:
 
     lambdaBar A T x v  ≤  λᵢ.
 
-Equivalently `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` — the TARGET. The slow vector hypothesis `P v = 0`
-(`v` orthogonal to the limit fast singular subspace) is what makes `htilt` hold; reducing `htilt`
-to `P v = 0` is the residual multi-gap tilt-decay (see the module note). -/
+Equivalently `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`. The slow vector hypothesis `P v = 0`
+(`v` orthogonal to the limit fast singular subspace) is what makes `htilt` hold; reducing
+`htilt` to `P v = 0` is the residual multi-gap tilt-decay (see the module docstring). -/
 theorem lambdaBar_le_of_tilt_decay [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) {lamI lam1 : ℝ}
     (htop : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖) atTop (𝓝 lam1))
@@ -558,7 +582,7 @@ theorem lambdaBar_le_of_tilt_decay [NeZero d] (A : X → Matrix (Fin d) (Fin d) 
       (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖)) :
     lambdaBar A T x v ≤ lamI := by
   have hangle := angle_of_tilt_decay A T x htop htiltbdd htilt htiltcob hsumcob hcnpos hPvpos
-  have hgrowth := limsup_log_cocycle_apply_le_of_angle (n₀ := 0) A T x hv hangle hangbdd hcocpos hcobdd
+  have hgrowth := limsup_log_cocycle_apply_le_of_angle A T x hv hangle hangbdd hcocpos hcobdd
   -- `limsup (1/n)log‖A⁽ⁿ⁾v‖ = lambdaBar A T x v`.
   rwa [limsup_log_norm_cocycle_eq_lambdaBar] at hgrowth
 

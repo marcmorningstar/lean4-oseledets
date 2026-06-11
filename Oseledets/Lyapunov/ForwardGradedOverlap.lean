@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.RuelleCore
 import Oseledets.Lyapunov.OseledetsLimit
 import Oseledets.Lyapunov.Forward
@@ -6,100 +11,63 @@ import Oseledets.Lyapunov.ForwardV
 import Oseledets.Lyapunov.SpectrumResiduals
 
 /-!
-# The n-scaled forward graded overlap bound (Ruelle Lemma 1.4 a.e. wiring)
+# The `n`-scaled forward graded overlap bound
 
-This module proves `forward_graded_overlap`: a.e., for every `δ > 0` there is `c ≥ 1` such that
-eventually in `n`, for all sorted-eigenbasis indices `a` and limit-eigenbasis indices `e`,
+This module proves `forward_graded_overlap`: almost everywhere, for every `δ > 0` there is a
+constant `c ≥ 1` such that, eventually in `n`, for all sorted-eigenbasis indices `a` and
+limit-eigenbasis indices `e`,
 
-    |⟪b' x e, u_a(n)⟫| ≤ c · exp(−n·(max(λ_e − λ_a, 0) − δ)).
+    |⟪b' x e, u_a(n)⟫| ≤ c · exp(−n·(max(λ_e − λ_a, 0) − δ)),
 
-where `u_a(n) = sortedGramEigenbasis A T n x a` and `b' x e` is the limit eigenbasis vector at
-eigenvalue `exp(λ_e)`.
+where `u_a(n) = sortedGramEigenbasis A T n x a` and `b' x e` is the limit-eigenbasis vector at
+eigenvalue `exp(λ_e)`. This is the a.e. form of the graded-overlap estimate underlying the
+forward Oseledets filtration.
 
-## Paper proof (Ruelle Lemma 1.4 / Prop 1.3, a.e. layer)
+## Main results
 
-Fix `x` in the a.e. good set (intersection of the committed a.e. facts: `hb'`, `hident`,
-`ae_lamSing_eq_lam0`, the two tempering limits, and the `hlam0` convergence for each `i < d`).
-Write `σ_a(n) = singularValues a` (genuine SVD values of `A⁽ⁿ⁾`, antitone in `a`),
-`u_a(n) = sortedGramEigenbasis A T n x a`, `λ_a = lam0 a`.
+* `toEuclideanLin_cfc_fix_eigenvector`: the continuous functional calculus fixes an eigenvector at
+  an eigenvalue where the function takes the value `1` (a general spectral fact).
+* `tendsto_toEuclideanLin_apply`: continuity of `M ↦ toEuclideanLin M u` in the matrix `M`.
+* `abs_inner_le_of_bandProjector_mass_bound`: the limit-transfer reduction — the overlap `|⟪w, u⟫|`
+  is bounded by any eventual fast-band-mass bound, transferred through the projector limit.
+* `exists_spectral_cut`: a spectrum-avoiding cut strictly between two `exp`-levels exists.
+* `forward_graded_overlap`: the a.e. graded-overlap bound stated above.
 
-**Trivial case.** If `λ_e ≤ λ_a` then `max(λ_e − λ_a, 0) = 0`, so the RHS is
-`c · exp(nδ) ≥ 1 ≥ |⟪b'_e, u_a(n)⟫|` by Cauchy–Schwarz (both unit vectors). So with `c = 1` the
-bound holds for all `n` (no eventuality needed) in the trivial pairs. The content is the gap pairs.
+## Proof outline
 
-**Gap pairs.** Suppose `λ_e > λ_a`. Fix `δ > 0`, WLOG `δ < (λ_e − λ_a)/3`. The claim is the
-time-`n` slow vector `u_a(n)` has overlap with the LIMIT fast band (eigenvectors at level ≥ λ_e)
-decaying like `exp(−n(λ_e − λ_a − δ))`.
+Fix `x` in the full-measure set on which all the hypotheses hold. Write `λ_a = lam0 a` and
+`u_a(n) = sortedGramEigenbasis A T n x a`.
 
-Route (Ruelle two-time chain + limit transfer):
+For a trivial pair `λ_e ≤ λ_a` we have `max(λ_e − λ_a, 0) = 0`, so the right-hand side is
+`c · exp(nδ) ≥ 1 ≥ |⟪b'_e, u_a(n)⟫|` by Cauchy–Schwarz (both are unit vectors); the bound holds
+for all `n` with `c = 1`. The content is the gap pairs `λ_e > λ_a`, where the time-`n` slow vector
+`u_a(n)` has overlap with the limit fast band decaying like `exp(−n(λ_e − λ_a − δ))`. There the
+proof proceeds in three steps:
 
-1. **Gap cut.** The finitely many values `{exp(λ_j) : j < d}` are finite; choose a cut `c₀` with
-   `exp(λ_a) < c₀ < exp(λ_e)` avoiding all `exp(λ_j)` (e.g. strictly between two consecutive
-   level values straddling the gap). `hident` then applies at this cut.
+1. *Gap cut.* The finitely many values `{exp(λ_j) : j < d}` form a finite set, so one may choose a
+   cut `c₀` with `exp(λ_a) < c₀ < exp(λ_e)` avoiding all of them; `hident` applies at this cut.
+2. *Two-time chain.* The time-`n` slow vector has fast-band mass at the time-`m` cut decaying like
+   `exp(−n(λ_e − λ_a − δ))`, uniformly in `m ≥ n`. This is the analytic content packaged here as
+   the hypothesis `hchain` (see below).
+3. *Limit transfer.* The limit-eigenbasis vector `b'_e` at level `exp(λ_e) > c₀` is fixed by the
+   limit band projector `Pinf = cfc (indicator (Ioi c₀)) (lambdaHat A T x)`. Self-adjointness of
+   `Pinf` and convergence of the time-`m` band projectors to `Pinf` then bound `|⟪b'_e, u_a(n)⟫|`
+   by the step-2 mass bound, with no rate needed for the vanishing term.
 
-2. **Two-time chain (deterministic core).** Instantiate `Ruelle13.SVDData` with
-   `σ n j := σ_{a-reindexed}(n)`, `e n := sortedGramEigenbasis` (reindexed `Fin (card (Fin d)) ≃ Fin d`),
-   `apply n u := toEuclideanLin (cocycle A T n x) u`. The Parseval field is
-   `norm_sq_cocycle_apply_eq_sum_singularValues` (after `real_inner_comm`).
-   Then for the time-`n` slow vector `u_a(n)` (it lies in the slow span `{u_j(n) : j ≤ a}` —
-   trivially, it is `u_a(n)` itself), run the chain `m = n, n+1, …` and obtain, for the time-`m`
-   fast band `hi_m = {j : σ_j(m)^{1/m} > c₀}` = `{j : σ_j(m) > c₀^m}`:
+The finitely many pairs are combined via `eventually_all`, and `c` is the maximum of the
+step-2 constants over the gap pairs (independent of `n`, `a`, `e`).
 
-       ‖fastProj(m, hi_m) u_a(n)‖ ≤ C(x,δ) · exp(−n·(λ_e − λ_a − Kδ))   UNIFORMLY in m ≥ n.
+The two-time chain envelope is supplied as the hypothesis `hchain`: for a gap pair `λ_a < λ_e` and
+any cut `c₀` strictly between the two `exp`-levels, the fast-band mass of the time-`n` slow
+eigenvector, measured by the time-`m` band projector at `c₀`, decays like `exp(−n(λ_e − λ_a − δ))`
+uniformly in `m ≥ n`. A single deterministic operator-norm step over `[n, m]` is too lossy (it
+gives `exp((m − n)λ₀ − mλ_e)`, which diverges as `m → ∞` in the gap direction), so the per-step
+recursion that keeps the vector in the slow cone is genuinely required.
 
-   The per-step inputs (all eventual in m, uniform on the finitely many indices):
-   - tempered step: `‖A(Tᵐx)‖ ≤ exp(mδ')` (from `tendsto_logNorm_orbit_div_atTop_zero`), giving the
-     one-step operator bound `‖A⁽ᵐ⁺¹⁾u‖ ≤ ‖A(Tᵐx)‖·‖A⁽ᵐ⁾u‖`;
-   - singular-value envelope: `exp(m(λ_j − δ')) ≤ σ_j(m) ≤ exp(m(λ_j + δ'))` eventually
-     (from `hlam0`, intersected over the finitely many j).
-   The recursion `chain_leakage_exp` packages the imbalance at gap `γ ≈ λ_e − λ_a − 2δ'`.
+## References
 
-   NOTE on the cut value: `bandProjector A T (indicator (Ioi c₀)) m x` is the orthogonal projector
-   onto `span{u_j(m) : σ_j(m)^{1/m} > c₀}` = `S.fastProj m hi_m` applied (after frame identity).
-   The bandProjector is the cfc-projector; `fastProj` is the explicit sum. They coincide on the
-   relevant band.
-
-3. **Limit transfer (m → ∞ at fixed n).** `⟪b'_e, u_a(n)⟫`: by `hb'`, `b'_e` is a `lambdaHat`
-   eigenvector at `exp(λ_e) > c₀`, hence FIXED by `Pinf = cfc (indicator (Ioi c₀)) lambdaHat`.
-   So `⟪b'_e, u_a(n)⟫ = ⟪Pinf b'_e, u_a(n)⟫ = ⟪b'_e, Pinf u_a(n)⟫` (self-adjointness). Write
-   `Pinf = P_m + (Pinf − P_m)`. `‖P_m u_a(n)‖` is the time-`m` fast-band mass ≤ step-2 bound uniformly
-   in m; `‖(Pinf − P_m) u_a(n)‖ ≤ ‖Pinf − P_m‖ → 0` by `hident`. Let `m → ∞` at fixed `n`:
-   `|⟪b'_e, Pinf u_a(n)⟫| = |⟪b'_e, P_m u_a(n)⟫ + ⟪b'_e, (Pinf−P_m) u_a(n)⟫|`
-   `≤ ‖P_m u_a(n)‖ + ‖(Pinf−P_m) u_a(n)‖ → step-2 bound + 0`.
-   No rate needed for the vanishing term.
-
-4. **Assemble.** Combine the finitely many a.e. sets and the gap/trivial dichotomy; `c` is the max
-   over the finitely many gap pairs of the step-2 constants (`≥ 1`), independent of `n, a, e`. `N` in
-   the `∀ᶠ` is the max of the finitely many eventual thresholds.
-
-**Quantifier audit.** `c` depends on `x, δ` (not on `n, a, e`): take max over pairs. `N` depends on
-`x, δ`. `m` is the free recursion index sent to `∞` AT FIXED `n` — so the chain bound must be
-uniform in `m ≥ n`, which `geometric_recursion_uniform` provides (the `q^k a₀ + R·k·M^{k-1}` envelope
-is bounded uniformly in `k = m − n` because `M < 1` and the polynomial `k` is dominated).
-
-## What is proved vs. isolated
-
-FULLY PROVED here (zero `sorry`, axioms `[propext, Classical.choice, Quot.sound]`):
-* `toEuclideanLin_cfc_fix_eigenvector` — the cfc fixes an arbitrary eigenvector at an eigenvalue
-  where the cutoff is `1` (general spectral fact);
-* `tendsto_toEuclideanLin_apply` — continuity of `M ↦ toEuclideanLin M u`;
-* `abs_inner_le_of_bandProjector_mass_bound` — the LIMIT-TRANSFER reduction (Ruelle step 3): the
-  overlap `|⟪w,u⟫|` is bounded by any eventual fast-band-mass bound, transferred through the
-  projector limit (no rate needed for the vanishing term);
-* `exists_spectral_cut` — the GAP-CUT selection (Ruelle step 1): a spectrum-avoiding cut strictly
-  between two `exp`-levels exists;
-* `forward_graded_overlap` — the a.e. wrapper: the trivial pairs (`λ_e ≤ λ_a`) are closed by
-  Cauchy–Schwarz; the gap pairs are reduced, via the cut + limit-transfer, to the chain envelope;
-  the finitely many pairs are combined by `eventually_all`.
-
-ISOLATED as the single analytic hypothesis `hchain` (Ruelle step 2, the two-time chain): the
-uniform-in-`m` fast-band-mass envelope
-`‖bandProjector(c₀,m) · u_a(n)‖ ≤ C·exp(−n(λ_e−λ_a−δ))` at an ARBITRARY cut `c₀` between the levels.
-This is exactly the wiring of `Ruelle13.oneStep_sandwich` into `Ruelle13.chain_leakage_exp`, which
-the deterministic core `RuelleCore.lean` deliberately leaves out (its docstring: "the a.e. wiring
-(M5) … is what is not in this deterministic core").  A single deterministic operator-norm step over
-`[n,m]` is provably too lossy (it gives `exp((m−n)λ₀ − mλ_e)`, which DIVERGES as `m→∞` for the gap
-direction), so the per-step recursion that keeps the vector in the slow cone is genuinely required.
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*, Publ. Math. IHÉS **50** (1979),
+  27–58 (Lemma 1.4 / Proposition 1.3).
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -108,10 +76,6 @@ open scoped RealInnerProductSpace BigOperators
 noncomputable section
 
 namespace Oseledets
-
-variable {X : Type*} [MeasurableSpace X] {μ : MeasureTheory.Measure X} {d : ℕ} {T : X → X}
-
-set_option linter.unusedSectionVars false
 
 /-! ## Deterministic helper lemmas -/
 
@@ -133,7 +97,7 @@ theorem toEuclideanLin_cfc_fix_eigenvector {d : ℕ} [NeZero d] (M : Matrix (Fin
     intro j hj
     have hMbj : Matrix.toEuclideanLin M (hM.eigenvectorBasis j)
         = hM.eigenvalues j • (hM.eigenvectorBasis j) := by
-      rw [Matrix.toEuclideanLin_apply, hM.mulVec_eigenvectorBasis j]; rfl
+      rw [Matrix.toLpLin_apply, hM.mulVec_eigenvectorBasis j]; rfl
     have hsa : (Matrix.toEuclideanLin M).IsSymmetric :=
       Matrix.isSymmetric_toEuclideanLin_iff.mpr hM
     have e1 : (inner ℝ (hM.eigenvectorBasis j) (Matrix.toEuclideanLin M v) : ℝ)
@@ -163,8 +127,8 @@ theorem toEuclideanLin_cfc_fix_eigenvector {d : ℕ} [NeZero d] (M : Matrix (Fin
         · rw [hcomp j hj, hf, one_smul]
     _ = v := hexp
 
-/-- **Continuity of matrix→vector application.** If `P_m → Pinf` (in the finite-dim matrix norm) then
-`toEuclideanLin (P_m) u → toEuclideanLin Pinf u`. -/
+/-- **Continuity of matrix→vector application.** If `P_m → Pinf` (in the finite-dimensional matrix
+norm) then `toEuclideanLin (P_m) u → toEuclideanLin Pinf u`. -/
 theorem tendsto_toEuclideanLin_apply {d : ℕ} {P : ℕ → Matrix (Fin d) (Fin d) ℝ}
     {Pinf : Matrix (Fin d) (Fin d) ℝ} (hP : Filter.Tendsto P Filter.atTop (𝓝 Pinf))
     (u : EuclideanSpace ℝ (Fin d)) :
@@ -180,10 +144,10 @@ theorem tendsto_toEuclideanLin_apply {d : ℕ} {P : ℕ → Matrix (Fin d) (Fin 
   exact (hcont.tendsto Pinf).comp hP
 
 /-- **Limit-transfer reduction (Ruelle Lemma 1.4, step 3).** Let `w` be a unit vector that is fixed
-by the limit band projector `Pinf` (`toEuclideanLin Pinf w = w`), with `Pinf` self-adjoint, and suppose
-the time-`m` band projectors `P m` converge to `Pinf`. If the fast-band mass `‖toEuclideanLin (P m) u‖`
-is eventually bounded by `B`, then `|⟪w, u⟫| ≤ B`. (No rate is needed for the vanishing of
-`Pinf − P m`.) -/
+by the limit band projector `Pinf` (`toEuclideanLin Pinf w = w`), with `Pinf` self-adjoint, and
+suppose the time-`m` band projectors `P m` converge to `Pinf`. If the fast-band mass
+`‖toEuclideanLin (P m) u‖` is eventually bounded by `B`, then `|⟪w, u⟫| ≤ B`. (No rate is needed
+for the vanishing of `Pinf − P m`.) -/
 theorem abs_inner_le_of_bandProjector_mass_bound {d : ℕ}
     {P : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
     (hP : Filter.Tendsto P Filter.atTop (𝓝 Pinf)) (hPinfsa : IsSelfAdjoint Pinf)
@@ -234,12 +198,10 @@ namespace Oseledets
 
 variable {X : Type*} [MeasurableSpace X] {μ : MeasureTheory.Measure X} {d : ℕ} {T : X → X}
 
-set_option linter.unusedSectionVars false
-
 theorem forward_graded_overlap [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
-    (hT : Ergodic T μ)
-    {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
-    (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
+    (_hT : Ergodic T μ)
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (_hA : ∀ x, (A x).det ≠ 0) (_hAmeas : Measurable A)
+    (_hint : IntegrableLogNorm A μ) (_hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
     (lam0 : ℕ → ℝ)
     (hlam0 : ∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Filter.Tendsto
       (fun n : ℕ => (n : ℝ)⁻¹ *
@@ -252,14 +214,12 @@ theorem forward_graded_overlap [MeasureTheory.IsProbabilityMeasure μ] [NeZero d
     (hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c → (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
       Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
         Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))))
-    -- ISOLATED OBSTRUCTION (Ruelle Lemma 1.4 step 2: the uniform-in-`m` fast-band-mass chain
-    -- envelope) — stated at an ARBITRARY spectral cut `c₀` strictly between the two `exp`-levels.
+    -- The two-time chain envelope (Ruelle Lemma 1.4, step 2: the uniform-in-`m` fast-band-mass
+    -- bound), stated at an arbitrary spectral cut `c₀` strictly between the two `exp`-levels.
     -- For a gap pair `λ_a < λ_e` and any such `c₀`, the fast-band mass of the time-`n` slow
     -- eigenvector `u_a(n)`, measured by the time-`m` band projector at cut `c₀`, decays like
-    -- `exp(−n(λ_e−λ_a−δ))` UNIFORMLY in `m ≥ n`.  This is the genuine remaining analytic content
-    -- (the deterministic core `Ruelle13` supplies the abstract recursion engine `chain_leakage_exp`
-    -- but not the wiring of `oneStep_sandwich` into it).  The cut SELECTION (step 1) is discharged
-    -- in the proof via `exists_spectral_cut`; only the envelope is assumed here.  See report.
+    -- `exp(−n(λ_e−λ_a−δ))` uniformly in `m ≥ n`. The cut selection (step 1) is discharged in the
+    -- proof via `exists_spectral_cut`; only the envelope is assumed here.
     (hchain : ∀ᵐ x ∂μ, ∀ δ : ℝ, 0 < δ → ∃ C : ℝ, 1 ≤ C ∧ ∀ a e : Fin d,
       lam0 (a : ℕ) < lam0 (e : ℕ) →
       ∀ c₀ : ℝ, Real.exp (lam0 (a : ℕ)) < c₀ → c₀ < Real.exp (lam0 (e : ℕ)) →
@@ -343,11 +303,3 @@ theorem forward_graded_overlap [MeasureTheory.IsProbabilityMeasure μ] [NeZero d
   exact hn (a, e)
 
 end Oseledets
-
-/-! ## Axiom audit -/
-
-#print axioms Oseledets.toEuclideanLin_cfc_fix_eigenvector
-#print axioms Oseledets.tendsto_toEuclideanLin_apply
-#print axioms Oseledets.abs_inner_le_of_bandProjector_mass_bound
-#print axioms Oseledets.exists_spectral_cut
-#print axioms Oseledets.forward_graded_overlap

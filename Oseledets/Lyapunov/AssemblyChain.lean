@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Oseledets.Lyapunov.MeasurableSubspace
 import Oseledets.Lyapunov.AssemblyFromUpperIdent
@@ -10,15 +15,37 @@ import Oseledets.Lyapunov.SpectrumResiduals
 import Oseledets.Lyapunov.RuelleReverse
 
 /-!
-# Final assembly of the Oseledets filtration theorem from the chain envelope
+# The Oseledets filtration theorem from the chain envelope
 
-This module proves `Oseledets.oseledets_filtration_of_chain`: the verbatim statement of
-`oseledets_filtration` (from `Oseledets/MultiplicativeErgodic.lean`) with exactly one added
-hypothesis, the chain envelope `hchain` (quantified over `lam0`), which is the `hchain` slot of
-`forward_graded_overlap` wrapped in `∀ lam0, hlam0 → …`.
+This module proves `Oseledets.oseledets_filtration_of_chain`: the statement of the Oseledets
+multiplicative ergodic theorem `Oseledets.oseledets_filtration` (see
+`Oseledets/MultiplicativeErgodic.lean`) with one additional hypothesis, the chain envelope
+`hchain`, quantified over the deterministic singular-exponent data `lam0`.  The envelope asks,
+for every pair of singular exponents `lam0 a < lam0 e` and every cut `c₀` strictly between
+their exponentials, for a bound `C · exp (-n (lam0 e - lam0 a - δ))` on the mass that the
+band projector above the cut assigns to the `a`-th sorted Gram eigenvector, uniformly in the
+band time `m ≥ n`.
 
-A separate worker proves `hchain` unconditionally as `fast_band_mass_chain_envelope`; this theorem
-composes with it by `fun lam0 hlam0 => fast_band_mass_chain_envelope … lam0 hlam0`.
+This arbitrary-cut envelope fails in general: when an intermediate exponent lies above the
+cut, the band contains the corresponding Oseledets direction, whose overlap decays at a
+strictly slower rate (see `Oseledets/Lyapunov/ChainRecursion.lean`).  The unconditional proof
+of `oseledets_filtration` therefore goes through the top-gap envelope instead
+(`Oseledets.oseledets_filtration_of_topgap` in `Oseledets/Lyapunov/AssemblyTopGap.lean`).
+
+This module also proves the dimension-zero case `Oseledets.oseledets_filtration_dim_zero`,
+which the main theorem composes with.
+
+## Main results
+
+* `Oseledets.oseledets_filtration_of_chain`: the Oseledets filtration theorem for an ergodic,
+  log-integrable, invertible matrix cocycle, assuming the arbitrary-cut chain envelope.
+* `Oseledets.oseledets_filtration_dim_zero`: the trivial dimension-zero case of the Oseledets
+  filtration theorem.
+
+## References
+
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*,
+  Publ. Math. IHÉS **50** (1979), 27–58.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -28,15 +55,13 @@ noncomputable section
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
 variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
-/-- **Oseledets filtration theorem from the chain envelope.**
+/-- **The Oseledets filtration theorem, assuming the chain envelope.**
 
-The verbatim statement of `oseledets_filtration`, with the single added hypothesis `hchain` — the
-fast-band-mass chain envelope (the `hchain` slot of `forward_graded_overlap`), quantified over the
-deterministic singular-exponent data `lam0`.  All other content is composed from committed assets. -/
+The statement of `oseledets_filtration` with one additional hypothesis `hchain`: the
+arbitrary-cut fast-band-mass chain envelope, quantified over the deterministic
+singular-exponent data `lam0`. -/
 theorem oseledets_filtration_of_chain
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -75,10 +100,10 @@ theorem oseledets_filtration_of_chain
               atTop (𝓝 (lam i))) := by
   classical
     have hTmeas : Measurable T := hT.toMeasurePreserving.measurable
-    -- (3) deterministic singular-value exponents.
+    -- the deterministic singular-value exponents.
     obtain ⟨lam0, _hmono, hlam0⟩ :=
       exists_lam_tendsto_singularValue hT hA hAmeas hint hint'
-    -- (4) the limit eigenbasis and its eigenpair / slow-orthogonality data.
+    -- the limit eigenbasis and its eigenpair / slow-orthogonality data.
     set b' : X → OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)) :=
       fun x => limitEigenbasis A T x with hb'def
     have hb' : ∀ᵐ x ∂μ, ∀ e : Fin d,
@@ -88,26 +113,26 @@ theorem oseledets_filtration_of_chain
     have hslowperp : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, ∀ e : Fin d,
         t < lam0 (e : ℕ) → inner ℝ (b' x e) v = 0 :=
       inner_limitEigenbasis_eq_zero_of_slow hT hA hAmeas hint hint' lam0 hlam0
-    -- (5) the spectral-identification band-projector datum.
+    -- the spectral-identification band-projector datum.
     have hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c →
         (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
         Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
           Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
       ae_tendsto_bandProjector_cfc_indicator hT hA hAmeas hint hint'
-    -- (6) the forward graded overlap bound (consuming the chain envelope).
+    -- the forward graded overlap bound, consuming the chain envelope.
     have hfwdN := forward_graded_overlap hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident
       (hchain lam0 hlam0)
-    -- the reverse cofactor bound (Ruelle step 3).
+    -- the reverse cofactor bound for orthogonal matrices, after Ruelle.
     have hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
         ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
         (∀ a b : Fin d, |S a b| ≤ c * Real.exp (-(max (g b - g a) 0))) →
         ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)) :=
       fun S hS g c hc hf => Ruelle13.entry_reverse_bound_of_orthogonal S hS g c hc hf
-    -- (7) the band-limit bridge.
+    -- the band-limit bridge.
     have hbridge := hbridge_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
     -- the grading `g x e := lam0 e`.
     set g : X → Fin d → ℝ := fun _ e => lam0 (e : ℕ) with hgdef
-    -- (8) the TRIVIAL forward graded-overlap discharge for the capstone (NO analytic content):
+    -- the trivial discharge of the forward graded-overlap hypothesis (no analytic content):
     -- pick `c := exp M` with `M` the finite max of `lam0 e - lam0 a` over pairs (and `≥ 0`);
     -- then `c · exp(-(max (g e - g a) 0)) ≥ exp 0 = 1 ≥ |⟪b' e, u_a(n)⟫|`.
     have hfwd : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
@@ -145,10 +170,10 @@ theorem oseledets_filtration_of_chain
         rw [hgdef]
         exact max_le (hMpair a e) hMnn
       linarith
-    -- (9) the capstone: per-vector spectral upper bound on the limit slow space.
+    -- the per-vector spectral upper bound on the limit slow space.
     have hupper := limsup_le_of_mem_Vslow hT hTmeas hA hAmeas hint hint' hrev
       lam0 hlam0 b' g hfwd hbridge
-    -- residuals for the composer.
+    -- the spectrum-identification residuals.
     have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
       ae_lambdaSublevel_le_Vslow hT hA hAmeas hint hint'
     have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ, Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
@@ -167,7 +192,7 @@ theorem oseledets_filtration_of_chain
           atTop (𝓝 (lam0' i))) →
         ∀ᵐ x ∂μ, distinctExp lam0' d ⊆ spectrum A T x :=
       fun lam0' hlam0' => hlb_spec_of_slowflag hT hA hAmeas hint hint' hslowflag lam0' hlam0'
-    -- (10) compose the headline theorem.
+    -- assemble the conclusion.
     exact oseledets_filtration_of_upper' hT hTmeas hA hAmeas hint hint' hupper hslowrev
       hub_spec hlb_spec hident
 
@@ -182,16 +207,15 @@ private lemma submodule_zero_subsingleton :
     have hv : v = 0 := Subsingleton.elim v 0
     simp [hv]⟩
 
-set_option linter.unusedVariables false in
-/-- **Oseledets filtration theorem, dimension-zero case.** Trivial: `k = 0`, `V ≡ ⊤ = ⊥`. -/
+/-- **The Oseledets filtration theorem, dimension-zero case.** Trivial: `k = 0`, `V ≡ ⊤ = ⊥`. -/
 theorem oseledets_filtration_dim_zero
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
-    (hT : Ergodic T μ)
+    (_hT : Ergodic T μ)
     (A : X → Matrix (Fin 0) (Fin 0) ℝ)
-    (hA : ∀ x, (A x).det ≠ 0)
-    (hAmeas : Measurable A)
-    (hint : IntegrableLogNorm A μ)
-    (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
+    (_hA : ∀ x, (A x).det ≠ 0)
+    (_hAmeas : Measurable A)
+    (_hint : IntegrableLogNorm A μ)
+    (_hint' : IntegrableLogNorm (fun x ↦ (A x)⁻¹) μ) :
     ∃ (k : ℕ) (lam : Fin k → ℝ)
       (V : Fin (k + 1) → X → Submodule ℝ (EuclideanSpace ℝ (Fin 0))),
       StrictAnti lam ∧
@@ -210,15 +234,10 @@ theorem oseledets_filtration_dim_zero
   haveI := submodule_zero_subsingleton
   refine ⟨0, fun i => i.elim0, fun _ _ => ⊤, fun i => i.elim0, ?_, ?_⟩
   · intro i
-    show Measurable fun _ : X =>
+    change Measurable fun _ : X ↦
       orthProjMatrix (⊤ : Submodule ℝ (EuclideanSpace ℝ (Fin 0)))
     exact measurable_const
   · refine Eventually.of_forall fun x => ⟨rfl, Subsingleton.elim _ _, fun i => i.elim0,
       fun i => Subsingleton.elim _ _, fun i => i.elim0⟩
-
-/-! ## Axiom audit -/
-
-#print axioms oseledets_filtration_of_chain
-#print axioms oseledets_filtration_dim_zero
 
 end Oseledets

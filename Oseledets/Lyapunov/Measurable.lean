@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.Filtration
 import Oseledets.Lyapunov.MeasurableSubspace
 import Mathlib.Analysis.InnerProductSpace.PiL2
@@ -10,45 +15,46 @@ import Mathlib.LinearAlgebra.Matrix.Polynomial
 import Mathlib.Topology.ContinuousMap.Weierstrass
 
 /-!
-# Measurability infrastructure for the Lyapunov filtration (M7)
+# Measurability infrastructure for the Lyapunov filtration
 
-This module assembles the measurability tools for milestone `M7`. The strategy (see
-`docs/plan/blueprints/m7-measurable-strategy-v2.md`, crux verified by compilation) routes the
-measurability of the Oseledets flag **through the concrete continuous-functional-calculus
-spectral projections of the Oseledets limit operator** `Λ x = lim_n ((A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾)^{1/(2n)}`,
-rather than through a measurable selection of an orthonormal frame for the abstract sublevel
-subspace (which would need a Kuratowski–Ryll-Nardzewski selection theorem absent from Mathlib).
+This module assembles the measurability tools for the Oseledets flag. The strategy routes the
+measurability of the flag **through the concrete continuous-functional-calculus spectral
+projections of the Oseledets limit operator** `Λ x = lim_n ((A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾)^{1/(2n)}`, rather
+than through a measurable selection of an orthonormal frame for the abstract sublevel subspace
+(which would need a Kuratowski–Ryll-Nardzewski selection theorem absent from Mathlib).
 
 Defining the `i`-th flag projection as the CFC element `Pᵢ x := cfc gᵢ (Λ x)` (with `gᵢ` a
 continuous gap function) makes `orthProjMatrix (range (toEuclideanCLM (Pᵢ x))) = Pᵢ x`
 definitionally — a self-adjoint idempotent equals the orthogonal projection onto its range — so
 `MeasurableSubspace` reduces to measurability of `x ↦ cfc gᵢ (Λ x)`.
 
-## What this module provides
+## Main results
 
-* `measurable_lambdaBar_apply` — for fixed `v`, `x ↦ lambdaBar A T x v` is measurable (the scalar
-  scaffolding, reused throughout the arc).
-* `orthProjMatrix_apply` / `measurable_orthProjMatrix_iff` — the projection matrix's entry formula
-  and the resulting reduction of matrix measurability to projecting the fixed standard basis
-  vectors.
-* `instMeasurableAdd₂Matrix`, `measurable_matrix_pow`, `measurable_aeval_matrix` — matrix-algebra
-  measurability (a polynomial in a measurable matrix is measurable).
-* `measurable_cfc_eqOn_polynomial` — **the make-or-break crux**: if a fixed polynomial `q` agrees
-  with `g` on the spectrum of every (self-adjoint) `M x`, then `x ↦ cfc g (M x)` is measurable.
-  This is the polynomial bypass: it uses only the bare Hermitian CFC instance, not the (absent for
-  real matrices) `IsometricContinuousFunctionalCalculus`.
+* `Oseledets.measurable_lambdaBar_apply` — for fixed `v`, `x ↦ lambdaBar A T x v` is measurable
+  (the scalar scaffolding reused by the later measurability arguments).
+* `Oseledets.orthProjMatrix_apply` / `Oseledets.measurable_orthProjMatrix_iff` — the projection
+  matrix's entry formula and the resulting reduction of matrix measurability to projecting the
+  fixed standard basis vectors.
+* `Oseledets.instMeasurableAdd₂Matrix`, `Oseledets.measurable_matrix_pow`,
+  `Oseledets.measurable_aeval_matrix` — matrix-algebra measurability (a polynomial in a
+  measurable matrix is measurable).
+* `Oseledets.measurable_cfc_eqOn_polynomial` — if a fixed polynomial `q` agrees with `g` on the
+  spectrum of every (self-adjoint) `M x`, then `x ↦ cfc g (M x)` is measurable. This polynomial
+  bypass uses only the bare Hermitian CFC instance, not the (absent for real matrices)
+  `IsometricContinuousFunctionalCalculus`.
+* `Oseledets.measurable_cfc_continuous` — for a continuous `f` and a measurable family of
+  self-adjoint matrices `M`, `x ↦ cfc f (M x)` is measurable, via a per-point Weierstrass
+  approximation.
 
 The terminal `MeasurableSubspace` lemma for the concrete flag is assembled once the Oseledets
-limit `Λ` is available (the Limit module), since it needs `Measurable Λ` and the fixed Lyapunov
-spectrum on which the gap function is interpolated by a polynomial.
+limit `Λ` is available (in `Oseledets.Lyapunov.OseledetsLimit`), since it needs `Measurable Λ`
+and the fixed Lyapunov spectrum on which the gap function is interpolated by a polynomial.
 -/
 
 open MeasureTheory Filter Topology Matrix
 open scoped Matrix.Norms.L2Operator RealInnerProductSpace
 
 namespace Oseledets
-
-set_option linter.unusedSectionVars false
 
 variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X} {d : ℕ}
 
@@ -189,13 +195,13 @@ theorem measurable_aeval_matrix (q : Polynomial ℝ) :
       rw [this]
       exact (measurable_matrix_pow (n + 1)).const_mul _
 
-/-! ### The make-or-break crux (CFC polynomial bypass) -/
+/-! ### Measurability of the CFC via a fixed interpolating polynomial -/
 
-/-- **THE MAKE-OR-BREAK CRUX.** Let `M : X → Matrix (Fin d) (Fin d) ℝ` be measurable with each
+/-- **The CFC polynomial bypass.** Let `M : X → Matrix (Fin d) (Fin d) ℝ` be measurable with each
 `M x` self-adjoint (Hermitian). Suppose a *fixed* polynomial `q` agrees with `g : ℝ → ℝ` on the
 spectrum of every `M x`. Then `x ↦ cfc g (M x)` is measurable.
 
-This is the situation in the measurability route: `M x = Λ x` (the a.e.-existing Oseledets limit
+This is the situation in the intended application: `M x = Λ x` (the a.e.-existing Oseledets limit
 matrix, measurable as a limit of measurable matrices), `g = gᵢ` the continuous gap function, and
 on the a.e. good set the spectrum is the fixed gapped Lyapunov set, on which `gᵢ` equals an
 interpolating polynomial `q`. It uses only the bare Hermitian CFC instance — no
@@ -268,10 +274,10 @@ theorem continuous_matrix_entry (i j : Fin d) :
     { toFun := fun M => M i j, map_add' := fun M N => rfl, map_smul' := fun c M => rfl }
   exact L.continuous_of_finiteDimensional
 
-/-- **L8 measurability crux (continuous functional calculus of a measurable self-adjoint matrix
-family).** If `M : X → Matrix (Fin d) (Fin d) ℝ` is measurable with each `M x` self-adjoint, and
-`f : ℝ → ℝ` is continuous, then `x ↦ cfc f (M x)` is measurable. Proved by the per-point
-Weierstrass approximation described above. -/
+/-- **Continuous functional calculus of a measurable self-adjoint matrix family.** If
+`M : X → Matrix (Fin d) (Fin d) ℝ` is measurable with each `M x` self-adjoint, and `f : ℝ → ℝ`
+is continuous, then `x ↦ cfc f (M x)` is measurable. Proved by the per-point Weierstrass
+approximation described above. -/
 theorem measurable_cfc_continuous (f : ℝ → ℝ) (hf : Continuous f)
     (M : X → Matrix (Fin d) (Fin d) ℝ) (hM : Measurable M)
     (hMsa : ∀ x, IsSelfAdjoint (M x)) :

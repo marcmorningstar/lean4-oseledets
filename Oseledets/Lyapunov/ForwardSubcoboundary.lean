@@ -1,20 +1,37 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Ergodic.Birkhoff
 import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 import Mathlib.Dynamics.BirkhoffSum.Average
 
 /-!
-# ForwardSubcoboundary — the abstract tempering lemma via the in-measure trick.
+# A sub-coboundary tempering lemma via convergence in measure
 
-Deliverable 2 (the crown jewel): a *sub-coboundary* tempering lemma. If `u ≥ 0` is
-measurable and finite, `g ∈ L¹`, and `u (T x) ≤ u x + g x` a.e., together with the
-reverse `u x ≤ u (T x) + g x` a.e. (so the *increment* `h := u∘T − u` is dominated by
-`g`, hence integrable), then `(1/n) u (Tⁿ x) → 0` for `μ`-a.e. `x`.
+If `u ≥ 0` is measurable and finite, `g ∈ L¹`, and `u (T x) ≤ u x + g x` a.e., together
+with the reverse `u x ≤ u (T x) + g x` a.e. (so the *increment* `h := u∘T − u` is dominated
+by `g`, hence integrable), then `(1/n) u (Tⁿ x) → 0` for `μ`-a.e. `x`.
 
-This is strictly weaker than the L¹-temperedness premise `posLog (1/θ) ∈ L¹` used by the
-committed `tempering_posLog`: we only need the *one-step increment* to be integrable, not
-`u` itself.
+This is strictly weaker than the L¹-temperedness premise `posLog (1/θ) ∈ L¹` used by
+`tempering_posLog`: we only need the *one-step increment* to be integrable, not `u` itself.
 
-## Proof (Arnold §3.4.7, in-measure version)
+The second half of the file proves the exact algebraic core of the one-step distortion of
+the det-Gram splitting angle of a square frame under a linear map, which produces precisely
+the sub-coboundary increment bound consumed by the tempering lemma.
+
+## Main results
+
+* `Oseledets.tempering_of_subadditive_step`: the sub-coboundary tempering lemma — if the
+  one-step increment of `u ≥ 0` is dominated a.e. on both sides by an integrable `g`, then
+  `(1/n) u (Tⁿ x) → 0` a.e.
+* `Oseledets.tendstoInMeasure_orbit_div`: in-measure decay of the normalized orbit
+  `n⁻¹ · u (Tⁿ x)`.
+* `Oseledets.neg_log_gramAngleSq_le`: the log-distortion bound for the det-Gram splitting
+  angle, the inequality feeding the sub-coboundary step.
+
+## Proof sketch (in-measure version)
 
 * `h := u∘T − u` is integrable (dominated by `g`, measurable).
 * Telescoping: `u (Tⁿ x) = u x + birkhoffSum T h n x`.
@@ -23,23 +40,29 @@ committed `tempering_posLog`: we only need the *one-step increment* to be integr
 * In-measure: `μ {x | ε < (1/n) u (Tⁿ x)} = μ {x | εn < u x} → 0` (measure preservation +
   `u` finite on a probability space), so `(1/n) u (Tⁿ x) → 0` in measure.
 * Uniqueness (a.e. limit = in-measure limit via a subsequence): `ĥ = 0` a.e.
+
+## References
+
+* L. Arnold, *Random Dynamical Systems*, Springer (1998), Lemma 3.4.7.
 -/
 
 open MeasureTheory Filter Topology
 
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X}
+variable {X : Type*} {T : X → X}
 
 /-- **Telescoping identity.** For `h y = u (T y) − u y`, the Birkhoff sum telescopes:
 `birkhoffSum T h n x = u (Tⁿ x) − u x`. -/
 theorem birkhoffSum_sub_comp_self (u : X → ℝ) (n : ℕ) (x : X) :
-    birkhoffSum T (fun y => u (T y) - u y) n x = u (T^[n] x) - u x := by
+    birkhoffSum T (fun y ↦ u (T y) - u y) n x = u (T^[n] x) - u x := by
   induction n with
   | zero => simp [birkhoffSum_zero]
   | succ n ih =>
       rw [birkhoffSum_succ, ih, Function.iterate_succ_apply']
       ring
+
+variable [MeasurableSpace X] {μ : Measure X}
 
 /-- **Tail decay of the super-level measure.** For a measurable real-valued `u` on a finite
 measure space and `δ > 0`, `μ {x | δ·n ≤ u x} → 0` as `n → ∞`: the super-level sets are
@@ -110,7 +133,7 @@ theorem tendstoInMeasure_orbit_div [IsFiniteMeasure μ] (hT : MeasurePreserving 
   exact ((hT.iterate n).measure_preimage
     (measurableSet_le measurable_const hu).nullMeasurableSet).symm
 
-/-- **Abstract tempering lemma (sub-coboundary form) — the crown jewel.**
+/-- **Abstract tempering lemma (sub-coboundary form).**
 
 If `u ≥ 0` is measurable, `g ∈ L¹`, and the one-step increment is dominated by `g` on
 both sides — `u (T x) ≤ u x + g x` and `u x ≤ u (T x) + g x` a.e. — then the normalized
@@ -119,7 +142,8 @@ orbit tends to `0` a.e.:
 
 Crucially this needs only the *one-step increment* `u∘T − u` to be integrable (dominated by
 `g`), NOT `u` itself, and NOT `log⁺(1/θ) ∈ L¹`. This is the classical tempering trick of
-Arnold (MET book, Lemma 3.4.7), formalized via the in-measure uniqueness argument. -/
+Arnold (*Random Dynamical Systems*, Lemma 3.4.7), formalized via the in-measure uniqueness
+argument. -/
 theorem tempering_of_subadditive_step [IsProbabilityMeasure μ] (hT : MeasurePreserving T μ μ)
     (hTm : Measurable T) {u g : X → ℝ} (hu : Measurable u) (hu0 : 0 ≤ u)
     (hg : Integrable g μ)
@@ -171,14 +195,14 @@ theorem tempering_of_subadditive_step [IsProbabilityMeasure μ] (hT : MeasurePre
   filter_upwards [horbit, hbar0] with x hx hx0
   rwa [hx0] at hx
 
-/-! ## Deliverable 3 — one-step angle distortion (exact algebraic core).
+/-! ## The one-step angle distortion: the exact algebraic core
 
 The squared det-Gram splitting angle of a square frame `W = [ω_F | ω_S]` under a map `M` is
 `θ²(M) = det((MW)ᵀ(MW)) / (gF(MW) · gS(MW))`, where `gF, gS` extract the diagonal-block Gram
 determinants. The decisive *exact* fact: the numerator transforms by `(det M)²` (Cauchy–Binet
 on the full square frame), so the angle distortion is carried entirely by the block Gram
 determinants in the denominator. We prove this exactly, then package the log-distortion bound
-modulo singular-value sandwich bounds on the block Gram determinants (the residual analytic
+modulo singular-value sandwich bounds on the block Gram determinants (the remaining analytic
 input). -/
 
 section AngleDistortion
@@ -219,7 +243,7 @@ block Gram determinants:
 `θ²(I·W) = det(WᵀW)/(gF(W)·gS(W))`, this isolates the entire angle distortion in the *block*
 Gram determinants `gF, gS` — the numerator distortion is exact. -/
 theorem gramAngleSq_eq (gF gS : Matrix (Fin d) (Fin d) ℝ → ℝ)
-    (M W : Matrix (Fin d) (Fin d) ℝ) (hden : gF (M * W) * gS (M * W) ≠ 0) :
+    (M W : Matrix (Fin d) (Fin d) ℝ) (_hden : gF (M * W) * gS (M * W) ≠ 0) :
     gramAngleSq gF gS M W
       = (M.det) ^ 2 * (Wᵀ * W).det / (gF (M * W) * gS (M * W)) := by
   rw [gramAngleSq, det_gram_image_eq_sq_mul_self]
@@ -306,13 +330,3 @@ theorem neg_log_gramAngleSq_le
 end AngleDistortion
 
 end Oseledets
-
-#print axioms Oseledets.tempering_of_subadditive_step
-#print axioms Oseledets.tendstoInMeasure_orbit_div
-#print axioms Oseledets.tendsto_measure_superlevel_atTop
-#print axioms Oseledets.birkhoffSum_sub_comp_self
-#print axioms Oseledets.det_gram_image_eq_sq_mul_self
-#print axioms Oseledets.gramAngleSq_eq
-#print axioms Oseledets.log_gramAngleSq_decomp
-#print axioms Oseledets.log_gramAngleSq_ratio
-#print axioms Oseledets.neg_log_gramAngleSq_le

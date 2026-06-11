@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Ergodic.Birkhoff
 import Mathlib.Analysis.Subadditive
 import Mathlib.MeasureTheory.Integral.Lebesgue.Add
@@ -10,47 +15,65 @@ import Mathlib.Topology.Instances.EReal.Lemmas
 /-!
 # Kingman's subadditive ergodic theorem
 
-Kingman's theorem (layer `L2` / milestone `M4`) is the analytic engine of the
-multiplicative ergodic theorem. Mathlib has only the *deterministic* Fekete lemma
-(`Subadditive.tendsto_lim`); the measure-theoretic a.e.-convergence statement for a
-**subadditive cocycle** over a measure-preserving system is absent.
+Kingman's theorem is the analytic engine of the multiplicative ergodic theorem.
+Mathlib has only the *deterministic* Fekete lemma (`Subadditive.tendsto_lim`); the
+measure-theoretic a.e.-convergence statement for a **subadditive cocycle** over a
+measure-preserving system is absent.
 
 We record the subadditive-cocycle predicate and the theorem. The statement here is in
 `ℝ` under the boundedness proviso `BddBelow {(∫ gₙ)/n}` (which keeps the limit finite —
 exactly the case used by Furstenberg–Kesten under the `log⁺‖A⁻¹‖ ∈ L¹` hypothesis); the
-fully general `EReal`-valued version (limit possibly `−∞`) is a planned refinement.
+fully general `EReal`-valued version (limit possibly `−∞`) is a possible refinement.
+
+## Main results
+
+* `Oseledets.IsSubadditiveCocycle`: the subadditive-cocycle predicate
+  `g (m + n) x ≤ g m x + g n (T^[m] x)`.
+* `Oseledets.tendsto_kingman`: for a measure-preserving `T` on a finite measure space
+  and an integrable subadditive cocycle `g` whose normalized integrals are bounded
+  below, `gₙ/n` converges `μ`-a.e. to a `T`-invariant integrable limit.
+* `Oseledets.tendsto_kingman_ergodic`: under ergodicity the a.e. limit is constant.
 
 ## Strategy (pointwise Katznelson–Weiss / Steele)
 
-The a.e. convergence is closed by a *pointwise* sandwich, exactly mirroring the existing
-`M3` Birkhoff proof. Write `c n x := g (n+1) x / (n+1)`, `f₊ x := limsup_n (c n x)`,
+The a.e. convergence is closed by a *pointwise* sandwich, mirroring the Birkhoff proof in
+`Oseledets.Ergodic.Birkhoff`. Write `c n x := g (n+1) x / (n+1)`, `f₊ x := limsup_n (c n x)`,
 `f₋ x := liminf_n (c n x)`. The target limit is `G := f₋`. The convergence
 `Tendsto (c · x) atTop (𝓝 (f₋ x))` follows pointwise from
 `tendsto_of_le_liminf_of_limsup_le` once we know, a.e.,
 
-* (S1) `f₊ x ≤ f₋ x`  [hard, `ae_limsup_le_liminf_div` / `L9`]; and
-* (S2) `f₋ x ≤ f₊ x`  [trivial, `liminf_le_limsup`].
+* `f₊ x ≤ f₋ x`  [hard, `ae_limsup_le_liminf_div`]; and
+* `f₋ x ≤ f₊ x`  [trivial, `liminf_le_limsup`].
 
 No integral of `f₊`/`f₋` enters the convergence proof. The integral facts are needed only
-to certify `Integrable G`, via a single Fatou step (`int_limsup_div_integrable` / `L8`).
+to certify `Integrable G`, via a single Fatou step (`int_limsup_div_integrable`).
 
 All of this — the pointwise squeeze, the boundedness facts, the envelope integrability, and
 the `T`-invariance — is derived (soft arguments) from the core lemma `ae_tendsto_cdiv`
-(*for `μ`-a.e. `x`, `c n x` converges to the value `G x` of some integrable `G`*). The whole
-chain is now **sorry-free**: the hard analytic core `ae_ereal_limsup_le_liminf` (`limsup = liminf`
-a.e.) is proved via the non-positive companion `ae_ereal_limsup_le_liminf_nonpos`, which closes
-Karlsson §3.3 by the `M`-block subsequence squeeze (LD-c, `limsup_ecdiv_eq_block` /
-`liminf_ecdiv_eq_block`), the additive `T^[M]`-Birkhoff assembly (LD-d, `limsup_block_eq` /
-`liminf_block_eq`), and the `E_{α}` contradiction (LD-e, `measure_gap_set_eq_zero`) closing on
-the `β`-maximal inequality `setIntegral_div_le_level`. See
-`docs/plan/blueprints/m4-kingman-v2.md` §4 and
-`docs/research/sources/kingman-karlsson-maximal-proof.md` §3.3.
+(*for `μ`-a.e. `x`, `c n x` converges to the value `G x` of some integrable `G`*). The hard
+analytic core `ae_ereal_limsup_le_liminf` (`limsup = liminf` a.e.) is proved via the
+non-positive companion `ae_ereal_limsup_le_liminf_nonpos`, which carries out the argument
+of Karlsson §3.3: the `M`-block subsequence squeeze (`limsup_ecdiv_eq_block` /
+`liminf_ecdiv_eq_block`), the additive `T^[M]`-Birkhoff assembly (`limsup_block_eq` /
+`liminf_block_eq`), and the `E_{α}` contradiction (`measure_gap_set_eq_zero`) closing on
+the `β`-maximal inequality `setIntegral_div_le_level`.
 
 ## Finiteness hypothesis
 
-`tendsto_kingman` carries `[IsFiniteMeasure μ]`. As with `M3` Birkhoff, the maximal-
-inequality machinery needs a finite measure; the Oseledets MET only ever calls Kingman
-for probability measures, where this is automatic.
+`tendsto_kingman` carries `[IsFiniteMeasure μ]`. As for the Birkhoff theorem, the maximal-
+inequality machinery needs a finite measure; the Oseledets multiplicative ergodic theorem
+only ever calls Kingman for probability measures, where this is automatic.
+
+## References
+
+* J. F. C. Kingman, *The ergodic theory of subadditive stochastic processes*,
+  J. Roy. Statist. Soc. Ser. B **30** (1968).
+* Y. Katznelson, B. Weiss, *A simple proof of some ergodic theorems*,
+  Israel J. Math. **42** (1982).
+* Y. Derriennic, *Un théorème ergodique presque sous-additif*, Ann. Probab. **11** (1983).
+* J. M. Steele, *Kingman's subadditive ergodic theorem*,
+  Ann. Inst. H. Poincaré Probab. Statist. **25** (1989).
+* A. Karlsson, *A proof of the subadditive ergodic theorem*, expository note (2014).
 -/
 
 open MeasureTheory Filter Topology
@@ -66,10 +89,10 @@ follows from submultiplicativity of the operator norm and the cocycle identity.)
 structure IsSubadditiveCocycle (T : X → X) (g : ℕ → X → ℝ) : Prop where
   apply_add_le : ∀ m n x, g (m + n) x ≤ g m x + g n (T^[m] x)
 
-/-! ### L0: reindexing the normalized sequence -/
+/-! ### Reindexing the normalized sequence -/
 
 omit [MeasurableSpace X] in
-/-- **L0 — reindex.** The Kingman sequence `(n : ℝ)⁻¹ * g n x` converges to `L` iff the
+/-- **Reindexing.** The Kingman sequence `(n : ℝ)⁻¹ * g n x` converges to `L` iff the
 shifted sequence `g (n+1) x / (n+1)` converges to `L`. The `n = 0` term of the original
 sequence is `0⁻¹ * g 0 x = 0`, so dropping it is harmless. -/
 private theorem tendsto_kingman_reindex {g : ℕ → X → ℝ} {x : X} {L : ℝ} :
@@ -80,10 +103,10 @@ private theorem tendsto_kingman_reindex {g : ℕ → X → ℝ} {x : X} {L : ℝ
   push_cast
   rw [div_eq_inv_mul]
 
-/-! ### L1 / A1': singleton (Birkhoff-sum) subadditivity -/
+/-! ### Singleton (Birkhoff-sum) subadditivity -/
 
 omit [MeasurableSpace X] in
-/-- **A1' — singleton partition subadditivity.** For `n ≥ 1`, a subadditive cocycle is
+/-- **Singleton partition subadditivity.** For `n ≥ 1`, a subadditive cocycle is
 dominated by the Birkhoff sum of its first level: `g (n+1) x ≤ birkhoffSum T (g 1) (n+1) x`.
 (The statement fails at `n = 0`: subadditivity only forces `0 ≤ g 0 x`, not `g 0 x ≤ 0`.) -/
 private theorem IsSubadditiveCocycle.le_birkhoffSum_one {g : ℕ → X → ℝ}
@@ -96,9 +119,9 @@ private theorem IsSubadditiveCocycle.le_birkhoffSum_one {g : ℕ → X → ℝ}
       calc g (n + 1 + 1) x ≤ g (n + 1) x + g 1 (T^[n + 1] x) := hsub.apply_add_le (n + 1) 1 x
         _ ≤ birkhoffSum T (g 1) (n + 1) x + g 1 (T^[n + 1] x) := by linarith [ih]
 
-/-! ### L2 / A2: integral of a measure-preserving composition -/
+/-! ### Integral of a measure-preserving composition -/
 
-/-- **L2.** The integral of a measure-preserving composition equals the integral:
+/-- The integral of a measure-preserving composition equals the integral:
 `∫ g n (T^[m] x) ∂μ = ∫ g n x ∂μ`. -/
 private theorem integral_comp_iterate (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hint : ∀ n, Integrable (g n) μ) (m n : ℕ) :
@@ -110,7 +133,7 @@ private theorem integral_comp_iterate (hT : MeasurePreserving T μ μ) {g : ℕ 
   rw [hmp.map_eq] at hmap
   exact hmap.symm
 
-/-- **A2 — integral subadditivity.** The integral sequence `aₙ = ∫ gₙ` is subadditive
+/-- **Integral subadditivity.** The integral sequence `aₙ = ∫ gₙ` is subadditive
 in Mathlib's sense (`a (m+n) ≤ a m + a n`), the Fekete input. -/
 private theorem integral_subadditive (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ) :
@@ -125,9 +148,9 @@ private theorem integral_subadditive (hT : MeasurePreserving T μ μ) {g : ℕ �
     _ = (∫ x, g m x ∂μ) + ∫ x, g n (T^[m] x) ∂μ := integral_add (hint m) hcomp
     _ = (∫ x, g m x ∂μ) + ∫ x, g n x ∂μ := by rw [integral_comp_iterate hT hint m n]
 
-/-! ### L4 / Fekete: the limit `γ` of the normalized integrals -/
+/-! ### Fekete: the limit `γ` of the normalized integrals -/
 
-/-- **L4 — Fekete.** The normalized integral sequence `(∫ g (n+1)) / (n+1)` converges to
+/-- **Fekete.** The normalized integral sequence `(∫ g (n+1)) / (n+1)` converges to
 the Fekete constant `γ := (integral_subadditive …).lim`. The `n+1`-indexed bounded-below
 hypothesis is bridged to the `n`-indexed Fekete input by hand (the `n = 0` term is
 `(∫ g 0)/0 = 0`). -/
@@ -161,9 +184,9 @@ private theorem exists_fekete (hT : MeasurePreserving T μ μ) {g : ℕ → X �
   show a (n + 1) / ((n + 1 : ℕ) : ℝ) = (∫ x, g (n + 1) x ∂μ) / ((n : ℝ) + 1)
   simp only [hadef, Nat.cast_add, Nat.cast_one]
 
-/-! ### L5 / A3: a.e. `T`-invariance from monotonicity under `T` -/
+/-! ### A.e. `T`-invariance from monotonicity under `T` -/
 
-/-- **L5 / A3 — invariance from `F ≤ F ∘ T`.** If `F` is a.e. measurable, `T` is
+/-- **Invariance from `F ≤ F ∘ T`.** If `F` is a.e. measurable, `T` is
 measure-preserving on a finite measure, and `F x ≤ F (T x)` for a.e. `x`, then
 `F ∘ T =ᵐ[μ] F`. The upper level sets `{c ≤ F}` satisfy `{c ≤ F} ⊆ᵐ T⁻¹ {c ≤ F}` with
 equal (finite) measure, hence agree a.e.; ranging over rational `c` gives invariance. -/
@@ -204,7 +227,7 @@ private theorem ae_eq_comp_of_le_comp [IsFiniteMeasure μ]
     exact Filter.eventuallyEq_set.1 (hkey c)
   filter_upwards [hall] with x hx
   -- From `∀ c, (c ≤ F (T x)) ↔ (c ≤ F x)`, deduce `F (T x) = F x`.
-  show F (T x) = F x
+  change F (T x) = F x
   by_contra hne
   rcases lt_or_gt_of_ne hne with hlt | hgt
   · -- `F (T x) < F x`: pick rational `c` in between, contradict via `hx`.
@@ -229,7 +252,7 @@ private noncomputable def cdiv (g : ℕ → X → ℝ) (n : ℕ) (x : X) : ℝ :
 
 omit [MeasurableSpace X] in
 /-- `cdiv g n x` is dominated by the Birkhoff average of `g 1`: an immediate rephrasing of
-A1' (`le_birkhoffSum_one`). -/
+`le_birkhoffSum_one`. -/
 private theorem cdiv_le_birkhoffAverage {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
     (n : ℕ) (x : X) : cdiv g n x ≤ birkhoffAverage ℝ T (g 1) (n + 1) x := by
   have h := hsub.le_birkhoffSum_one n x
@@ -240,9 +263,9 @@ private theorem cdiv_le_birkhoffAverage {g : ℕ → X → ℝ} (hsub : IsSubadd
   rw [hcast]
   apply mul_le_mul_of_nonneg_left h (le_of_lt (by positivity))
 
-/-! ### L6: a.e. measurability of the limsup/liminf envelopes -/
+/-! ### A.e. measurability of the limsup/liminf envelopes -/
 
-/-- **L6 (limsup).** The pointwise `limsup` of `cdiv g · x` is a.e. measurable: it agrees a.e.
+/-- The pointwise `limsup` of `cdiv g · x` is a.e. measurable: it agrees a.e.
 with the limsup of measurable representatives of each level `g (n+1)`. -/
 private theorem aemeasurable_limsup_div {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) :
     AEMeasurable (fun x => Filter.limsup (fun n => cdiv g n x) atTop) μ := by
@@ -261,7 +284,7 @@ private theorem aemeasurable_limsup_div {g : ℕ → X → ℝ} (hint : ∀ n, I
     funext n
     rw [hx n]
 
-/-- **L6 (liminf).** The pointwise `liminf` of `cdiv g · x` is a.e. measurable. -/
+/-- The pointwise `liminf` of `cdiv g · x` is a.e. measurable. -/
 private theorem aemeasurable_liminf_div {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) :
     AEMeasurable (fun x => Filter.liminf (fun n => cdiv g n x) atTop) μ := by
   set g₀ : ℕ → X → ℝ := fun n => (hint n).1.mk with hg₀def
@@ -279,13 +302,15 @@ private theorem aemeasurable_liminf_div {g : ℕ → X → ℝ} (hint : ∀ n, I
 
 /-! ### Boundedness of the normalized cocycle
 
-A.e., the range of `cdiv g · x` is bounded above (immediate from A1' and a.e. boundedness of
+A.e., the range of `cdiv g · x` is bounded above (immediate from `le_birkhoffSum_one` and
+a.e. boundedness of
 the Birkhoff averages of `g 1`). The bounded-below direction is the subtle one: subadditivity
 gives only upper bounds, so a.e. finiteness of the liminf holds only once a.e. convergence is
 known. Accordingly it is derived from the core lemma `ae_tendsto_cdiv` (a convergent sequence
 is bounded), defined below. -/
 
-/-- A.e. the range of `cdiv g · x` is bounded above (A1' + `ae_bddAbove_birkhoffAverage`). -/
+/-- A.e. the range of `cdiv g · x` is bounded above (`le_birkhoffSum_one` +
+`ae_bddAbove_birkhoffAverage`). -/
 private theorem ae_bddAbove_cdiv [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ) :
@@ -302,7 +327,8 @@ The normalized cocycle may a priori tend to `−∞` on a positive-measure set, 
 `ℝ`-valued `Filter.liminf`/`limsup` return the junk value `0`. To control the relevant
 extrema before finiteness is established we coerce the sequence into `EReal`, a
 `CompleteLinearOrder` where `Filter.limsup`/`liminf` are total and `liminf ≤ limsup` is
-unconditional. The two facts produced here — `limsup < ⊤` (envelope, from A1' + `M3`) and
+unconditional. The two facts produced here — `limsup < ⊤` (envelope, from
+`le_birkhoffSum_one` and Birkhoff convergence) and
 `limsup > ⊥` (Fatou) — together with the hard `limsup ≤ liminf` (`ae_ereal_limsup_le_liminf`)
 pin the `EReal` `limsup`/`liminf` to a common finite value, from which the `ℝ` convergence
 follows. -/
@@ -311,8 +337,8 @@ follows. -/
 private noncomputable def ecdiv (g : ℕ → X → ℝ) (n : ℕ) (x : X) : EReal := (cdiv g n x : EReal)
 
 /-- **Envelope.** A.e. the `EReal` `limsup` of the normalized cocycle is bounded above by the
-(finite) conditional expectation `μ[g 1 | invariants T]`, hence is `< ⊤`. From A1'
-(`cdiv ≤ birkhoffAverage g₁ (n+1)`) and `M3` (`birkhoffAverage g₁ (n+1) → μ[g₁|I]`). -/
+(finite) conditional expectation `μ[g 1 | invariants T]`, hence is `< ⊤`. From
+`cdiv_le_birkhoffAverage` and the Birkhoff convergence `birkhoffAverage g₁ (n+1) → μ[g₁|I]`. -/
 private theorem ae_ereal_limsup_le_condExp [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ) :
@@ -337,9 +363,10 @@ private theorem ae_ereal_limsup_le_condExp [IsFiniteMeasure μ]
   rw [heshift.limsup_eq] at hle
   exact hle
 
-/-! ### STEP 2: the Fatou step — finiteness of the limsup and integrability of `f₊`
+/-! ### The Fatou step: finiteness of the limsup and integrability of `f₊`
 
-The normalized cocycle satisfies `cdiv g n x ≤ birkhoffAverage ℝ T (g 1) (n+1) x` (A1'), so the
+The normalized cocycle satisfies `cdiv g n x ≤ birkhoffAverage ℝ T (g 1) (n+1) x`
+(`le_birkhoffSum_one`), so the
 nonnegative defect `d n x := birkhoffAverage ℝ T (g 1) (n+1) x − cdiv g n x ≥ 0` controls how
 far `cdiv` can drop. A single `ℝ≥0∞` Fatou pass (`lintegral_liminf_le`) on `ENNReal.ofReal (d n)`
 shows `liminf_n (d n x) < ∞` a.e., which (since the Birkhoff average converges) is exactly
@@ -351,7 +378,7 @@ private noncomputable def fdefect (g : ℕ → X → ℝ) (n : ℕ) (x : X) : �
   birkhoffAverage ℝ T (g 1) (n + 1) x - cdiv g n x
 
 omit [MeasurableSpace X] in
-/-- The Fatou defect is nonnegative, by A1' (`cdiv_le_birkhoffAverage`). -/
+/-- The Fatou defect is nonnegative, by `cdiv_le_birkhoffAverage`. -/
 private theorem fdefect_nonneg {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
     0 ≤ fdefect (T := T) g n x :=
   sub_nonneg.2 (cdiv_le_birkhoffAverage hsub n x)
@@ -434,7 +461,7 @@ private theorem ae_liminf_ofReal_fdefect_lt_top [IsFiniteMeasure μ]
     intro n
     refine ENNReal.measurable_ofReal.comp ?_
     refine Measurable.sub ?_ ((hg₀m (n + 1)).div_const _)
-    show Measurable (fun x => ((n + 1 : ℕ) : ℝ)⁻¹ * birkhoffSum T (g₀ 1) (n + 1) x)
+    change Measurable (fun x ↦ ((n + 1 : ℕ) : ℝ)⁻¹ * birkhoffSum T (g₀ 1) (n + 1) x)
     exact (measurable_birkhoffSum hTm (hg₀m 1) (n + 1)).const_mul _
   -- `F n =ᵐ fdefect g n` for all `n` simultaneously.
   have hFeq : ∀ᵐ x ∂μ, ∀ n, ENNReal.ofReal (F n x) = ENNReal.ofReal (fdefect (T := T) g n x) := by
@@ -448,7 +475,7 @@ private theorem ae_liminf_ofReal_fdefect_lt_top [IsFiniteMeasure μ]
     have hba : birkhoffAverage ℝ T (g₀ 1) (n + 1) x = birkhoffAverage ℝ T (g 1) (n + 1) x := by
       simp only [birkhoffAverage, smul_eq_mul]
       rw [hxbs n]
-    show birkhoffAverage ℝ T (g₀ 1) (n + 1) x - g₀ (n + 1) x / ((n : ℝ) + 1)
+    change birkhoffAverage ℝ T (g₀ 1) (n + 1) x - g₀ (n + 1) x / ((n : ℝ) + 1)
       = birkhoffAverage ℝ T (g 1) (n + 1) x - cdiv g n x
     rw [hba]
     simp only [cdiv]
@@ -503,7 +530,7 @@ private theorem aemeasurable_liminf_ofReal_fdefect [IsFiniteMeasure μ]
     intro n
     refine ENNReal.measurable_ofReal.comp ?_
     refine Measurable.sub ?_ ((hg₀m (n + 1)).div_const _)
-    show Measurable (fun x => ((n + 1 : ℕ) : ℝ)⁻¹ * birkhoffSum T (g₀ 1) (n + 1) x)
+    change Measurable (fun x ↦ ((n + 1 : ℕ) : ℝ)⁻¹ * birkhoffSum T (g₀ 1) (n + 1) x)
     exact (measurable_birkhoffSum hTm (hg₀m 1) (n + 1)).const_mul _
   refine ⟨fun x => Filter.liminf (fun n => ENNReal.ofReal (F n x)) atTop,
     Measurable.liminf hFm, ?_⟩
@@ -516,14 +543,14 @@ private theorem aemeasurable_liminf_ofReal_fdefect [IsFiniteMeasure μ]
   have hFval : F n x = fdefect (T := T) g n x := by
     have hba : birkhoffAverage ℝ T (g₀ 1) (n + 1) x = birkhoffAverage ℝ T (g 1) (n + 1) x := by
       simp only [birkhoffAverage, smul_eq_mul]; rw [hxbs n]
-    show birkhoffAverage ℝ T (g₀ 1) (n + 1) x - g₀ (n + 1) x / ((n : ℕ) + 1 : ℝ)
+    change birkhoffAverage ℝ T (g₀ 1) (n + 1) x - g₀ (n + 1) x / ((n : ℕ) + 1 : ℝ)
       = birkhoffAverage ℝ T (g 1) (n + 1) x - cdiv g n x
     rw [hba]
     simp only [cdiv]
     rw [hx (n + 1)]
   rw [hFval]
 
-/-- **STEP 2 pointwise.** A.e. the `ℝ≥0∞`-`liminf` of the Fatou defect is finite. -/
+/-- **Fatou step, pointwise.** A.e. the `ℝ≥0∞`-`liminf` of the Fatou defect is finite. -/
 private theorem ae_liminf_fdefect_lt_top [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
@@ -532,7 +559,7 @@ private theorem ae_liminf_fdefect_lt_top [IsFiniteMeasure μ]
   ae_lt_top' (aemeasurable_liminf_ofReal_fdefect hT hTm hint)
     (ae_liminf_ofReal_fdefect_lt_top hT hTm hsub hint hbdd).ne
 
-/-- **STEP 2 (A1).** A.e. the `EReal` limsup of the normalized cocycle is bounded below by
+/-- A.e. the `EReal` limsup of the normalized cocycle is bounded below by
 `⊥`: the Fatou defect cannot tend to `+∞`, so the cocycle cannot tend to `−∞`. -/
 private theorem ae_bot_lt_ereal_limsup [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
@@ -578,7 +605,7 @@ private theorem ae_bot_lt_ereal_limsup [IsFiniteMeasure μ]
     exact hKfreq.mono fun n hn => by simpa only [ecdiv] using EReal.coe_le_coe_iff.2 hn
   exact lt_of_lt_of_le (EReal.bot_lt_coe K) hKle
 
-/-- **STEP 2 (A2).** The `ℝ`-valued limsup envelope `f₊` is integrable, by the Fatou step.
+/-- The `ℝ`-valued limsup envelope `f₊` is integrable, by the Fatou step.
 Set `B := μ[g 1 | invariants T]` (integrable) and `Δ := B − f₊`. Then a.e. `0 ≤ Δ` (the
 envelope `f₊ ≤ B`) and `Δ ≤ liminf_n (d n) =: D` (by `le_liminf_add` applied to
 `A_{n+1} + (−cdiv)`, using only that `cdiv` is bounded *above*). Since `d n ≥ 0`,
@@ -686,7 +713,7 @@ private theorem int_limsup_div_integrable_aux [IsFiniteMeasure μ]
       rw [not_le] at hlt
       have := hstep ((fp x - B x) / 2) (by linarith)
       linarith
-    show (0 : ℝ) ≤ Δ x
+    change (0 : ℝ) ≤ Δ x
     simp only [hΔdef]
     linarith
   -- Finite lintegral: `∫⁻ ofReal Δ ≤ ∫⁻ liminf (ofReal d) < ∞`.
@@ -699,18 +726,19 @@ private theorem int_limsup_div_integrable_aux [IsFiniteMeasure μ]
   rw [Integrable, hasFiniteIntegral_iff_ofReal hΔnn]
   exact ⟨hΔm.aestronglyMeasurable, hfin⟩
 
-/-! ### STEP 3: the Derriennic "leaders" route to `limsup ≤ liminf` a.e.
+/-! ### The Derriennic "leaders" route to `limsup ≤ liminf` a.e.
 
 We follow Karlsson, *A proof of the subadditive ergodic theorem* (Riesz/Derriennic route).
 The four ingredients are:
 
-* **L-A** (`sum_leaders_nonpos`): Riesz's combinatorial "leader" lemma (Karlsson Lemma 3.2),
+* `sum_leaders_nonpos`: Riesz's combinatorial "leader" lemma (Karlsson Lemma 3.2),
   pure finite induction, no measure theory.
-* **L-B** (`telescope_sub`): the telescoping identity `a n x − a (n−k) (T^[k] x) = ∑ bₙ₋ᵢ(T^[i]x)`.
-* **L-C** (`limsup_setIntegral_div_le`): Derriennic's maximal inequality (Karlsson Lemma 3.4 /
+* `sum_bcoc_telescope`: the telescoping identity
+  `a n x − a (n−k) (T^[k] x) = ∑ bₙ₋ᵢ(T^[i]x)`.
+* `limsup_setIntegral_div_nonpos`: Derriennic's maximal inequality (Karlsson Lemma 3.4 /
   Prop 3.5): for a `T`-invariant set `B` on which `liminf (aₙ/n) < α`, one has
   `limsup (1/n) ∫_B aₙ ≤ α·μ(B)`.
-* **L-D**: the `E_{α,β}` two-bound contradiction (Karlsson §3.3), mirroring the additive
+* the `E_{α,β}` two-bound contradiction (Karlsson §3.3), mirroring the additive
   `measure_setOf_lt_limsup_eq_zero` in `Birkhoff.lean`. -/
 
 open Classical in
@@ -733,7 +761,7 @@ private theorem mem_leaderSet_shift (S : ℕ → ℝ) (s n u : ℕ) (hsn : s ≤
   · rintro ⟨hu, j, hj1, hj2, hj3⟩
     refine ⟨⟨by omega, j + s, by omega, by omega, hj3⟩, by omega⟩
 
-/-- **L-A — Riesz's leader lemma** (Karlsson, Lemma 3.2), in partial-sum form. Given a
+/-- **Riesz's leader lemma** (Karlsson, Lemma 3.2), in partial-sum form. Given a
 sequence of partial sums `S : ℕ → ℝ` (think `S j = c 0 + … + c (j−1)`, `S 0 = 0`), call an
 index `u < n` a *leader* (of length `n`) if some later partial sum drops strictly below `S u`,
 i.e. `∃ j, u < j ≤ n ∧ S j < S u`. (This matches Karlsson's "a forward partial sum
@@ -789,8 +817,9 @@ private theorem sum_leaders_nonpos :
         have htail : ∑ u ∈ (leaderSet S (n + 1)).filter (fun u => ¬ u < k), (S (u + 1) - S u)
             ≤ 0 := by
           set S' : ℕ → ℝ := fun j => S (j + k) with hS'
-          have hmap : (leaderSet S (n + 1)).filter (fun u => ¬ u < k)
-              = (leaderSet S' (n + 1 - k)).map ⟨fun u => u + k, fun a b h => Nat.add_right_cancel h⟩ := by
+          have hmap : (leaderSet S (n + 1)).filter (fun u ↦ ¬ u < k)
+              = (leaderSet S' (n + 1 - k)).map
+                  ⟨fun u ↦ u + k, fun a b h ↦ Nat.add_right_cancel h⟩ := by
             ext u
             simp only [Finset.mem_filter, Finset.mem_map, Function.Embedding.coeFn_mk, not_lt]
             constructor
@@ -831,12 +860,12 @@ private theorem sum_leaders_nonpos :
         exact ih n (by omega) S'
 
 omit [MeasurableSpace X] in
-/-- **L-B — leader inequality for the cocycle** (Karlsson, §3.2, the pointwise input of his
+/-- **Leader inequality for the cocycle** (Karlsson, §3.2, the pointwise input of his
 Lemma 3.4). Fix `x` and length `n`, and consider the partial sums
 `S j := g n x − g (n−j) (T^[j] x)` (so `S 0 = 0`, and the increment `S (k+1) − S k` equals
 `g (n−k) (T^[k] x) − g (n−k−1) (T^[k+1] x)`). With these partial sums an index `k` is a
-*leader* exactly when `T^[k] x` lies in Karlsson's set `Λ_{n−k}`. The leader lemma `L-A`
-(`sum_leaders_nonpos`) then bounds the sum of the increments over the leaders by `0`. This is
+*leader* exactly when `T^[k] x` lies in Karlsson's set `Λ_{n−k}`. The leader lemma
+`sum_leaders_nonpos` then bounds the sum of the increments over the leaders by `0`. This is
 the purely pointwise/combinatorial heart of Derriennic's maximal inequality (the measure
 theory enters only when one integrates this inequality over a `T`-invariant set). -/
 private theorem sum_leaders_cocycle_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
@@ -846,10 +875,10 @@ private theorem sum_leaders_cocycle_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x 
   refine le_of_eq_of_le (Finset.sum_congr rfl (fun k _ => ?_)) h
   ring
 
-/-! ### L-C: Derriennic's maximal inequality (Karlsson Lemma 3.4 / Prop 3.5)
+/-! ### Derriennic's maximal inequality (Karlsson Lemma 3.4 / Prop 3.5)
 
 Karlsson's Λ-set and A-set, and the integral telescoping of `sum_leaders_cocycle_nonpos`
-(L-B) over a `T`-invariant set `B`. -/
+over a `T`-invariant set `B`. -/
 
 /-- The increment of the cocycle: `bcoc g i x = g i x − g (i−1) (T x)`. (Karlsson's `b_i`.) -/
 private def bcoc (g : ℕ → X → ℝ) (i : ℕ) (x : X) : ℝ := g i x - g (i - 1) (T x)
@@ -915,7 +944,7 @@ private theorem sum_bcoc_telescope (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
 
 open Classical in
 omit [MeasurableSpace X] in
-/-- **L-B′ — pointwise leader inequality, Λ-form.** Summing the increments `bcoc g (n−k)`
+/-- **Pointwise leader inequality, Λ-form.** Summing the increments `bcoc g (n−k)`
 along the orbit over the indices `k < n` with `T^[k] x ∈ Λ_{n−k}` gives a non-positive number.
 (Recast of `sum_leaders_cocycle_nonpos` via the membership identification.) -/
 private theorem sum_bcoc_lambda_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
@@ -937,7 +966,7 @@ private noncomputable def psiCoc (g : ℕ → X → ℝ) (i : ℕ) : X → ℝ :
 
 open Classical in
 omit [MeasurableSpace X] in
-/-- **L-B″ — indicator form of the pointwise leader inequality.** The full-range orbit sum of
+/-- **Indicator form of the pointwise leader inequality.** The full-range orbit sum of
 the localized increments `ψ_{n−k} ∘ T^[k]` is non-positive (it equals the filtered leader sum
 of `sum_bcoc_lambda_nonpos`, the extra terms being zero off `Λ`). -/
 private theorem sum_psiCoc_comp_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
@@ -1003,7 +1032,7 @@ private theorem setIntegral_comp_iterate_of_invariants
     _ = ∫ y in s, h y ∂(Measure.map (T^[k]) μ) := (setIntegral_map hs hhmap hmp.aemeasurable).symm
     _ = ∫ y in s, h y ∂μ := by rw [hmap]
 
-/-- **(★) — integrated leader inequality** (Karlsson Lemma 3.4, the telescoped integral). For a
+/-- **Integrated leader inequality** (Karlsson Lemma 3.4, the telescoped integral). For a
 measurable `T`-invariant set `B`, the partial sum of localized increment integrals is
 non-positive: `∑_{i=1}^n ∫_{B} ψ_i ≤ 0`, where `ψ_i = 1_{Λ_i} bcoc g i`. -/
 private theorem sum_setIntegral_psiCoc_nonpos
@@ -1120,7 +1149,7 @@ private theorem ereal_limsup_add_coe (u : ℕ → ℝ) (c : ℝ) :
   simp only [erealAddCoeIso, RelIso.coe_fn_mk, Equiv.coe_fn_mk] at h
   exact h.symm
 
-/-- **L-C — Derriennic's maximal inequality** (Karlsson Lemma 3.4). For a measurable
+/-- **Derriennic's maximal inequality** (Karlsson Lemma 3.4). For a measurable
 `T`-invariant set `B` on which (a.e.) `liminf (cdiv g · x) < 0`, the normalized integral
 `(∫_B g (n+1))/(n+1)` has non-positive `limsup`. -/
 private theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
@@ -1220,7 +1249,7 @@ private theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
       rw [integral_sub (integrable_bcoc hT hint i).restrict
         (integrable_psiCoc hT hint i).restrict] at hsub_int
       linarith
-    -- sum the per-level bounds; use ★ for `∑ ∫_B ψ_i ≤ 0`.
+    -- sum the per-level bounds; use `sum_setIntegral_psiCoc_nonpos` for `∑ ∫_B ψ_i ≤ 0`.
     have hsumlevel : ∑ i ∈ Finset.Icc 1 (n + 1), ∫ x in B, bcoc (T := T) g i x ∂μ
         ≤ (∑ i ∈ Finset.Icc 1 (n + 1), ∫ x in B, psiCoc (T := T) g i x ∂μ)
           + ∑ i ∈ Finset.Icc 1 (n + 1), dseq i := by
@@ -1258,7 +1287,8 @@ private theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
       have : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
         tendsto_inv_atTop_zero.comp (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop)
       simpa using this.const_mul (∫ x in B, g 0 x ∂μ)
-    have h2 : Tendsto (fun n : ℕ => (∑ i ∈ Finset.Icc 1 (n + 1), dseq i) / (n + 1)) atTop (𝓝 0) := by
+    have h2 : Tendsto (fun n : ℕ ↦ (∑ i ∈ Finset.Icc 1 (n + 1), dseq i) / (n + 1)) atTop
+        (𝓝 0) := by
       -- Cesàro: `(m⁻¹) ∑_{j<m} dseq (j+1) → 0`, evaluated at `m = n+1`.
       have hces : Tendsto (fun m : ℕ => ((m : ℝ))⁻¹ * ∑ j ∈ Finset.range m, dseq (j + 1))
           atTop (𝓝 0) := Filter.Tendsto.cesaro (hdseq0.comp (tendsto_add_atTop_nat 1))
@@ -1281,10 +1311,10 @@ private theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
     _ = ((0 : ℝ) : EReal) := hcoe.limsup_eq
     _ = 0 := by norm_num
 
-/-- **LD-b — the `β`-version of the maximal inequality** (Karlsson Prop 3.5). For a measurable
+/-- **The `β`-version of the maximal inequality** (Karlsson Prop 3.5). For a measurable
 `T`-invariant set `B` on which (a.e.) `liminf (cdiv a · x) < β`, the normalized integral
-`(∫_B a(n+1))/(n+1)` has `EReal` `limsup ≤ β · (μ B).toReal`. Proved by applying L-C
-(`limsup_setIntegral_div_nonpos`) to the shifted subadditive cocycle `a'(n) x := a n x − n·β`
+`(∫_B a(n+1))/(n+1)` has `EReal` `limsup ≤ β · (μ B).toReal`. Proved by applying
+`limsup_setIntegral_div_nonpos` to the shifted subadditive cocycle `a'(n) x := a n x − n·β`
 (subtracting the additive `n·β` preserves subadditivity), then undoing the constant shift. -/
 private theorem setIntegral_div_le_level [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {a : ℕ → X → ℝ}
@@ -1317,7 +1347,7 @@ private theorem setIntegral_div_le_level [IsFiniteMeasure μ]
     simp only [ha'def]
     push_cast
     linarith
-  -- L-C for `a'`.
+  -- The maximal inequality for `a'`.
   have hLC := limsup_setIntegral_div_nonpos hT ha'sub ha'int hB hBinv hBneg'
   -- Integral identity: `(∫_B a'(n+1))/(n+1) = (∫_B a(n+1))/(n+1) − β·(μ B).toReal`.
   have hident : ∀ n : ℕ, (∫ x in B, a' (n + 1) x ∂μ) / (n + 1)
@@ -1336,7 +1366,7 @@ private theorem setIntegral_div_le_level [IsFiniteMeasure μ]
     have hpos : (0 : ℝ) < (((n : ℕ) + 1 : ℕ) : ℝ) := by positivity
     rw [show ((n : ℝ) + 1) = (((n : ℕ) + 1 : ℕ) : ℝ) by push_cast; ring]
     field_simp
-  -- Rewrite the L-C limsup using the identity, then undo the shift.
+  -- Rewrite the maximal-inequality limsup using the identity, then undo the shift.
   have hcongr : (fun n : ℕ => (((∫ x in B, a' (n + 1) x ∂μ) / (n + 1) : ℝ) : EReal))
       = fun n : ℕ => (((∫ x in B, a (n + 1) x ∂μ) / (n + 1) : ℝ) : EReal)
           + ((-(β * (μ B).toReal) : ℝ) : EReal) := by
@@ -1355,13 +1385,14 @@ private theorem setIntegral_div_le_level [IsFiniteMeasure μ]
   rw [hid] at hstep
   exact hstep
 
-/-! ### L-D, first half: reduction to the non-positive companion cocycle
+/-! ### Reduction to the non-positive companion cocycle
 
 Karlsson's §3.3 argument is run on the *non-positive* companion
 `vcoc g n := g n − birkhoffSum T (g 1) n`. Since `birkhoffSum (g 1)` is an additive cocycle,
-`vcoc g` is again subadditive, and A1' (`le_birkhoffSum_one`) gives `vcoc g (n+1) ≤ 0`.
+`vcoc g` is again subadditive, and `le_birkhoffSum_one` gives `vcoc g (n+1) ≤ 0`.
 The normalized gap is unchanged: `cdiv g − cdiv (vcoc g) = birkhoffAverage (g 1) (·+1)`, which
-converges a.e. (M3) to the *finite* `μ[g 1 | invariants T]`, so `liminf = limsup` for `ecdiv g`
+converges a.e. (Birkhoff) to the *finite* `μ[g 1 | invariants T]`, so `liminf = limsup` for
+`ecdiv g`
 follows from the same statement for `ecdiv (vcoc g)`. -/
 
 /-- The **non-positive companion cocycle** `vcoc g n x := g n x − birkhoffSum T (g 1) n x`. -/
@@ -1382,7 +1413,7 @@ private theorem vcoc_subadditive {g : ℕ → X → ℝ} (hsub : IsSubadditiveCo
   linarith
 
 omit [MeasurableSpace X] in
-/-- `vcoc g (n+1) x ≤ 0`: exactly A1' (`le_birkhoffSum_one`). -/
+/-- `vcoc g (n+1) x ≤ 0`: exactly `le_birkhoffSum_one`. -/
 private theorem vcoc_nonpos {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
     vcoc (T := T) g (n + 1) x ≤ 0 := by
   simp only [vcoc, sub_nonpos]
@@ -1449,10 +1480,10 @@ private theorem ecdiv_eq_ecdiv_vcoc_add {g : ℕ → X → ℝ} (n : ℕ) (x : X
   ring
 
 omit [MeasurableSpace X] in
-/-- **L1b — block subadditivity.** For a subadditive cocycle and any consecutive block
+/-- **Block subadditivity.** For a subadditive cocycle and any consecutive block
 decomposition of `[0, n)` into `k+1` blocks of lengths `ℓ 0, …, ℓ k` (with
 `n = ∑_{i ≤ k} ℓ i`), the cocycle is dominated by the sum of the block cocycle values along
-the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used by `L9` and by
+the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used by
 the `Tᴹ`-subsequence cocycle algebra below; stated for `k+1` blocks since the empty
 decomposition would force the false `g 0 x ≤ 0`.) -/
 private theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
@@ -1471,12 +1502,11 @@ private theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
         _ ≤ (∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x))
               + g (ℓ (k + 1)) (T^[s] x) := by linarith [ih]
 
-/-! ### L-D, second half (next worker): the `Tᴹ`-subsequence cocycle algebra
+/-! ### The `Tᴹ`-subsequence cocycle algebra
 
 For a non-positive subadditive cocycle `g` over `T` and a block length `M`, the
 `Tᴹ`-subsequence cocycle `vM g M n x := g (n*M) x − ∑_{i<n} g M (T^[i*M] x)` is a non-positive
-subadditive cocycle for `T^[M]`. This is the pure-algebra engine consumed by the second-half
-worker; no measure theory is used. -/
+subadditive cocycle for `T^[M]`. This is a pure-algebra layer; no measure theory is used. -/
 
 /-- The **`Tᴹ`-subsequence cocycle** `vM g M n x := g (n*M) x − ∑_{i<n} g M (T^[i*M] x)`. -/
 private noncomputable def vM (g : ℕ → X → ℝ) (M n : ℕ) (x : X) : ℝ :=
@@ -1595,7 +1625,8 @@ private theorem block_sandwich {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocy
         _ ≤ g (k * M) x := by linarith [hnp r hrpos (T^[k * M] x)]
 
 omit [MeasurableSpace X] in
-/-- The pointwise subadditivity bound, normalized: `cdiv g n x ≤ g 1 x / (n+1) + g n (T x)/(n+1)`. -/
+/-- The pointwise subadditivity bound, normalized:
+`cdiv g n x ≤ g 1 x / (n+1) + g n (T x)/(n+1)`. -/
 private theorem cdiv_le_shift {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
     cdiv g n x ≤ g 1 x / (n + 1) + g n (T x) / (n + 1) := by
   have h := hsub.apply_add_le 1 n x
@@ -1604,7 +1635,7 @@ private theorem cdiv_le_shift {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocyc
   apply div_le_div_of_nonneg_right h (by positivity) |>.trans_eq
   simp only [Function.iterate_one]
 
-/-! ### Piece 1: `EReal`-envelope `T`-invariance (non-positive case)
+/-! ### `EReal`-envelope `T`-invariance (non-positive case)
 
 The `ℝ`-valued envelope invariance (`liminf_div_comp_ae`) requires the normalized cocycle to be
 bounded below a.e. — a fact available only *after* `ae_tendsto_cdiv`. For the non-positive case
@@ -1686,7 +1717,8 @@ omit [MeasurableSpace X] in
 /-- **EReal ratio squeeze (`liminf`), one-sided.** If `z n ≤ 0`, `c n → 1`, `1 ≤ c n`, then the
 nonpositive `EReal`-coerced products `↑(c n · z n)` (which are `≤ ↑(z n)`) have `liminf` no smaller
 than that of `↑z`: `liminf ↑z ≤ liminf ↑(c · z)`. (The reverse is monotonicity.) For each `ε > 0`,
-eventually `(1+ε)·z n ≤ c n · z n` (as `z ≤ 0`), and `liminf ↑((1+ε)·z) = (1+ε)·liminf ↑z → liminf ↑z`
+eventually `(1+ε)·z n ≤ c n · z n` (as `z ≤ 0`), and
+`liminf ↑((1+ε)·z) = (1+ε)·liminf ↑z → liminf ↑z`
 as `ε → 0`; the `EReal` scalar law `EReal.liminf_const_mul_of_nonneg_of_ne_top` handles the `−∞`
 case uniformly. -/
 private theorem ereal_liminf_le_ratio {c z : ℕ → ℝ} (hz : ∀ n, z n ≤ 0)
@@ -2053,7 +2085,7 @@ private theorem cdiv_comp_ge_ratio {g : ℕ → X → ℝ} (hsub : IsSubadditive
     rw [show (((k : ℕ) + 1 : ℕ) : ℝ) + 1 = (k : ℝ) + 2 by push_cast; ring]
     field_simp
   rw [hlhs]
-  show (g (k + 2) x - g 1 x) / ((k : ℝ) + 1) ≤ g (k + 1) (T x) / ((k : ℝ) + 1)
+  change (g (k + 2) x - g 1 x) / ((k : ℝ) + 1) ≤ g (k + 1) (T x) / ((k : ℝ) + 1)
   exact hdiv
 
 omit [MeasurableSpace X] in
@@ -2166,7 +2198,7 @@ private theorem ereal_limsup_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditi
         · exact Filter.isBounded_le_of_top
     _ = Filter.limsup (fun n => ecdiv g n (T x)) atTop := rfl
 
-/-- **EReal version of `ae_eq_comp_of_le_comp` (L5).** For an a.e.-measurable `EReal`-valued `F`
+/-- **EReal version of `ae_eq_comp_of_le_comp`.** For an a.e.-measurable `EReal`-valued `F`
 with `F x ≤ F (T x)` a.e., `F ∘ T =ᵐ[μ] F`. Verbatim adaptation of the `ℝ` proof, with rational
 levels `↑(c : ℚ) : EReal` and `EReal.exists_rat_btwn_of_lt` for the separation step. -/
 private theorem ereal_ae_eq_comp_of_le_comp [IsFiniteMeasure μ]
@@ -2175,7 +2207,8 @@ private theorem ereal_ae_eq_comp_of_le_comp [IsFiniteMeasure μ]
   set F0 : X → EReal := hF.mk F with hF0def
   have hF0m : Measurable F0 := hF.measurable_mk
   have hFF0 : F =ᵐ[μ] F0 := hF.ae_eq_mk
-  have hkey : ∀ c : ℚ, T ⁻¹' {x | (((c : ℝ) : EReal)) ≤ F x} =ᵐ[μ] {x | (((c : ℝ) : EReal)) ≤ F x} := by
+  have hkey : ∀ c : ℚ,
+      T ⁻¹' {x | (((c : ℝ) : EReal)) ≤ F x} =ᵐ[μ] {x | (((c : ℝ) : EReal)) ≤ F x} := by
     intro c
     set s : Set X := {x | (((c : ℝ) : EReal)) ≤ F x} with hs
     have hsmeas : NullMeasurableSet s μ := by
@@ -2198,7 +2231,7 @@ private theorem ereal_ae_eq_comp_of_le_comp [IsFiniteMeasure μ]
     intro c
     exact Filter.eventuallyEq_set.1 (hkey c)
   filter_upwards [hall] with x hx
-  show F (T x) = F x
+  change F (T x) = F x
   by_contra hne
   rcases lt_or_gt_of_ne hne with hlt | hgt
   · -- `F (T x) < F x`: pick rational `c` with `F (T x) < ↑c < F x`.
@@ -2234,7 +2267,7 @@ private theorem limsup_ecdiv_comp_ae [IsFiniteMeasure μ]
   ereal_ae_eq_comp_of_le_comp hT (aemeasurable_ereal_limsup hint)
     (Eventually.of_forall (fun x => ereal_limsup_le_comp hsub hnonpos x))
 
-/-! ### LD-c: the `M`-block subsequence squeeze
+/-! ### The `M`-block subsequence squeeze
 
 For a non-positive subadditive cocycle and `M ≥ 1`, the full `EReal` `limsup`/`liminf` of the
 normalized cocycle equal the `limsup`/`liminf` along the `M`-subsequence
@@ -2295,8 +2328,8 @@ private theorem lt_div_add_one_mul {M : ℕ} (hM : 1 ≤ M) (j : ℕ) : j < (j /
   nlinarith [h1, h2]
 
 omit [MeasurableSpace X] in
-/-- **LD-c (`limsup`).** For `M ≥ 1`, the full `limsup` of `ecdiv g` equals the `limsup` along the
-`M`-block subsequence `k ↦ usub g x (k*M)`. -/
+/-- **Block subsequence squeeze (`limsup`).** For `M ≥ 1`, the full `limsup` of `ecdiv g`
+equals the `limsup` along the `M`-block subsequence `k ↦ usub g x (k*M)`. -/
 private theorem limsup_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
     (hnonpos : ∀ n x, g (n + 1) x ≤ 0) {M : ℕ} (hM : 1 ≤ M) (x : X) :
     Filter.limsup (fun n => ecdiv g n x) atTop
@@ -2316,7 +2349,9 @@ private theorem limsup_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubaddit
       rcases Nat.eq_zero_or_pos (j / M) with h0 | hpos
       · simp [h0]
       · apply div_nonpos_of_nonpos_of_nonneg _ (by positivity)
-        exact hnp _ (by have : 1 ≤ j / M := hpos; nlinarith [Nat.one_le_iff_ne_zero.2 (by omega : M ≠ 0)])
+        exact hnp _ (by
+          have : 1 ≤ j / M := hpos
+          nlinarith [Nat.one_le_iff_ne_zero.2 (by omega : M ≠ 0)])
     have hc1 : ∀ j, c j ≤ 1 := by
       intro j
       simp only [hcdef]
@@ -2328,7 +2363,8 @@ private theorem limsup_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubaddit
     have hctend : Tendsto c atTop (𝓝 1) := by
       -- squeeze: `(j/M)/((j/M)+1) ≤ c j ≤ 1`, and `j/M → ∞`.
       have hkdiv : Tendsto (fun j : ℕ => j / M) atTop atTop := tendsto_div_const_atTop_nat hM
-      have hlow : Tendsto (fun j : ℕ => ((j / M : ℕ) : ℝ) / (((j / M : ℕ) : ℝ) + 1)) atTop (𝓝 1) := by
+      have hlow : Tendsto (fun j : ℕ ↦ ((j / M : ℕ) : ℝ) / (((j / M : ℕ) : ℝ) + 1)) atTop
+          (𝓝 1) := by
         have hform : (fun j : ℕ => ((j / M : ℕ) : ℝ) / (((j / M : ℕ) : ℝ) + 1))
             = (fun k : ℕ => (k : ℝ) / ((k : ℝ) + 1)) ∘ (fun j => j / M) := rfl
         rw [hform]
@@ -2390,8 +2426,8 @@ private theorem limsup_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubaddit
       (Filter.isCobounded_le_of_bot) (Filter.isBounded_le_of_top)
 
 omit [MeasurableSpace X] in
-/-- **LD-c (`liminf`).** For `M ≥ 1`, the full `liminf` of `ecdiv g` equals the `liminf` along the
-`M`-block subsequence `k ↦ usub g x (k*M)`. -/
+/-- **Block subsequence squeeze (`liminf`).** For `M ≥ 1`, the full `liminf` of `ecdiv g`
+equals the `liminf` along the `M`-block subsequence `k ↦ usub g x (k*M)`. -/
 private theorem liminf_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
     (hnonpos : ∀ n x, g (n + 1) x ≤ 0) {M : ℕ} (hM : 1 ≤ M) (x : X) :
     Filter.liminf (fun n => ecdiv g n x) atTop
@@ -2429,7 +2465,8 @@ private theorem liminf_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubaddit
     have hc'tend : Tendsto c' atTop (𝓝 1) := by
       -- `1 ≤ c' j ≤ ((j/M)+1)/(j/M)` (for `j ≥ M`), and `j/M → ∞`.
       have hkdiv : Tendsto (fun j : ℕ => j / M) atTop atTop := tendsto_div_const_atTop_nat hM
-      have hupp : Tendsto (fun j : ℕ => (((j / M : ℕ) : ℝ) + 1) / ((j / M : ℕ) : ℝ)) atTop (𝓝 1) := by
+      have hupp : Tendsto (fun j : ℕ ↦ (((j / M : ℕ) : ℝ) + 1) / ((j / M : ℕ) : ℝ)) atTop
+          (𝓝 1) := by
         have hform : (fun j : ℕ => (((j / M : ℕ) : ℝ) + 1) / ((j / M : ℕ) : ℝ))
             = (fun k : ℕ => ((k : ℝ) + 1) / (k : ℝ)) ∘ (fun j => j / M) := rfl
         rw [hform]
@@ -2489,11 +2526,11 @@ private theorem liminf_ecdiv_eq_block {g : ℕ → X → ℝ} (hsub : IsSubaddit
           rw [hcw]
           exact div_le_div_of_nonneg_right hsand (by positivity) |>.trans_eq (by ring)
 
-/-! ### LD-d: additive assembly via the `T^[M]`-Birkhoff average
+/-! ### Additive assembly via the `T^[M]`-Birkhoff average
 
 The `M`-block subsequence value decomposes pointwise (for `n ≥ 1`) as
 `g (n*M) x / (n*M) = (1/M)·(vM g M n x / n) + (1/M)·birkhoffAverage (T^[M]) (g M) n x`,
-where the Birkhoff average converges a.e. (M3) to the finite `μ[g M | invariants (T^[M])] x`.
+where the Birkhoff average converges a.e. to the finite `μ[g M | invariants (T^[M])] x`.
 Feeding this into the `EReal` additive/scaling laws gives the envelopes of the block subsequence
 as `(1/M)·(envelope of usub (vM g M)) + ↑((1/M)·c x)`. -/
 
@@ -2529,7 +2566,8 @@ private theorem usub_vM (g : ℕ → X → ℝ) (M : ℕ) (x : X) (n : ℕ) :
     usub (vM (T := T) g M) x n = ((vM (T := T) g M n x / (n : ℝ) : ℝ) : EReal) := rfl
 
 omit [MeasurableSpace X] in
-/-- **LD-d (`limsup`).** A.e. (where the `T^[M]`-Birkhoff average of `g M` converges to `c x`),
+/-- **Block-envelope assembly (`limsup`).** A.e. (where the `T^[M]`-Birkhoff average of
+`g M` converges to `c x`),
 `limsup_k (usub g x (k*M)) = ↑(1/M)·limsup_n (usub (vM g M) x n) + ↑((1/M)·c x)`. -/
 private theorem limsup_block_eq {g : ℕ → X → ℝ} {M : ℕ} (hM : 1 ≤ M) (x : X) {c : ℝ}
     (hc : Tendsto (fun n => birkhoffAverage ℝ (T^[M]) (g M) n x) atTop (𝓝 c)) :
@@ -2550,14 +2588,15 @@ private theorem limsup_block_eq {g : ℕ → X → ℝ} {M : ℕ} (hM : 1 ≤ M)
   rw [ereal_limsup_add_tendsto hstend]
   -- `limsup ↑(b n) = ↑(1/M)·limsup ↑(vM/n)`.
   have hbeq : Filter.limsup (fun n => ((b n : ℝ) : EReal)) atTop
-      = ((1 / (M : ℝ) : ℝ) : EReal) * Filter.limsup (fun n => usub (vM (T := T) g M) x n) atTop := by
+      = ((1 / (M : ℝ) : ℝ) : EReal)
+        * Filter.limsup (fun n ↦ usub (vM (T := T) g M) x n) atTop := by
     simp only [hbdef]
     rw [ereal_limsup_const_mul (by positivity)]
     rfl
   rw [hbeq]
 
 omit [MeasurableSpace X] in
-/-- **LD-d (`liminf`).** A.e.,
+/-- **Block-envelope assembly (`liminf`).** A.e.,
 `liminf_k (usub g x (k*M)) = ↑(1/M)·liminf_n (usub (vM g M) x n) + ↑((1/M)·c x)`. -/
 private theorem liminf_block_eq {g : ℕ → X → ℝ} {M : ℕ} (hM : 1 ≤ M) (x : X) {c : ℝ}
     (hc : Tendsto (fun n => birkhoffAverage ℝ (T^[M]) (g M) n x) atTop (𝓝 c)) :
@@ -2575,13 +2614,14 @@ private theorem liminf_block_eq {g : ℕ → X → ℝ} {M : ℕ} (hM : 1 ≤ M)
     simp only [hsdef]; exact hc.const_mul _
   rw [ereal_liminf_add_tendsto hstend]
   have hbeq : Filter.liminf (fun n => ((b n : ℝ) : EReal)) atTop
-      = ((1 / (M : ℝ) : ℝ) : EReal) * Filter.liminf (fun n => usub (vM (T := T) g M) x n) atTop := by
+      = ((1 / (M : ℝ) : ℝ) : EReal)
+        * Filter.liminf (fun n ↦ usub (vM (T := T) g M) x n) atTop := by
     simp only [hbdef]
     rw [ereal_liminf_const_mul (by positivity)]
     rfl
   rw [hbeq]
 
-/-- **LD-e algebra.** From the block-envelope identities, the strict gap on `E` forces the
+/-- **Gap algebra.** From the block-envelope identities, the strict gap on `E` forces the
 companion `liminf` strictly below `↑(−M·α)`. For `r > 0`, finite `c`, `α > 0`, and `Lp ≤ 0`,
 if `↑r·Lm + ↑c + ↑α < ↑r·Lp + ↑c` then `Lm < ↑(−α/r)`. -/
 private theorem ereal_gap_to_liminf {r c α : ℝ} (hr : 0 < r) (_hα : 0 < α) {Lm Lp : EReal}
@@ -2627,14 +2667,14 @@ private theorem ereal_gap_to_liminf {r c α : ℝ} (hr : 0 < r) (_hα : 0 < α) 
   rw [EReal.coe_div, EReal.lt_div_iff (EReal.coe_pos.2 hr) (EReal.coe_ne_top r), mul_comm]
   exact h5
 
-/-- **LD-e — the `E_α` contradiction** (Karlsson §3.3). For a non-positive subadditive cocycle
+/-- **The `E_α` contradiction** (Karlsson §3.3). For a non-positive subadditive cocycle
 and any `α > 0`, the gap set `Bα := {x | liminf (ecdiv g · x) + ↑α < limsup (ecdiv g · x)}` is
 null. The argument:
 
 * Extract a genuinely `T`-invariant measurable `E =ᵐ Bα` (both envelopes are a.e. `T`-invariant,
   `liminf_ecdiv_comp_ae` / `limsup_ecdiv_comp_ae`); then `(T^[M])⁻¹ E = E` for every `M`.
-* Fix `ε > 0`; pick `M ≥ 1` with `(∫ g M)/M ≤ Λ + ε` (Fekete). On `E`, LD-c
-  (`limsup_ecdiv_eq_block` / `liminf_ecdiv_eq_block`) and LD-d (`limsup_block_eq` /
+* Fix `ε > 0`; pick `M ≥ 1` with `(∫ g M)/M ≤ Λ + ε` (Fekete). On `E`, the block squeeze
+  (`limsup_ecdiv_eq_block` / `liminf_ecdiv_eq_block`) and the assembly (`limsup_block_eq` /
   `liminf_block_eq`) reduce the `g`-gap to the companion `usub (vM g M)` envelopes; the strict
   gap and `limsup (usub (vM g M)) ≤ 0` force `liminf_n (vM g M n x / n) < ↑(−M·α)`
   (`ereal_gap_to_liminf`), hence `∃ k, vM g M (k+1) x < (k+1)·(−M·α)` (the `hBneg` input).
@@ -2675,7 +2715,7 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
     | zero => simp
     | succ M ih =>
         rw [Function.iterate_succ, Set.preimage_comp, ih, hEinv]
-  -- Birkhoff convergence of `g M` along `T^[M]` (M3), finite limit `cM x`.
+  -- Birkhoff convergence of `g M` along `T^[M]`, finite limit `cM x`.
   set I : ∀ M : ℕ, MeasurableSpace X := fun M => MeasurableSpace.invariants (T^[M]) with hIdef
   have hbirk : ∀ M : ℕ, ∀ᵐ x ∂μ, Tendsto
       (fun n => birkhoffAverage ℝ (T^[M]) (g M) n x) atTop
@@ -2701,7 +2741,7 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
         ∃ k, vM (T := T) g M (k + 1) x < (k + 1 : ℝ) * (-(M : ℝ) * α) := by
       filter_upwards [hbirk M, Filter.eventuallyEq_set.1 hEeq] with x hxbirk hxmem
       intro hxE
-      -- Block envelopes via LD-c + LD-d.
+      -- Block envelopes via the squeeze and assembly identities.
       set cM : ℝ := (μ[g M | MeasurableSpace.invariants (T^[M])]) x with hcMdef
       have hLU : Filter.liminf (fun n => ecdiv g n x) atTop + (α : EReal)
           < Filter.limsup (fun n => ecdiv g n x) atTop := by
@@ -2753,7 +2793,7 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
         rw [Nat.cast_sub hn1']; push_cast; ring]
       rw [div_lt_iff₀ (by positivity)] at this
       linarith [this]
-    -- L-D-b / Prop 3.5: `limsup ↑((∫_E vM(n+1))/(n+1)) ≤ ↑((−Mα)·m)`.
+    -- The `β`-maximal inequality (Prop 3.5): `limsup ↑((∫_E vM(n+1))/(n+1)) ≤ ↑((−Mα)·m)`.
     have hUpper := setIntegral_div_le_level (vM_measurePreserving hT M)
       (vM_subadditive hsub M) (vM_integrable hT hint M) hEm (hEinvM M) (-(M : ℝ) * α) hBneg
     -- Lower bound: `(∫_X vM(n+1))/(n+1) → M·Λ − ∫ g M ≥ −Mε`, and `∫_E ≥ ∫_X` (since `vM ≤ 0`).
@@ -2773,7 +2813,8 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
       have hsubseq : Tendsto (fun n : ℕ => (∫ x, g ((n + 1) * M) x ∂μ) / (((n + 1) * M : ℕ) : ℝ))
           atTop (𝓝 Λ) := by
         have hcomp : (fun n : ℕ => (∫ x, g ((n + 1) * M) x ∂μ) / (((n + 1) * M : ℕ) : ℝ))
-            = (fun k : ℕ => (∫ x, g (k + 1) x ∂μ) / ((k : ℝ) + 1)) ∘ (fun n => (n + 1) * M - 1) := by
+            = (fun k : ℕ ↦ (∫ x, g (k + 1) x ∂μ) / ((k : ℝ) + 1))
+              ∘ (fun n ↦ (n + 1) * M - 1) := by
           funext n
           simp only [Function.comp]
           rw [show (n + 1) * M - 1 + 1 = (n + 1) * M by
@@ -2786,7 +2827,7 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
         refine hΛ.comp ?_
         apply tendsto_atTop_mono (fun n => ?_) tendsto_id
         have h1 : n + 1 ≤ (n + 1) * M := Nat.le_mul_of_pos_right _ (by omega)
-        show n ≤ (n + 1) * M - 1
+        change n ≤ (n + 1) * M - 1
         omega
       have := (hsubseq.const_mul (M : ℝ)).sub_const (∫ x, g M x ∂μ)
       convert this using 2
@@ -2798,7 +2839,8 @@ private theorem measure_gap_set_eq_zero [IsFiniteMeasure μ]
     have hsetint_ge : ∀ n : ℕ, (∫ x, vM (T := T) g M (n + 1) x ∂μ)
         ≤ ∫ x in E, vM (T := T) g M (n + 1) x ∂μ := by
       intro n
-      have hvMnp : ∀ x, vM (T := T) g M (n + 1) x ≤ 0 := fun x => vM_nonpos hsub M (n + 1) (by omega) x
+      have hvMnp : ∀ x, vM (T := T) g M (n + 1) x ≤ 0 :=
+        fun x ↦ vM_nonpos hsub M (n + 1) (by omega) x
       have hintEc : Integrable (vM (T := T) g M (n + 1)) (μ.restrict Eᶜ) :=
         (vM_integrable hT hint M (n + 1)).restrict
       have hsplit : ∫ x, vM (T := T) g M (n + 1) x ∂μ
@@ -2872,7 +2914,7 @@ private theorem ae_ereal_limsup_le_liminf_nonpos [IsFiniteMeasure μ]
   classical
   -- Fekete constant `Λ`.
   obtain ⟨Λ, hΛ⟩ := exists_fekete hT hsub hint hbdd
-  -- The gap set for `α > 0` has measure zero (the LD-e contradiction).
+  -- The gap set for `α > 0` has measure zero (the `E_α` contradiction).
   have hgap : ∀ α : ℝ, 0 < α →
       μ {x | Filter.liminf (fun n => ecdiv g n x) atTop + (α : EReal)
         < Filter.limsup (fun n => ecdiv g n x) atTop} = 0 :=
@@ -2930,14 +2972,14 @@ normalized cocycle equals its `EReal` `limsup`, proved by the Riesz/Derriennic "
 
 Reduced here to the non-positive case `ae_ereal_limsup_le_liminf_nonpos` applied to the
 companion `vcoc g` (`vcoc_subadditive`, `vcoc_nonpos`, `vcoc_integrable`, `vcoc_bddBelow`): the
-normalized gap `ecdiv g − ecdiv (vcoc g) = ↑(birkhoffAverage (g 1) (·+1))` converges a.e. to the
-*finite* `μ[g 1 | invariants T]` (M3), and adding an a.e.-convergent finite-valued real sequence
-preserves the `liminf`/`limsup` (both become `e + ↑(limit)`).
+normalized gap `ecdiv g − ecdiv (vcoc g) = ↑(birkhoffAverage (g 1) (·+1))` converges a.e.
+(Birkhoff) to the *finite* `μ[g 1 | invariants T]`, and adding an a.e.-convergent
+finite-valued real sequence preserves the `liminf`/`limsup` (both become `e + ↑(limit)`).
 
-Ingredients now in place sorry-free above:
-* **L-A** `sum_leaders_nonpos` — Riesz's combinatorial leader lemma (Lemma 3.2).
-* **L-B** `sum_leaders_cocycle_nonpos` / `sum_psiCoc_comp_nonpos` — pointwise leader inequality.
-* **L-C** `limsup_setIntegral_div_nonpos` — *Derriennic's maximal inequality* (Lemma 3.4). -/
+Ingredients:
+* `sum_leaders_nonpos` — Riesz's combinatorial leader lemma (Karlsson Lemma 3.2).
+* `sum_leaders_cocycle_nonpos` / `sum_psiCoc_comp_nonpos` — pointwise leader inequality.
+* `limsup_setIntegral_div_nonpos` — *Derriennic's maximal inequality* (Karlsson Lemma 3.4). -/
 private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
@@ -2952,7 +2994,7 @@ private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
   have hvbdd : BddBelow (Set.range fun n : ℕ => (∫ x, v (n + 1) x ∂μ) / (n + 1)) :=
     vcoc_bddBelow hT hint hbdd
   have hveq := ae_ereal_limsup_le_liminf_nonpos hT hTm hvsub hvint hvnonpos hvbdd
-  -- M3: `birkhoffAverage (g 1) (·+1) x → B x := μ[g 1 | I] x` a.e. (reindexed).
+  -- Birkhoff: `birkhoffAverage (g 1) (·+1) x → B x := μ[g 1 | I] x` a.e. (reindexed).
   have hbirk : ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => birkhoffAverage ℝ T (g 1) (n + 1) x) atTop
       (𝓝 ((μ[g 1 | MeasurableSpace.invariants T]) x)) := by
     filter_upwards [tendsto_birkhoffAverage_ae hT (hint 1)] with x hx
@@ -2970,7 +3012,8 @@ private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
   have hcont : ContinuousAt (fun p : EReal × EReal => p.1 + p.2) (e, ((c : ℝ) : EReal)) :=
     EReal.continuousAt_add (Or.inr (EReal.coe_ne_bot c)) (Or.inr (EReal.coe_ne_top c))
   have htend_g : Tendsto (fun n => ecdiv g n x) atTop (𝓝 (e + ((c : ℝ) : EReal))) := by
-    have hsum : Tendsto (fun n => (ecdiv v n x, ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal)))
+    have hsum : Tendsto
+        (fun n ↦ (ecdiv v n x, ((birkhoffAverage ℝ T (g 1) (n + 1) x : ℝ) : EReal)))
         atTop (𝓝 (e, ((c : ℝ) : EReal))) := htend_v.prodMk_nhds htend_b
     have := hcont.tendsto.comp hsum
     refine this.congr (fun n => ?_)
@@ -2978,9 +3021,9 @@ private theorem ae_ereal_limsup_le_liminf [IsFiniteMeasure μ]
     exact (ecdiv_eq_ecdiv_vcoc_add n x).symm
   rw [htend_g.liminf_eq, htend_g.limsup_eq]
 
-/-! ### The Kingman core: a.e. existence of an integrable limit (the single deep gap) -/
+/-! ### The Kingman core: a.e. existence of an integrable limit -/
 
-/-- **Kingman core (the single deep gap of M4).** The normalized cocycle `g (n+1) x / (n+1)`
+/-- **Kingman core.** The normalized cocycle `g (n+1) x / (n+1)`
 converges, for `μ`-a.e. `x`, to the value `G x` of some integrable `G`. This packages the
 entire analytic content of Kingman's theorem that is *not* generic measure theory:
 
@@ -2989,15 +3032,13 @@ entire analytic content of Kingman's theorem that is *not* generic measure theor
 
 Everything else in this file — a.e. boundedness (`ae_bddBelow_cdiv`), `limsup ≤ liminf`
 (`ae_limsup_le_liminf_div`), integrability of the envelope (`int_limsup_div_integrable`),
-`T`-invariance, and the ergodic collapse — is derived from this one lemma by soft arguments,
-so closing `M4` reduces exactly to this proof.
+`T`-invariance, and the ergodic collapse — is derived from this one lemma by soft arguments.
 
-The proof is now sorry-free given the isolated stopping-time lemma `ae_ereal_limsup_le_liminf`.
-It follows `docs/plan/blueprints/m4-kingman-v2.md` §4 and `docs/research/scratch/m4-L9-notes.md`:
-work with the `EReal`-valued `limsup`/`liminf` to avoid the `ℝ` junk value at `−∞`; the `ℝ≥0∞`
-Fatou step (`ae_bot_lt_ereal_limsup`, `int_limsup_div_integrable_aux`) gives `limsup > ⊥` a.e.
-and the integrability; the stopping-time lemma gives `liminf = limsup`; together with the
-envelope `limsup ≤ ↑B < ⊤` they force a finite a.e. limit `e.toReal`. -/
+The proof works with the `EReal`-valued `limsup`/`liminf` to avoid the `ℝ` junk value at
+`−∞`: the `ℝ≥0∞` Fatou step (`ae_bot_lt_ereal_limsup`, `int_limsup_div_integrable_aux`)
+gives `limsup > ⊥` a.e. and the integrability; the stopping-time lemma
+`ae_ereal_limsup_le_liminf` gives `liminf = limsup`; together with the envelope
+`limsup ≤ ↑B < ⊤` they force a finite a.e. limit `e.toReal`. -/
 private theorem ae_tendsto_cdiv [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
@@ -3041,7 +3082,7 @@ private theorem ae_bddBelow_cdiv [IsFiniteMeasure μ]
   filter_upwards [hG] with x hx
   exact hx.bddBelow_range
 
-/-! ### L7: a.e. `T`-invariance of the limsup/liminf envelopes -/
+/-! ### A.e. `T`-invariance of the limsup/liminf envelopes -/
 
 omit [MeasurableSpace X] in
 /-- **Key limsup comparison.** For a fixed `x` at which the normalized cocycle is bounded
@@ -3139,12 +3180,13 @@ private theorem limsup_cdiv_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditiv
       ≤ Filter.limsup w atTop := hstepA
     _ = Filter.limsup target atTop := hww'.trans hw'target
 
-/-- **L7 (limsup).** The envelope `f₊ x = limsup_n cdiv g n x` is a.e. `T`-invariant.
+/-- The envelope `f₊ x = limsup_n cdiv g n x` is a.e. `T`-invariant.
 The pointwise inequality `f₊ x ≤ f₊ (T x)` (`limsup_cdiv_le_comp`) feeds the level-set
-invariance argument `ae_eq_comp_of_le_comp` (`L5`).
+invariance argument `ae_eq_comp_of_le_comp`.
 
 Depends on `ae_bddBelow_cdiv` (a.e. boundedness below of the normalized cocycle) for the
-cobounded side-conditions, which is the single boundedness fact entangled with `L9`. -/
+cobounded side-conditions, which is the single boundedness fact entangled with the hard
+direction `ae_limsup_le_liminf_div`. -/
 private theorem limsup_div_comp_ae [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
@@ -3201,7 +3243,7 @@ private theorem liminf_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
         rw [Real.dist_eq, sub_zero] at hn
         exact (abs_lt.1 hn).1
       filter_upwards [hev] with n hn
-      show b n + (-δ) ≤ a n
+      change b n + (-δ) ≤ a n
       linarith
     by_contra hcon
     rw [not_le] at hcon
@@ -3214,7 +3256,7 @@ private theorem liminf_eq_of_sub_tendsto_zero {u v : ℕ → ℝ}
   · exact key u v hau bbv cov h
 
 omit [MeasurableSpace X] in
-/-- **LD-a (liminf comparison).** Mirror of `limsup_cdiv_le_comp` for the `liminf` envelope:
+/-- **Liminf comparison.** Mirror of `limsup_cdiv_le_comp` for the `liminf` envelope:
 for a fixed `x` at which the normalized cocycle is bounded (at `x` and at `T x`),
 `liminf (cdiv g · x) ≤ liminf (cdiv g · (T x))`. -/
 private theorem liminf_cdiv_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) {x : X}
@@ -3305,8 +3347,8 @@ private theorem liminf_cdiv_le_comp {g : ℕ → X → ℝ} (hsub : IsSubadditiv
       ≤ Filter.liminf w atTop := hstepA
     _ = Filter.liminf target atTop := hww'.trans hw'target
 
-/-- **LD-a.** The envelope `f₋ x = liminf_n cdiv g n x` is a.e. `T`-invariant. Mirrors
-`limsup_div_comp_ae`, using `liminf_cdiv_le_comp` and `ae_eq_comp_of_le_comp` (L5). -/
+/-- The envelope `f₋ x = liminf_n cdiv g n x` is a.e. `T`-invariant. Mirrors
+`limsup_div_comp_ae`, using `liminf_cdiv_le_comp` and `ae_eq_comp_of_le_comp`. -/
 private theorem liminf_div_comp_ae [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)
@@ -3336,7 +3378,7 @@ private theorem int_limsup_div_integrable [IsFiniteMeasure μ]
   filter_upwards [hG] with x hx
   exact hx.limsup_eq
 
-/-! ### L9: the hard combinatorial direction (stopping-time block partition) -/
+/-! ### The hard direction: `limsup ≤ liminf` almost everywhere -/
 
 /-- **`limsup ≤ liminf` a.e.** For a.e. `x` the limsup of the normalized cocycle is dominated
 by its liminf. Derived from `ae_tendsto_cdiv`: where the sequence converges, both equal the
@@ -3351,9 +3393,9 @@ private theorem ae_limsup_le_liminf_div [IsFiniteMeasure μ]
   filter_upwards [hG] with x hx
   exact le_of_eq (hx.limsup_eq.trans hx.liminf_eq.symm)
 
-/-! ### L10 / L11: assembly -/
+/-! ### Assembly -/
 
-/-- **Kingman's subadditive ergodic theorem** (`M4`). For a measure-preserving `T` and
+/-- **Kingman's subadditive ergodic theorem.** For a measure-preserving `T` and
 an integrable subadditive cocycle `g` whose normalized integrals are bounded below,
 `gₙ / n` converges `μ`-a.e. to a `T`-invariant integrable limit `G`. -/
 theorem tendsto_kingman [IsFiniteMeasure μ]
@@ -3365,7 +3407,7 @@ theorem tendsto_kingman [IsFiniteMeasure μ]
   -- The a.e. limit is the liminf envelope `f₋`.
   set fm : X → ℝ := fun x => Filter.liminf (fun n => cdiv g n x) atTop with hfmdef
   set fp : X → ℝ := fun x => Filter.limsup (fun n => cdiv g n x) atTop with hfpdef
-  -- `f₋ =ᵐ f₊` (L9 `limsup ≤ liminf` + `liminf_le_limsup`, on the a.e.-bounded set).
+  -- `f₋ =ᵐ f₊` (`ae_limsup_le_liminf_div` + `liminf_le_limsup`, on the a.e.-bounded set).
   have heq : fm =ᵐ[μ] fp := by
     filter_upwards [ae_limsup_le_liminf_div hT hT.measurable hsub hint hbdd,
       ae_bddAbove_cdiv hT hsub hint, ae_bddBelow_cdiv hT hsub hint hbdd] with x hle hba hbb
@@ -3373,17 +3415,17 @@ theorem tendsto_kingman [IsFiniteMeasure μ]
     have hbB : IsBoundedUnder (· ≥ ·) atTop (fun n => cdiv g n x) := hbb.isBoundedUnder_of_range
     exact le_antisymm (Filter.liminf_le_limsup hbA hbB) hle
   refine ⟨fm, ?_, ?_, ?_⟩
-  · -- `f₋ ∘ T =ᵐ f₋`: directly the liminf-envelope invariance (LD-a).
+  · -- `f₋ ∘ T =ᵐ f₋`: directly the liminf-envelope invariance (`liminf_div_comp_ae`).
     exact liminf_div_comp_ae hT hsub hint hbdd
-  · -- `Integrable f₋`: `f₋ =ᵐ f₊` and `f₊` integrable (L8).
+  · -- `Integrable f₋`: `f₋ =ᵐ f₊` and `f₊` integrable (`int_limsup_div_integrable`).
     have hfp_int : Integrable fp μ := int_limsup_div_integrable hT hsub hint hbdd
     exact (integrable_congr heq).mpr hfp_int
-  · -- Pointwise convergence of `cdiv g · x` to `f₋ x`, then reindex (L0).
+  · -- Pointwise convergence of `cdiv g · x` to `f₋ x`, then reindex.
     filter_upwards [ae_limsup_le_liminf_div hT hT.measurable hsub hint hbdd,
       ae_bddAbove_cdiv hT hsub hint, ae_bddBelow_cdiv hT hsub hint hbdd] with x hle hba hbb
     have hbA : IsBoundedUnder (· ≤ ·) atTop (fun n => cdiv g n x) := hba.isBoundedUnder_of_range
     have hbB : IsBoundedUnder (· ≥ ·) atTop (fun n => cdiv g n x) := hbb.isBoundedUnder_of_range
-    -- `f₋ x ≤ liminf` (refl) and `limsup ≤ f₋ x` (L9), so the sequence converges to `f₋ x`.
+    -- `f₋ x ≤ liminf` (refl) and `limsup ≤ f₋ x`, so the sequence converges to `f₋ x`.
     have htend : Tendsto (fun n => cdiv g n x) atTop (𝓝 (fm x)) :=
       tendsto_of_le_liminf_of_limsup_le (le_refl _) hle hbA hbB
     -- Reindex to the original Kingman sequence.
@@ -3391,9 +3433,8 @@ theorem tendsto_kingman [IsFiniteMeasure μ]
     exact htend
 
 /-- **Kingman, ergodic case**: under ergodicity the a.e. limit is a single constant.
-(That constant is the Fekete infimum `⨅ n, (∫ g_{n+1})/(n+1)`; identifying it with the
-infimum is deferred — the statement here asserts only a.e.-constancy, which is what the
-multiplicative ergodic theorem consumes.) -/
+(That constant is the Fekete infimum `⨅ n, (∫ g_{n+1})/(n+1)`; the statement here asserts
+only a.e.-constancy, which is what the multiplicative ergodic theorem consumes.) -/
 theorem tendsto_kingman_ergodic
     [IsProbabilityMeasure μ] (hT : Ergodic T μ) {g : ℕ → X → ℝ}
     (hsub : IsSubadditiveCocycle T g) (hint : ∀ n, Integrable (g n) μ)

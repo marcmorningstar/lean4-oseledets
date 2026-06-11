@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.ForwardMeasurable
 import Oseledets.Lyapunov.OseledetsLimit
 
@@ -5,7 +10,7 @@ import Oseledets.Lyapunov.OseledetsLimit
 # The measurable Λ-spectral filtration `V`
 
 This module constructs the **measurable spectral filtration** of the Oseledets limit operator
-`Λ x = oseledetsLimit A T x` and discharges its global measurability through the committed
+`Λ x = oseledetsLimit A T x` and discharges its global measurability through the
 projector/range bridge `measurableSubspace_range_of_measurable`
 (`Oseledets/Lyapunov/ForwardMeasurable.lean`).
 
@@ -36,7 +41,7 @@ resolved here:
 * `Vslow` — the spectral sublevel filtration `t ↦ x ↦ range (toEuclideanCLM (slowProjector t x))`.
 * `measurableSubspace_Vslow_of_measurable_slowProjector` — the bridge application: `Vslow t` is a
   `MeasurableSubspace` once `x ↦ slowProjector t x` is measurable.
-* `measurableSubspace_Vslow` — the fully discharged statement, given measurability of the
+* `measurableSubspace_Vslow` — measurability of the filtration, given measurability of the
   indicator-CFC family (`measurable_slowProjector`).
 
 ## On the indicator-CFC measurability
@@ -47,9 +52,9 @@ the continuous-CFC measurability crux `measurable_cfc_continuous` does not apply
 bypass `measurable_cfc_eqOn_polynomial` would need a *single* polynomial agreeing with the indicator
 on the spectrum of *every* `lambdaHat A T x` — which requires global control of the spectra that is
 not available here.  This module therefore takes that measurability as an explicit hypothesis
-(`measurable_slowProjector`) and discharges *everything else*: the sanitization and its properties,
-the everywhere self-adjoint + idempotent of the indicator-CFC, and the bridge application reduced to
-exactly that one measurability goal.
+(`measurable_slowProjector`) and discharges everything else: the sanitization and its properties,
+the everywhere self-adjointness and idempotence of the indicator-CFC, and the bridge application
+reduced to exactly that one measurability goal.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -57,9 +62,7 @@ open scoped Matrix
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] {T : X → X} {d : ℕ} [NeZero d]
+variable {X : Type*} {T : X → X} {d : ℕ}
 
 /-! ### Step 1 — sanitize `Λ` to be self-adjoint everywhere -/
 
@@ -72,9 +75,9 @@ noncomputable def lambdaHat (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
 
 /-- The conjugate-transpose of a measurable matrix family is measurable (entrywise the `star` of a
 transposed measurable entry; over `ℝ`, `star = id`). -/
-theorem measurable_conjTranspose {A : X → Matrix (Fin d) (Fin d) ℝ}
-    (hAmeas : Measurable A) (hTmeas : Measurable T) :
-    Measurable (fun x => (oseledetsLimit A T x)ᴴ) := by
+theorem measurable_conjTranspose [MeasurableSpace X] [NeZero d]
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A) (hTmeas : Measurable T) :
+    Measurable (fun x ↦ (oseledetsLimit A T x)ᴴ) := by
   have hΛ : Measurable (oseledetsLimit A T) := measurable_oseledetsLimit hAmeas hTmeas
   refine measurable_pi_iff.2 fun i => measurable_pi_iff.2 fun j => ?_
   simp only [Matrix.conjTranspose_apply, star_trivial]
@@ -84,8 +87,8 @@ theorem measurable_conjTranspose {A : X → Matrix (Fin d) (Fin d) ℝ}
 equalizer `{x | (Λ x)ᴴ = Λ x}` of the two measurable matrix-valued maps `x ↦ (Λ x)ᴴ` and
 `x ↦ Λ x`; equalizers of measurable maps into a metrizable space are measurable
 (`measurableSet_eq_fun`). -/
-theorem measurableSet_isHermitian_oseledetsLimit {A : X → Matrix (Fin d) (Fin d) ℝ}
-    (hAmeas : Measurable A) (hTmeas : Measurable T) :
+theorem measurableSet_isHermitian_oseledetsLimit [MeasurableSpace X] [NeZero d]
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A) (hTmeas : Measurable T) :
     MeasurableSet {x | (oseledetsLimit A T x).IsHermitian} := by
   have hΛ : Measurable (oseledetsLimit A T) := measurable_oseledetsLimit hAmeas hTmeas
   have hentry : ∀ i j : Fin d, Measurable fun x => oseledetsLimit A T x i j := fun i j =>
@@ -111,8 +114,8 @@ theorem measurableSet_isHermitian_oseledetsLimit {A : X → Matrix (Fin d) (Fin 
 /-- **Sanitization is measurable.**  `lambdaHat A T` is a measurable family: it is the piecewise
 combination of two measurable matrix maps (`Λ` and the constant `1`) over the measurable Hermitian
 set. -/
-theorem measurable_lambdaHat {A : X → Matrix (Fin d) (Fin d) ℝ}
-    (hAmeas : Measurable A) (hTmeas : Measurable T) :
+theorem measurable_lambdaHat [MeasurableSpace X] [NeZero d]
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A) (hTmeas : Measurable T) :
     Measurable (lambdaHat A T) := by
   have hΛ : Measurable (oseledetsLimit A T) := measurable_oseledetsLimit hAmeas hTmeas
   have hset : MeasurableSet {x | (oseledetsLimit A T x).IsHermitian} :=
@@ -180,22 +183,22 @@ indicator-CFC family `x ↦ slowProjector A T t x`, the spectral filtration `Vsl
 `MeasurableSubspace`.  The two algebraic hypotheses of the bridge
 (`measurableSubspace_range_of_measurable`) — self-adjointness and idempotence *everywhere* — are the
 discharged `slowProjector_isSelfAdjoint` and `slowProjector_mul_self`. -/
-theorem measurableSubspace_Vslow_of_measurable_slowProjector
+theorem measurableSubspace_Vslow_of_measurable_slowProjector [MeasurableSpace X]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (t : ℝ)
-    (hP : Measurable (fun x => slowProjector A T t x)) :
-    MeasurableSubspace (fun x => Vslow A T t x) :=
-  measurableSubspace_range_of_measurable (fun x => slowProjector A T t x) hP
-    (fun x => slowProjector_isSelfAdjoint A T t x)
-    (fun x => slowProjector_mul_self A T t x)
+    (hP : Measurable (fun x ↦ slowProjector A T t x)) :
+    MeasurableSubspace (fun x ↦ Vslow A T t x) :=
+  measurableSubspace_range_of_measurable (fun x ↦ slowProjector A T t x) hP
+    (fun x ↦ slowProjector_isSelfAdjoint A T t x)
+    (fun x ↦ slowProjector_mul_self A T t x)
 
-/-- **The fully discharged statement.**  Under the (genuine, isolated) measurability hypothesis on
-the indicator-CFC family, `Vslow A T t` is a `MeasurableSubspace`.  This is the terminal deliverable:
-the construction of the measurable Λ-spectral filtration, its self-adjoint + idempotent everywhere,
-and the bridge — all sorry-free, modulo the single measurability hypothesis isolated above. -/
-theorem measurableSubspace_Vslow
+/-- **Measurability of the slow spectral filtration.**  Under the single isolated measurability
+hypothesis on the indicator-CFC family, `Vslow A T t` is a `MeasurableSubspace`: the
+sanitization, the everywhere self-adjointness and idempotence of the slow projector, and the
+projector/range bridge reduce the measurability of the filtration to exactly this hypothesis. -/
+theorem measurableSubspace_Vslow [MeasurableSpace X]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (t : ℝ)
-    (measurable_slowProjector : Measurable (fun x => slowProjector A T t x)) :
-    MeasurableSubspace (fun x => Vslow A T t x) :=
+    (measurable_slowProjector : Measurable (fun x ↦ slowProjector A T t x)) :
+    MeasurableSubspace (fun x ↦ Vslow A T t x) :=
   measurableSubspace_Vslow_of_measurable_slowProjector A T t measurable_slowProjector
 
 end Oseledets

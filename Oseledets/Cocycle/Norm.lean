@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Mathlib.Analysis.CStarAlgebra.Matrix
 import Mathlib.MeasureTheory.Constructions.BorelSpace.ContinuousLinearMap
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
@@ -11,15 +16,22 @@ norm `‖·‖` and the matrix inverse `M ↦ M⁻¹` are measurable as function
 `Matrix (Fin d) (Fin d) ℝ` equipped with the entrywise (Pi) measurable structure
 `Oseledets.instMeasurableSpaceMatrix`.
 
-The subtlety (see the M5 blueprint, risk R1) is that Mathlib's `Measurable.norm` is
-stated for a `BorelSpace`, whereas the matrix σ-algebra here is the Pi structure. The
-L2 operator-norm topology on `Matrix (Fin d) (Fin d) ℝ` is *definitionally* the Pi
-product topology (it is installed via `replaceTopology` along the entrywise-continuous
-identification with continuous linear maps of `EuclideanSpace`), so the Pi measurable
-structure is exactly the Borel structure of the norm topology. We record the
-corresponding `OpensMeasurableSpace` instance and deduce measurability of `‖·‖` from
-continuity; the matrix inverse is handled entrywise via the adjugate/determinant
-formula.
+The subtlety is that Mathlib's `Measurable.norm` is stated for a `BorelSpace`,
+whereas the matrix σ-algebra here is the Pi structure. The L2 operator-norm topology
+on `Matrix (Fin d) (Fin d) ℝ` is *definitionally* the Pi product topology (it is
+installed via `replaceTopology` along the entrywise-continuous identification with
+continuous linear maps of `EuclideanSpace`), so the Pi measurable structure is exactly
+the Borel structure of the norm topology. We record the corresponding
+`OpensMeasurableSpace` instance and deduce measurability of `‖·‖` from continuity;
+the matrix inverse is handled entrywise via the adjugate/determinant formula.
+
+## Main results
+
+* `Oseledets.instOpensMeasurableSpaceMatrix`: the Pi measurable structure on square
+  real matrices is an `OpensMeasurableSpace` for the L2 operator-norm topology.
+* `Oseledets.measurable_l2_opNorm`: the L2 operator norm is measurable.
+* `Oseledets.measurable_det`: the determinant is measurable.
+* `Oseledets.measurable_inv_matrix`: the matrix inverse `M ↦ M⁻¹` is measurable.
 -/
 
 open MeasureTheory

@@ -1,30 +1,51 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.OseledetsLimit
 import Oseledets.Lyapunov.Filtration
 import Oseledets.Lyapunov.Measurable
 
 /-!
-# Forward exact growth and the measurable Oseledets filtration (L10–L13)
+# Forward exact growth and the measurable Oseledets filtration
 
-This module assembles the endgame of the one-sided Oseledets MET, connecting the analytic
-core (the Oseledets limit `Λ = lim ((A⁽ⁿ⁾)ᵀA⁽ⁿ⁾)^{1/2n}` of `OseledetsLimit.lean`, its
-band-projector convergence, and the limsup flag of `Filtration.lean`) to the target
+This module connects the analytic core of the one-sided Oseledets multiplicative ergodic
+theorem (the Oseledets limit `Λ = lim ((A⁽ⁿ⁾)ᵀA⁽ⁿ⁾)^{1/2n}` of `OseledetsLimit.lean`, its
+band-projector convergence, and the limsup flag of `Filtration.lean`) to the target theorem
 `oseledets_filtration`.
 
 The mathematical content of this module is the **per-vector exact growth limit**
 `(1/n) log‖A⁽ⁿ⁾(x) v‖ → λᵢ` for `v` in the stratum `Vᵢ \ Vᵢ₊₁`:
 
-* **Lower bound** `liminf ≥ λᵢ` — clean: the Gram quadratic-form band bound
+* **Lower bound** `liminf ≥ λᵢ`: the Gram quadratic-form band bound
   `⟪gramₙ v, v⟫ ≥ c^{2n} ‖Pᶜₙ v‖²` (`inner_cfc_ge_band`), the band-projector convergence
   `Pᶜₙ v → Pᶜ_∞ v ≠ 0`, and taking the threshold `c ↑ e^{λᵢ}`.
-* **Upper bound** `limsup ≤ λᵢ` — the crux: an Abel summation over nested band projectors,
-  each band's leakage `‖Pᶜₘₙ v‖` decaying at its straddling-gap rate (the band-projector
-  *tail rate* lemma), paired against the block's singular-value growth.
+* **Upper bound** `limsup ≤ λᵢ`: a spectral decomposition over the sorted Gram eigenbasis,
+  with each overlap term controlled by the tilt of the band projector at its
+  straddling-gap rate, paired against the block's singular-value growth.
 
-Together they upgrade the limsup flag's `lambdaBar = λᵢ` (`lambdaBar_eq_on_stratum`) to a genuine
-limit, identify the Λ-spectral filtration with `lambdaSublevel` a.e. (so it inherits strict
-antitonicity and `A`-equivariance), and—with the deterministic exponents from
-`exists_lam_tendsto_singularValue` and the CFC measurability of `Measurable.lean`—discharge the
-target.
+Together they upgrade the limsup flag's `lambdaBar = λᵢ` (`lambdaBar_eq_on_stratum`) to a
+genuine limit, identify the Λ-spectral filtration with `lambdaSublevel` a.e. (so it inherits
+strict antitonicity and `A`-equivariance), and — with the deterministic exponents from
+`exists_lam_tendsto_singularValue` and the CFC measurability of `Measurable.lean` — yield
+the target theorem.
+
+## Main results
+
+* `inner_cfc_ge_band`: the Gram quadratic-form band bound for a self-adjoint matrix.
+* `log_le_liminf_log_cocycle_apply`: the per-vector liminf lower bound
+  `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖` from band-projector convergence.
+* `limitBandProjector_apply_eq_zero_of_le`: kernel propagation between limit band
+  projectors of nested thresholds.
+* `norm_sq_bandProjector_apply_eq_sum`: the frame Parseval identity for the band
+  projection in the straddled regime.
+* `limsup_normLog_inner_le`: the per-overlap limsup bound via the handle identity and
+  Cauchy–Schwarz.
+* `limsup_inv_mul_log_norm_cocycle_apply_le`: the per-vector growth upper bound,
+  conditional on per-index leakage envelopes.
+* `tendsto_inv_mul_log_norm_cocycle_apply_of_S4`: the assembled per-vector exact growth
+  limit.
 -/
 
 open MeasureTheory Filter Topology
@@ -36,12 +57,14 @@ variable {d : ℕ}
 
 /-! ## Distinct descending exponent enumeration
 
-The deterministic singular-value exponents `lam : ℕ → ℝ` (from `exists_lam_tendsto_singularValue`)
-are antitone on `[0, d)`; their distinct values, enumerated **descending**, are the `k` Lyapunov
-exponents `λ₀ > ⋯ > λ_{k-1}` handed to the target. This mirrors `Filtration.specList`. -/
+The deterministic singular-value exponents `lam : ℕ → ℝ` (from
+`exists_lam_tendsto_singularValue`) are antitone on `[0, d)`; their distinct values,
+enumerated **descending**, are the `k` Lyapunov exponents `λ₀ > ⋯ > λ_{k-1}` of the target
+theorem. This mirrors `Filtration.specList`. -/
 
 /-- The finite set of distinct exponent values on `[0, d)`. -/
-noncomputable def distinctExp (lam : ℕ → ℝ) (d : ℕ) : Finset ℝ := (Finset.range d).image lam
+noncomputable def distinctExp (lam : ℕ → ℝ) (d : ℕ) : Finset ℝ :=
+  (Finset.range d).image lam
 
 /-- The number of distinct exponents. -/
 noncomputable def numExp (lam : ℕ → ℝ) (d : ℕ) : ℕ := (distinctExp lam d).card
@@ -69,7 +92,8 @@ theorem mem_distinctExp (lam : ℕ → ℝ) (d : ℕ) {r : ℝ} :
 theorem exists_expEnum_eq (lam : ℕ → ℝ) {d : ℕ} {j : ℕ} (hj : j < d) :
     ∃ i : Fin (numExp lam d), expEnum lam d i = lam j := by
   have hr : lam j ∈ distinctExp lam d := (mem_distinctExp lam d).mpr ⟨j, hj, rfl⟩
-  have hrange : lam j ∈ Set.range ⇑((distinctExp lam d).orderEmbOfFin (rfl : _ = numExp lam d)) := by
+  have hrange :
+      lam j ∈ Set.range ⇑((distinctExp lam d).orderEmbOfFin (rfl : _ = numExp lam d)) := by
     rw [Finset.range_orderEmbOfFin]; exact hr
   obtain ⟨k, hk⟩ := hrange
   exact ⟨k.rev, by simpa [expEnum] using hk⟩
@@ -90,17 +114,18 @@ theorem numExp_le (lam : ℕ → ℝ) (d : ℕ) : numExp lam d ≤ d := by
 
 /-! ## The Gram quadratic-form band bound (lower-bound foundation)
 
-For a self-adjoint `Q` and a `0/1` band indicator `χ = 𝟙_{(c,∞)}`, a continuous shape `f ≥ 0` with
-`f ≥ a` above `c` controls the band projection: `a · ‖(cfc χ Q) v‖² ≤ ⟪(cfc f Q) v, v⟫`. Applied
-with `Q = qpow`, `f = (·)^{2n}` (so `cfc f Q = gram`) and `a = c^{2n}` it gives the per-vector
-lower bound `c^{2n} ‖Pᶜₙ v‖² ≤ ‖A⁽ⁿ⁾ v‖²`. -/
+For a self-adjoint `Q` and a `0/1` band indicator `χ = 𝟙_{(c,∞)}`, a continuous shape
+`f ≥ 0` with `f ≥ a` above `c` controls the band projection:
+`a · ‖(cfc χ Q) v‖² ≤ ⟪(cfc f Q) v, v⟫`. Applied with `Q = qpow`, `f = (·)^{2n}`
+(so `cfc f Q = gram`) and `a = c^{2n}` it gives the per-vector lower bound
+`c^{2n} ‖Pᶜₙ v‖² ≤ ‖A⁽ⁿ⁾ v‖²`. -/
 
 section QuadForm
 open scoped InnerProductSpace
 open ComplexOrder
 
-/-- The norm identity `‖toEuclideanLin M v‖² = ⟪toEuclideanLin (Mᵀ * M) v, v⟫` (generic real
-matrix; the cocycle specialization is `norm_sq_cocycle_apply_eq_inner_gram`). -/
+/-- The norm identity `‖toEuclideanLin M v‖² = ⟪toEuclideanLin (Mᵀ * M) v, v⟫` (generic
+real matrix; the cocycle specialization is `norm_sq_cocycle_apply_eq_inner_gram`). -/
 theorem norm_sq_toEuclideanLin_eq_inner_gram
     (M : Matrix (Fin d) (Fin d) ℝ) (v : EuclideanSpace ℝ (Fin d)) :
     ‖Matrix.toEuclideanLin M v‖ ^ 2 = ⟪Matrix.toEuclideanLin (Mᵀ * M) v, v⟫_ℝ := by
@@ -111,14 +136,14 @@ theorem norm_sq_toEuclideanLin_eq_inner_gram
   rw [hadj]
   congr 1
   rw [← Matrix.toEuclideanLin_conjTranspose_eq_adjoint]
-  simp only [LinearMap.comp_apply, Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+  simp only [LinearMap.comp_apply, Matrix.toLpLin_apply, Matrix.mulVec_mulVec]
   rw [Matrix.conjTranspose_eq_transpose_of_trivial]
 
 /-- **Gram quadratic-form band bound.** For self-adjoint `Q`, a `0/1` band indicator
-`χ = 𝟙_{(c,∞)}`, and a continuous `f ≥ 0` on the spectrum with `a ≤ f t` whenever `c < t`:
-`a · ‖(cfc χ Q) v‖² ≤ ⟪(cfc f Q) v, v⟫`. The band projector is a self-adjoint idempotent
-(`‖Pv‖² = ⟪Pv,v⟫`); the gap `cfc (f − a·χ) Q` is `PosSemidef` since `f − a·χ ≥ 0` on the
-spectrum. -/
+`χ = 𝟙_{(c,∞)}`, and a continuous `f ≥ 0` on the spectrum with `a ≤ f t` whenever
+`c < t`: `a · ‖(cfc χ Q) v‖² ≤ ⟪(cfc f Q) v, v⟫`. The band projector is a self-adjoint
+idempotent (`‖Pv‖² = ⟪Pv,v⟫`); the gap `cfc (f − a·χ) Q` is `PosSemidef` since
+`f − a·χ ≥ 0` on the spectrum. -/
 theorem inner_cfc_ge_band [NeZero d]
     (Q : Matrix (Fin d) (Fin d) ℝ) (hQ : IsSelfAdjoint Q)
     (c a : ℝ) (f : ℝ → ℝ) (hf : ContinuousOn f (_root_.spectrum ℝ Q))
@@ -157,8 +182,9 @@ theorem inner_cfc_ge_band [NeZero d]
         rw [hχ, Set.indicator_of_notMem]; rw [Set.mem_Ioi]; exact hc
       rw [hg]; simp only [h0, mul_zero, sub_zero]; exact hfnn t ht
   have hgsplit : cfc g Q = cfc f Q - a • cfc χ Q := by
-    have hca : ContinuousOn (fun t => a * χ t) (_root_.spectrum ℝ Q) := (continuousOn_const).mul hcontχ
-    rw [hg, cfc_sub f (fun t => a * χ t) Q hf hca, cfc_const_mul a χ Q hcontχ]
+    have hca : ContinuousOn (fun t ↦ a * χ t) (_root_.spectrum ℝ Q) :=
+      (continuousOn_const).mul hcontχ
+    rw [hg, cfc_sub f (fun t ↦ a * χ t) Q hf hca, cfc_const_mul a χ Q hcontχ]
   have hgcont : ContinuousOn g (_root_.spectrum ℝ Q) := hf.sub ((continuousOn_const).mul hcontχ)
   have hgsa : IsSelfAdjoint (cfc g Q) := cfc_predicate g Q
   have hgherm : (cfc g Q).IsHermitian := Matrix.isHermitian_iff_isSelfAdjoint.mpr hgsa
@@ -170,7 +196,7 @@ theorem inner_cfc_ge_band [NeZero d]
     exact hgnn t ht
   have hinner_dot : ⟪Matrix.toEuclideanLin (cfc g Q) v, v⟫_ℝ
       = star (v : Fin d → ℝ) ⬝ᵥ ((cfc g Q) *ᵥ (v : Fin d → ℝ)) := by
-    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toEuclideanLin_apply]
+    rw [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toLpLin_apply]
     simp only [star_trivial]
   have hPSDnn : (0 : ℝ) ≤ ⟪Matrix.toEuclideanLin (cfc g Q) v, v⟫_ℝ := by
     rw [hinner_dot]; exact hgPSD.dotProduct_mulVec_nonneg _
@@ -188,22 +214,23 @@ theorem inner_cfc_ge_band [NeZero d]
 
 end QuadForm
 
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X}
+variable {X : Type*} [MeasurableSpace X]
 
 /-! ## The per-vector lower bound: Gram–CFC identity, band bound, and liminf
 
-The Gram matrix `gramₙ = (A⁽ⁿ⁾)ᵀA⁽ⁿ⁾` is recovered from `qpowₙ = (gramₙ)^{1/(2n)}` by raising to
-the `2n`-th power (`gram_eq_cfc_qpow`). Feeding `qpowₙ` into the quadratic-form band bound
-(`inner_cfc_ge_band`) with `f = (·)^{2n}` and threshold `c` then gives the per-vector bound
-`c^{2n} ‖Pᶜₙ v‖² ≤ ‖A⁽ⁿ⁾ v‖²` (`cocycle_apply_sq_ge_band`). Taking logs, dividing by `2n`, and
-sending the band-projector correction to `0` (`tendsto_inv_mul_log_norm_bandProjector_apply`) yields
-the per-vector liminf lower bound `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖` (`log_le_liminf_log_cocycle_apply`). -/
+The Gram matrix `gramₙ = (A⁽ⁿ⁾)ᵀA⁽ⁿ⁾` is recovered from `qpowₙ = (gramₙ)^{1/(2n)}` by
+raising to the `2n`-th power (`gram_eq_cfc_qpow`). Feeding `qpowₙ` into the quadratic-form
+band bound (`inner_cfc_ge_band`) with `f = (·)^{2n}` and threshold `c` then gives the
+per-vector bound `c^{2n} ‖Pᶜₙ v‖² ≤ ‖A⁽ⁿ⁾ v‖²` (`cocycle_apply_sq_ge_band`). Taking logs,
+dividing by `2n`, and sending the band-projector correction to `0`
+(`tendsto_inv_mul_log_norm_bandProjector_apply`) yields the per-vector liminf lower bound
+`log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖` (`log_le_liminf_log_cocycle_apply`). -/
 
 section LowerBound
 open scoped Matrix InnerProductSpace
 
-/-- **Gram–CFC identity.** Raising `qpowₙ = (gramₙ)^{1/(2n)}` to the `2n`-th power (via the CFC)
-recovers the Gram matrix `gramₙ`. -/
+/-- **Gram–CFC identity.** Raising `qpowₙ = (gramₙ)^{1/(2n)}` to the `2n`-th power (via the
+CFC) recovers the Gram matrix `gramₙ`. -/
 theorem gram_eq_cfc_qpow [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {n : ℕ} (hn : 1 ≤ n) (x : X) :
     cfc (fun t : ℝ => t ^ (2 * (n : ℝ))) (qpow A T n x) = gram A T n x := by
@@ -222,10 +249,11 @@ theorem gram_eq_cfc_qpow [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : 
   have hfold :
       cfc (fun t : ℝ => t ^ (2 * (n : ℝ))) (qpow A T n x)
         = cfc (fun t : ℝ => (t ^ ((2 * (n : ℝ))⁻¹)) ^ (2 * (n : ℝ))) (gram A T n x) := by
-    show cfc (fun t : ℝ => t ^ (2 * (n : ℝ)))
-        (cfc (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹)) (gram A T n x)) = _
-    rw [← cfc_comp (fun t : ℝ => t ^ (2 * (n : ℝ))) (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹))
-      (gram A T n x) hgsa hcont_out.continuousOn hcont_in.continuousOn]
+    change cfc (fun t : ℝ ↦ t ^ (2 * (n : ℝ)))
+        (cfc (fun t : ℝ ↦ t ^ ((2 * (n : ℝ))⁻¹)) (gram A T n x)) = _
+    rw [← cfc_comp (fun t : ℝ ↦ t ^ (2 * (n : ℝ)))
+      (fun t : ℝ ↦ t ^ ((2 * (n : ℝ))⁻¹)) (gram A T n x) hgsa hcont_out.continuousOn
+      hcont_in.continuousOn]
     rfl
   rw [hfold]
   -- on the (nonneg) spectrum, the composed power is the identity
@@ -263,15 +291,16 @@ theorem cocycle_apply_sq_ge_band [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
     exact Real.rpow_le_rpow hc (le_of_lt hct) h2n
   have hmain := inner_cfc_ge_band Q hQsa c (c ^ (2 * (n : ℝ)))
     (fun t : ℝ => t ^ (2 * (n : ℝ))) hf hfnn hfband v
-  -- `cfc f Q = gram` by D1, RHS inner = ‖cocycle v‖²
+  -- `cfc f Q = gram` by the Gram–CFC identity; the RHS inner product is `‖cocycle v‖²`
   rw [gram_eq_cfc_qpow A T hn x] at hmain
   rw [← norm_sq_cocycle_apply_eq_inner_gram A n x v] at hmain
   -- `cfc χ Q = bandProjector` by def
   exact hmain
 
-/-- **Band correction vanishes.** If the band projectors `Pᶜₙ` converge to `P` with `P v ≠ 0`,
-then the normalized log of the band projection `‖Pᶜₙ v‖` tends to `0`: the norm converges to a
-positive limit, so its log is bounded, and dividing by `n → ∞` kills it. -/
+omit [MeasurableSpace X] in
+/-- **Band correction vanishes.** If the band projectors `Pᶜₙ` converge to `P` with
+`P v ≠ 0`, then the normalized log of the band projection `‖Pᶜₙ v‖` tends to `0`: the norm
+converges to a positive limit, so its log is bounded, and dividing by `n → ∞` kills it. -/
 theorem tendsto_inv_mul_log_norm_bandProjector_apply [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) {c : ℝ} {x : X}
     {P : Matrix (Fin d) (Fin d) ℝ} {v : EuclideanSpace ℝ (Fin d)}
@@ -279,8 +308,8 @@ theorem tendsto_inv_mul_log_norm_bandProjector_apply [NeZero d]
       Filter.atTop (nhds P))
     (hPv : Matrix.toEuclideanLin P v ≠ 0) :
     Filter.Tendsto
-      (fun n : ℕ => (n : ℝ)⁻¹ *
-        Real.log ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖)
+      (fun n : ℕ ↦ (n : ℝ)⁻¹ * Real.log
+        ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖)
       Filter.atTop (nhds 0) := by
   -- the linear map `M ↦ toEuclideanLin M v` is continuous (finite-dimensional)
   set evalLin : Matrix (Fin d) (Fin d) ℝ →ₗ[ℝ] EuclideanSpace ℝ (Fin d) :=
@@ -300,7 +329,8 @@ theorem tendsto_inv_mul_log_norm_bandProjector_apply [NeZero d]
       Filter.atTop (nhds ‖Matrix.toEuclideanLin P v‖) := htend.norm
   -- logs converge to log L (a finite number)
   have hlog : Filter.Tendsto
-      (fun n => Real.log ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖)
+      (fun n ↦ Real.log
+        ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖)
       Filter.atTop (nhds (Real.log ‖Matrix.toEuclideanLin P v‖)) :=
     (Real.continuousAt_log (ne_of_gt hL)).tendsto.comp hnorm
   -- (n)⁻¹ → 0, times bounded log → 0
@@ -309,12 +339,12 @@ theorem tendsto_inv_mul_log_norm_bandProjector_apply [NeZero d]
   have := hinv.mul hlog
   simpa using this
 
-/-- **Per-vector lower-bound, eventual form (the analytic core of the liminf bound).** If the band
-projectors for `(c,∞)` (with `c > 0`) converge to `P` with `P v ≠ 0`, then *eventually*
-`log c + (1/n) log‖Pᶜₙ v‖ ≤ (1/n) log‖A⁽ⁿ⁾ v‖`, where the left band-correction term tends to `0`
-(`tendsto_inv_mul_log_norm_bandProjector_apply`). This is the genuine new content of the per-vector
-lower bound: taking `n → ∞` (the band correction vanishing) yields `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`,
-which is packaged as `log_le_liminf_log_cocycle_apply` below. -/
+/-- **Per-vector lower bound, eventual form (the analytic core of the liminf bound).** If
+the band projectors for `(c,∞)` (with `c > 0`) converge to `P` with `P v ≠ 0`, then
+*eventually* `log c + (1/n) log‖Pᶜₙ v‖ ≤ (1/n) log‖A⁽ⁿ⁾ v‖`, where the left band-correction
+term tends to `0` (`tendsto_inv_mul_log_norm_bandProjector_apply`). Taking `n → ∞` (the
+band correction vanishing) yields `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`, which is packaged as
+`log_le_liminf_log_cocycle_apply` below. -/
 theorem log_add_correction_le_inv_mul_log_cocycle_apply [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (hA : ∀ x, (A x).det ≠ 0)
     {c : ℝ} (hc : 0 < c) {x : X} {P : Matrix (Fin d) (Fin d) ℝ} {v : EuclideanSpace ℝ (Fin d)}
@@ -322,8 +352,8 @@ theorem log_add_correction_le_inv_mul_log_cocycle_apply [NeZero d]
       Filter.atTop (nhds P))
     (hPv : Matrix.toEuclideanLin P v ≠ 0) :
     ∀ᶠ n : ℕ in Filter.atTop,
-      Real.log c + (n : ℝ)⁻¹ *
-          Real.log ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
+      Real.log c + (n : ℝ)⁻¹ * Real.log
+          ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
         ≤ (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
   -- v ≠ 0 since toEuclideanLin P v ≠ 0
   have hv : v ≠ 0 := by
@@ -350,9 +380,10 @@ theorem log_add_correction_le_inv_mul_log_cocycle_apply [NeZero d]
   -- the eventual inequality
   filter_upwards [eventually_ge_atTop 1, hbandpos] with n hn1 hbpos
   have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one hn1
-  -- band bound from D2
-  have hD2 := cocycle_apply_sq_ge_band A T hn1 x (le_of_lt hc) v
-  set b := ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖ with hb
+  -- the band bound `cocycle_apply_sq_ge_band`
+  have hband := cocycle_apply_sq_ge_band A T hn1 x (le_of_lt hc) v
+  set b := ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
+    with hb
   set M := ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ with hM
   have hMpos : 0 < M := norm_pos_iff.mpr (cocycle_apply_ne_zero (T := T) hA n x hv)
   -- take logs of `c^(2n) * b^2 ≤ M^2`
@@ -360,7 +391,7 @@ theorem log_add_correction_le_inv_mul_log_cocycle_apply [NeZero d]
     have : 0 < c ^ (2 * (n : ℝ)) := Real.rpow_pos_of_pos hc _
     positivity
   have hlog_le : Real.log (c ^ (2 * (n : ℝ)) * b ^ 2) ≤ Real.log (M ^ 2) :=
-    Real.log_le_log hlhs_pos hD2
+    Real.log_le_log hlhs_pos hband
   -- expand the LHS log
   rw [Real.log_mul (ne_of_gt (Real.rpow_pos_of_pos hc _)) (by positivity),
     Real.log_rpow hc, Real.log_pow, Real.log_pow] at hlog_le
@@ -377,15 +408,16 @@ theorem log_add_correction_le_inv_mul_log_cocycle_apply [NeZero d]
   apply mul_nonneg (le_of_lt hninv)
   nlinarith [hlog_le]
 
-/-- **Per-vector liminf lower bound.** If the band projectors for `(c,∞)` (with `c > 0`) converge
-to `P` with `P v ≠ 0`, then `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`.
+/-- **Per-vector liminf lower bound.** If the band projectors for `(c,∞)` (with `c > 0`)
+converge to `P` with `P v ≠ 0`, then `log c ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`.
 
 The proof combines the eventual lower bound `log_add_correction_le_inv_mul_log_cocycle_apply`
 (whose left side converges to `log c`, the band correction vanishing by
 `tendsto_inv_mul_log_norm_bandProjector_apply`) with `liminf` monotonicity. The
-`IsCoboundedUnder (· ≥ ·)` side-condition on the right-hand cocycle sequence — which fails in
-general without an a-priori upper growth bound on `(1/n) log‖A⁽ⁿ⁾‖` (a Furstenberg–Kesten input) —
-is taken as a hypothesis `hcobdd`; it is discharged downstream from the integrable top FK exponent. -/
+`IsCoboundedUnder (· ≥ ·)` side-condition on the right-hand cocycle sequence — which fails
+in general without an a-priori upper growth bound on `(1/n) log‖A⁽ⁿ⁾‖`, a Furstenberg–Kesten
+input — is taken as a hypothesis `hcobdd`; at the application site it is supplied by the
+integrability of the top Furstenberg–Kesten exponent. -/
 theorem log_le_liminf_log_cocycle_apply [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (hA : ∀ x, (A x).det ≠ 0)
     {c : ℝ} (hc : 0 < c) {x : X} {P : Matrix (Fin d) (Fin d) ℝ} {v : EuclideanSpace ℝ (Fin d)}
@@ -398,8 +430,8 @@ theorem log_le_liminf_log_cocycle_apply [NeZero d]
       (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖)
       Filter.atTop := by
   have hcorr := tendsto_inv_mul_log_norm_bandProjector_apply A T hP hPv
-  set LHS : ℕ → ℝ := fun n => Real.log c +
-      (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
+  set LHS : ℕ → ℝ := fun n ↦ Real.log c + (n : ℝ)⁻¹ * Real.log
+      ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
     with hLHS
   set RHS : ℕ → ℝ := fun n =>
       (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ with hRHS
@@ -412,17 +444,19 @@ theorem log_le_liminf_log_cocycle_apply [NeZero d]
   calc Real.log c = Filter.liminf LHS Filter.atTop := hLHStend.liminf_eq.symm
     _ ≤ Filter.liminf RHS Filter.atTop := Filter.liminf_le_liminf hineq hLHSbdd hcobdd
 
-/-! ## S1 — band-projector nesting
+/-! ## Band-projector nesting
 
-For `c ≤ c'`, the spectral bands satisfy `Ioi c' ⊆ Ioi c`, so the finer band projector (threshold
-`c'`) has range contained in the coarser one (threshold `c`); algebraically `Pᶜₙ · Pᶜ'ₙ = Pᶜ'ₙ`.
-Passing to the limit and applying to a vector gives the kernel-propagation form consumed by the
-upper-bound proof: a vector killed by a finer (higher-threshold) limit projector is killed by every
-coarser (lower-threshold ⟹ but we need higher-threshold-kills-⟹-…) one above it. -/
+For `c ≤ c'`, the spectral bands satisfy `Ioi c' ⊆ Ioi c`, so the finer band projector
+(threshold `c'`) has range contained in the coarser one (threshold `c`); algebraically
+`Pᶜₙ · Pᶜ'ₙ = Pᶜ'ₙ`. Passing to the limit and applying to a vector gives the
+kernel-propagation form consumed by the upper-bound proof: a vector killed by the coarser
+(lower-threshold) limit projector is killed by every finer (higher-threshold) one above
+it. -/
 
-/-- **S1 (finite `n`, operator form).** For `c ≤ c'`, the band projectors are nested:
-`cfc 𝟙_{(c,∞)} · cfc 𝟙_{(c',∞)} = cfc 𝟙_{(c',∞)}` on `qpow`. The coarser band (threshold `c`)
-contains the finer one (threshold `c'`). -/
+omit [MeasurableSpace X] in
+/-- **Band-projector nesting (finite `n`, operator form).** For `c ≤ c'`, the band
+projectors are nested: `cfc 𝟙_{(c,∞)} · cfc 𝟙_{(c',∞)} = cfc 𝟙_{(c',∞)}` on `qpow`. The
+coarser band (threshold `c`) contains the finer one (threshold `c'`). -/
 theorem bandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (n : ℕ) (x : X) {c c' : ℝ} (h : c ≤ c') :
     bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
@@ -446,9 +480,10 @@ theorem bandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X �
   simp only [bandProjector]
   rw [← cfc_mul _ _ _ hcont hcont', cfc_congr hidem]
 
-/-- **S1 (limit, operator form).** Passing `bandProjector_mul_of_le` through the two convergent
-band-projector sequences (matrix multiplication is continuous) gives `P · P' = P'` for the limit
-projectors, where `c ≤ c'`. -/
+omit [MeasurableSpace X] in
+/-- **Band-projector nesting (limit, operator form).** Passing `bandProjector_mul_of_le`
+through the two convergent band-projector sequences (matrix multiplication is continuous)
+gives `P · P' = P'` for the limit projectors, where `c ≤ c'`. -/
 theorem limitBandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {x : X} {c c' : ℝ} (h : c ≤ c') {P P' : Matrix (Fin d) (Fin d) ℝ}
     (hP : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
@@ -456,7 +491,8 @@ theorem limitBandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T :
     (hP' : Filter.Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
       Filter.atTop (nhds P')) :
     P * P' = P' := by
-  -- The product sequence converges both to `P * P'` (by continuity of mul) and to `P'` (S1).
+  -- The product sequence converges both to `P * P'` (by continuity of multiplication)
+  -- and, by band nesting, to `P'`.
   have hmul : Filter.Tendsto
       (fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x
           * bandProjector A T (Set.indicator (Set.Ioi c') 1) n x)
@@ -468,13 +504,10 @@ theorem limitBandProjector_mul_of_le (A : X → Matrix (Fin d) (Fin d) ℝ) (T :
   rw [heq] at hmul
   exact tendsto_nhds_unique hmul hP'
 
-/-- **S1 (limit, vector / kernel-propagation form).** With `c ≤ c'`, if the finer (threshold `c'`)
-limit projector `P'` kills `v`, then the coarser (threshold `c`) limit projector `P` also kills `v`.
-Indeed `P · P' = P'`, so `range P' ⊆ range P` and `P (P' v) = P' v`; if `P' v = 0` then taking the
-component along `P'` gives nothing — but the directly useful direction for the upper bound is the
-reverse inclusion. We deliver the form the consumer needs: a vector with `P^{c}_∞ v = 0` (coarser,
-lower threshold) has `P^{c'}_∞ v = 0` (finer, higher threshold), because `P' = P · P'` gives
-`P' v = P (P' v)`, and `P^{c'} = P^{c'} · P^{c}`… see `limitBandProjector_apply_eq_zero_of_le`. -/
+/-- **Band-projector nesting (limit, kernel-propagation form).** With `c ≤ c'`, a vector
+with `P v = 0` for the coarser (threshold `c`) limit projector also has `P' v = 0` for the
+finer (threshold `c'`) one: transposing `P · P' = P'` (both limit projectors are symmetric)
+gives `P' · P = P'`, hence `P' v = P' (P v) = 0`. -/
 theorem limitBandProjector_apply_eq_zero_of_le [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {x : X} {c c' : ℝ} (h : c ≤ c') {P P' : Matrix (Fin d) (Fin d) ℝ}
@@ -484,10 +517,8 @@ theorem limitBandProjector_apply_eq_zero_of_le [NeZero d]
       Filter.atTop (nhds P')) {v : EuclideanSpace ℝ (Fin d)}
     (hv : Matrix.toEuclideanLin P v = 0) :
     Matrix.toEuclideanLin P' v = 0 := by
-  -- `P * P' = P'`, equivalently `P' = P * P'`; so `P' v = P (P' v)`. We need the other product.
-  -- Use the symmetric statement: `P' * P = P'` as well? No — use `P * P' = P'` transposed.
-  -- Since all band projectors are self-adjoint (hence the limits are symmetric), `P * P' = P'`
-  -- transposes to `P' * P = P'` (symmetric matrices). Then `P' v = P' (P v) = P' 0 = 0`.
+  -- Since all band projectors are self-adjoint (hence the limits are symmetric),
+  -- `P * P' = P'` transposes to `P' * P = P'`. Then `P' v = P' (P v) = P' 0 = 0`.
   have hPP' : P * P' = P' := limitBandProjector_mul_of_le A T h hP hP'
   -- symmetry of the limit projectors (limit of self-adjoint matrices is self-adjoint)
   have hPsym : Pᵀ = P := by
@@ -528,24 +559,25 @@ theorem limitBandProjector_apply_eq_zero_of_le [NeZero d]
   -- now `P' v = (P' * P) v = P' (P v) = P' 0 = 0`
   have hsplit : Matrix.toEuclideanLin (P' * P) v
       = Matrix.toEuclideanLin P' (Matrix.toEuclideanLin P v) := by
-    simp only [Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+    simp only [Matrix.toLpLin_apply, Matrix.mulVec_mulVec]
   calc Matrix.toEuclideanLin P' v
       = Matrix.toEuclideanLin (P' * P) v := by rw [hP'P]
     _ = Matrix.toEuclideanLin P' (Matrix.toEuclideanLin P v) := hsplit
     _ = Matrix.toEuclideanLin P' 0 := by rw [hv]
     _ = 0 := map_zero _
 
-/-! ## S2 — exact frame Parseval identity
+/-! ## The exact frame Parseval identity
 
-In the eventual straddled regime where exactly `k` `qpow`-eigenvalues exceed the cut `c` and the
-top-`k` sorted ones all exceed it, `bandProjector_indicator_eq_sortedTopFrame` gives
-`P = W Wᵀ` with `Wᵀ W = 1`, `W = sortedTopFrame`. The band projection applied to `v` therefore has
-squared norm equal to the sum of squared overlaps with the top sorted Gram eigenvectors. -/
+In the eventual straddled regime where exactly `k` `qpow`-eigenvalues exceed the cut `c`
+and the top-`k` sorted ones all exceed it, `bandProjector_indicator_eq_sortedTopFrame`
+gives `P = W Wᵀ` with `Wᵀ W = 1`, `W = sortedTopFrame`. The band projection applied to `v`
+therefore has squared norm equal to the sum of squared overlaps with the top sorted Gram
+eigenvectors. -/
 
-/-- **S2 — frame Parseval.** Under the eventual straddled-regime hypotheses (`htop`, `hcount`) of
-`bandProjector_indicator_eq_sortedTopFrame`, the squared norm of the band projection equals the sum
-of squared overlaps of `v` with the top-`k` sorted Gram eigenvectors (the columns of
-`sortedTopFrame`, recovered by `colE_sortedTopFrame`). -/
+/-- **Frame Parseval identity.** Under the eventual straddled-regime hypotheses (`htop`,
+`hcount`) of `bandProjector_indicator_eq_sortedTopFrame`, the squared norm of the band
+projection equals the sum of squared overlaps of `v` with the top-`k` sorted Gram
+eigenvectors (the columns of `sortedTopFrame`, recovered by `colE_sortedTopFrame`). -/
 theorem norm_sq_bandProjector_apply_eq_sum [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) (c : ℝ)
     {k : ℕ} (hk : k ≤ Fintype.card (Fin d))
@@ -566,9 +598,9 @@ theorem norm_sq_bandProjector_apply_eq_sum [NeZero d]
     apply (EuclideanSpace.equiv (Fin d) ℝ).injective
     rw [map_sum]
     funext a
-    rw [Matrix.toEuclideanLin_apply]
+    rw [Matrix.toLpLin_apply]
     -- LHS at `a`: `((W Wᵀ) *ᵥ v) a`; RHS: `∑ⱼ ⟪v,colEⱼ⟫ • (equiv colEⱼ) a`.
-    show ((W * Wᵀ) *ᵥ ((EuclideanSpace.equiv (Fin d) ℝ) v)) a
+    change ((W * Wᵀ) *ᵥ ((EuclideanSpace.equiv (Fin d) ℝ) v)) a
       = (∑ j : Fin k, (EuclideanSpace.equiv (Fin d) ℝ)
           ((inner ℝ v (ExteriorNorm.colE W j) : ℝ) • ExteriorNorm.colE W j)) a
     rw [Finset.sum_apply]
@@ -611,21 +643,20 @@ theorem norm_sq_bandProjector_apply_eq_sum [NeZero d]
 
 end LowerBound
 
-/-! ## S4-CORE — the per-overlap limsup bound (handle + Cauchy–Schwarz, log level)
+/-! ## The per-overlap limsup bound
 
 The handle identity `⟪v, uⱼ(n)⟫ = ⟪v, (Pₙ − Pinf) uⱼ(n)⟫` for slow `v`/fast `uⱼ`, its
-Cauchy–Schwarz consequence `|⟪v,uⱼ⟫| ≤ ‖v‖ · ‖(Pₙ − Pinf) uⱼ‖`, the `k = 1` Gram residual via
-Pythagoras, and the assembled normalized-log/limsup bounds. Everything is parametrized over a
-tilt/overlap-rate hypothesis (the remaining analytic input). -/
+Cauchy–Schwarz consequence `|⟪v,uⱼ⟫| ≤ ‖v‖ · ‖(Pₙ − Pinf) uⱼ‖`, the `k = 1` Gram residual
+via Pythagoras, and the assembled normalized-log/limsup bounds. Everything is parametrized
+over a tilt/overlap-rate hypothesis, supplied at the application site by the
+band-projector convergence theory. -/
 
-section S4Core
+section OverlapBound
 open scoped InnerProductSpace
 
-variable {X : Type*} [MeasurableSpace X]
-
-/-- **Handle identity (bankable).** If `v` is slow (`toEuclideanLin Pinf v = 0`) and `uⱼ(n)` lies in
-the step-`n` fast band (`toEuclideanLin Pₙ uⱼ = uⱼ`), then `⟪v, uⱼ⟫ = ⟪v, (Pₙ − Pinf) uⱼ⟫`. Both
-`Pₙ` and `Pinf` are self-adjoint. -/
+/-- **Handle identity.** If `v` is slow (`toEuclideanLin Pinf v = 0`) and `uⱼ(n)` lies in
+the step-`n` fast band (`toEuclideanLin Pₙ uⱼ = uⱼ`), then `⟪v, uⱼ⟫ = ⟪v, (Pₙ − Pinf) uⱼ⟫`.
+Both `Pₙ` and `Pinf` are self-adjoint. -/
 theorem inner_eq_inner_bandProjector_sub_limit [NeZero d]
     {Pn Pinf : Matrix (Fin d) (Fin d) ℝ}
     (_hPnsa : Pnᵀ = Pn) (hPinfsa : Pinfᵀ = Pinf)
@@ -659,9 +690,9 @@ theorem abs_inner_le_norm_mul_bandProjector_tilt [NeZero d]
   rw [inner_eq_inner_bandProjector_sub_limit hPnsa hPinfsa hslow hfast]
   exact abs_real_inner_le_norm v _
 
-/-- **S3-direct (Pythagoras).** The off-diagonal residual numerator squared:
-`‖C v₀ − ⟪C v₀, v₀⟫ v₀‖² = ‖C v₀‖² − ⟪C v₀, v₀⟫²` for a unit vector `v₀`. The elementary `k = 1`
-Gram off-diagonal residual; no exterior/compound machinery. -/
+/-- **Off-diagonal residual (Pythagoras).** The off-diagonal residual numerator squared:
+`‖C v₀ − ⟪C v₀, v₀⟫ v₀‖² = ‖C v₀‖² − ⟪C v₀, v₀⟫²` for a unit vector `v₀`. This is the
+elementary `k = 1` Gram off-diagonal residual, requiring no exterior-power machinery. -/
 theorem norm_sub_inner_smul_sq {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     (C : E →ₗ[ℝ] E) {v₀ : E} (hv₀ : ‖v₀‖ = 1) :
     ‖C v₀ - (inner ℝ (C v₀) v₀ : ℝ) • v₀‖ ^ 2
@@ -675,7 +706,8 @@ theorem norm_sub_inner_smul_sq {E : Type*} [NormedAddCommGroup E] [InnerProductS
   rw [← real_inner_self_eq_norm_sq]
   ring
 
-/-- **S3-direct (bound form).** The off-diagonal residual numerator is at most `‖C v₀‖`. -/
+/-- **Off-diagonal residual (bound form).** The off-diagonal residual numerator is at most
+`‖C v₀‖`. -/
 theorem norm_sub_inner_smul_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     (C : E →ₗ[ℝ] E) {v₀ : E} (hv₀ : ‖v₀‖ = 1) :
     ‖C v₀ - (inner ℝ (C v₀) v₀ : ℝ) • v₀‖ ≤ ‖C v₀‖ := by
@@ -684,9 +716,9 @@ theorem norm_sub_inner_smul_le {E : Type*} [NormedAddCommGroup E] [InnerProductS
     rw [hsq]; nlinarith [sq_nonneg (inner ℝ (C v₀) v₀ : ℝ)]
   exact le_of_pow_le_pow_left₀ two_ne_zero (norm_nonneg _) hle
 
-/-- **S4-CORE (per-step log bound).** With the per-step handle bound `|⟪v,uⱼₙ⟫| ≤ ‖v‖ · tₙ`
-(`hbound`) and both sides positive, the normalized-log overlap exponent is dominated by the tilt
-exponent plus a vanishing `(1/n) log ‖v‖` shift. -/
+/-- **Per-step log overlap bound.** With the per-step handle bound `|⟪v,uⱼₙ⟫| ≤ ‖v‖ · tₙ`
+(`hbound`) and both sides positive, the normalized-log overlap exponent is dominated by the
+tilt exponent plus a vanishing `(1/n) log ‖v‖` shift. -/
 theorem normLog_overlap_le {a t : ℕ → ℝ} {nv : ℝ} {n : ℕ}
     (hbound : a n ≤ nv * t n) (hapos : 0 < a n) (hnvpos : 0 < nv) (htpos : 0 < t n) :
     (n : ℝ)⁻¹ * Real.log (a n)
@@ -702,9 +734,9 @@ theorem normLog_overlap_le {a t : ℕ → ℝ} {nv : ℝ} {n : ℕ}
         mul_le_mul_of_nonneg_left hlog hninv
     _ = (n : ℝ)⁻¹ * Real.log nv + (n : ℝ)⁻¹ * Real.log (t n) := by ring
 
-/-- **S4-CORE (limsup bound).** Combining `normLog_overlap_le` over `n` with the vanishing of
-`(1/n) log ‖v‖` and the supplied tilt-rate `limsup ((1/n) log tₙ) ≤ r`, the overlap exponent has
-`limsup ≤ r`. -/
+/-- **Limsup overlap bound.** Combining `normLog_overlap_le` over `n` with the vanishing of
+`(1/n) log ‖v‖` and the supplied tilt-rate `limsup ((1/n) log tₙ) ≤ r`, the overlap
+exponent has `limsup ≤ r`. -/
 theorem limsup_normLog_overlap_le {a t : ℕ → ℝ} {nv r : ℝ}
     (hbound : ∀ᶠ n in atTop, a n ≤ nv * t n)
     (hapos : ∀ᶠ n in atTop, 0 < a n) (hnvpos : 0 < nv) (htpos : ∀ᶠ n in atTop, 0 < t n)
@@ -733,10 +765,11 @@ theorem limsup_normLog_overlap_le {a t : ℕ → ℝ} {nv r : ℝ}
   rw [hulimsup, zero_add] at h2
   exact (h1.trans h2).trans htilt
 
-/-- **S4-CORE (Oseledets specialization).** Ties the abstract limsup bound to the genuine band
-projectors. Given, eventually in `n`, self-adjointness of `Pₙ`/`Pinf`, the slow hypothesis
-`Pinf v = 0`, and fast-band membership `Pₙ uⱼ(n) = uⱼ(n)`, the handle + Cauchy–Schwarz supply the
-per-step bound, and with the tilt rate `htilt` the overlap exponent has `limsup ≤ r`. -/
+/-- **Limsup overlap bound (band-projector form).** Ties the abstract limsup bound to the
+genuine band projectors. Given, eventually in `n`, self-adjointness of `Pₙ`/`Pinf`, the
+slow hypothesis `Pinf v = 0`, and fast-band membership `Pₙ uⱼ(n) = uⱼ(n)`, the handle +
+Cauchy–Schwarz supply the per-step bound, and with the tilt rate `htilt` the overlap
+exponent has `limsup ≤ r`. -/
 theorem limsup_normLog_inner_le [NeZero d]
     {Pn : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
     {v : EuclideanSpace ℝ (Fin d)} {uj : ℕ → EuclideanSpace ℝ (Fin d)} {r : ℝ}
@@ -763,8 +796,9 @@ theorem limsup_normLog_inner_le [NeZero d]
     exact abs_inner_le_norm_mul_bandProjector_tilt hsa hPinfsa hslow hf
   exact limsup_normLog_overlap_le hbound hapos hvpos htpos hnvvanish htilt hcob hcobt hbddt
 
-/-- **S5 (per-step log bound).** With `‖P v‖² = Σⱼ cⱼ`, `cⱼ ≥ 0`, and a common per-step ceiling
-`cⱼ ≤ B`, the band-projection leakage exponent is bounded by `(1/2n) log (k·B)`. -/
+/-- **Band-projection leakage bound (per-step log form).** With `‖P v‖² = Σⱼ cⱼ`, `cⱼ ≥ 0`,
+and a common per-step ceiling `cⱼ ≤ B`, the band-projection leakage exponent is bounded by
+`(1/2n) log (k·B)`. -/
 theorem normLog_bandProj_le {k : ℕ} {P : ℝ} {c : Fin k → ℝ} {B : ℝ} {n : ℕ}
     (hPpos : 0 < P) (hsum : P ^ 2 = ∑ j, c j) (hcB : ∀ j, c j ≤ B) :
     (n : ℝ)⁻¹ * Real.log P ≤ (n : ℝ)⁻¹ * (2⁻¹ * Real.log ((k : ℝ) * B)) := by
@@ -783,19 +817,17 @@ theorem normLog_bandProj_le {k : ℕ} {P : ℝ} {c : Fin k → ℝ} {B : ℝ} {n
     linarith
   exact mul_le_mul_of_nonneg_left hlogP hninv
 
-end S4Core
+end OverlapBound
 
-/-! ## Per-vector growth UPPER bound (conditional on S4) and the per-vector LIMIT
+/-! ## The per-vector growth upper bound and the per-vector limit
 
-The per-vector upper bound `limsup (1/n) log‖A⁽ⁿ⁾v‖ ≤ λᵢ`, conditional on the per-index S4 leakage
-envelopes, and the assembled per-vector exact-growth limit. -/
+The per-vector upper bound `limsup (1/n) log‖A⁽ⁿ⁾v‖ ≤ λᵢ`, conditional on the per-index
+leakage envelopes, and the assembled per-vector exact-growth limit. -/
 
 section Upper
 open scoped InnerProductSpace
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] (T : X → X)
+variable (T : X → X)
 
 /-- **Helper (log of a finite sum).** Let `s` be a finite index type and `t : s → ℕ → ℝ` with
 `t m n ≥ 0`. If for every `m` and every `ε > 0`, eventually `t m n ≤ exp (n (L + ε))`, and the total
@@ -1020,8 +1052,9 @@ theorem eventually_mul_le_exp {a b : ℕ → ℝ} (_hann : ∀ n, 0 ≤ a n) (hb
         mul_le_mul han hbn (hbnn n) (Real.exp_nonneg _)
     _ = Real.exp ((n : ℝ) * (p + q)) := by rw [← Real.exp_add]; ring_nf
 
-/-- **Singular-value square envelope.** If `(1/n) log σⱼ(n) → λⱼ` and each `σⱼ(n) > 0`, then for
-every `δ > 0`, eventually `σⱼ(n)² ≤ exp(n(2λⱼ + δ))`. -/
+omit [MeasurableSpace X] in
+/-- **Singular-value square envelope.** If `(1/n) log σⱼ(n) → λⱼ` and each `σⱼ(n) > 0`, then
+for every `δ > 0`, eventually `σⱼ(n)² ≤ exp(n(2λⱼ + δ))`. -/
 theorem eventually_sq_singularValue_le_exp {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (j : Fin (Fintype.card (Fin d)))
     (hσpos : ∀ n : ℕ, 1 ≤ n → 0 < (Matrix.toEuclideanLin (cocycle A T n x)).singularValues j)
@@ -1081,6 +1114,7 @@ theorem specTerm_envelope_of_rate [NeZero d] {A : X → Matrix (Fin d) (Fin d) �
     nlinarith [hrate]
   linarith [this]
 
+omit [MeasurableSpace X] in
 /-- **Per-vector exact growth limit (from limsup ≤ λᵢ and λᵢ ≤ liminf).** -/
 theorem tendsto_inv_mul_log_norm_cocycle_apply
     (A : X → Matrix (Fin d) (Fin d) ℝ) (x : X) (v : EuclideanSpace ℝ (Fin d)) (lami : ℝ)
@@ -1096,11 +1130,11 @@ theorem tendsto_inv_mul_log_norm_cocycle_apply
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) atTop (𝓝 lami) :=
   tendsto_of_le_liminf_of_limsup_le hinf hsup hbddabove hbddbelow
 
-/-- **Per-vector exact growth limit (assembled, conditional on S4).** The lower bound is the
-committed `log_le_liminf_log_cocycle_apply` at threshold `c = e^{λᵢ}`; the upper bound is
-`limsup_inv_mul_log_norm_cocycle_apply_le`. Given band-projector convergence (`hP`, `hPv`), the
-per-index S4/regime envelopes (`henv`), positivity (`hpos`), the cobounded inputs, and the
-boundedness side-conditions, the per-vector growth converges to `λᵢ`. -/
+/-- **Per-vector exact growth limit (assembled).** The lower bound is
+`log_le_liminf_log_cocycle_apply` at threshold `c = e^{λᵢ}`; the upper bound is
+`limsup_inv_mul_log_norm_cocycle_apply_le`. Given band-projector convergence (`hP`, `hPv`),
+the per-index leakage envelopes (`henv`), positivity (`hpos`), the cobounded inputs, and
+the boundedness side-conditions, the per-vector growth converges to `λᵢ`. -/
 theorem tendsto_inv_mul_log_norm_cocycle_apply_of_S4 [NeZero d]
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) {x : X}
     {v : EuclideanSpace ℝ (Fin d)} {lami : ℝ} {P : Matrix (Fin d) (Fin d) ℝ}

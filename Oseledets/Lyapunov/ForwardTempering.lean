@@ -7,95 +7,90 @@ import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.OseledetsLimit
 
 /-!
-# `scratch_tempering` — the spectral upper bound via the TEMPERED ANGLE (adapted-norm route)
+# Tempered angles and the spectral upper bound for slow vectors
 
-## The target (the single open node)
+Let `Pₙ = bandProjector A T (Set.indicator (Set.Ioi c) 1) n x` denote the projector onto the
+fast Oseledets band at the cut `c = exp λᵢ` (the band of `qpow`-eigenvalues `> exp λᵢ`),
+converging to a limit projector `Pinf`, and call a vector `v` *slow* when
+`toEuclideanLin Pinf v = 0`. This file proves the spectral upper bound
 
-For a Λ-slow vector `v` — `toEuclideanLin Pinf v = 0`, where
-`Pinf = lim_n bandProjector A T (indicator (Ioi (exp λᵢ)) 1) n x` is the limit projector onto the
-FAST Oseledets band (qpow-eigenvalues `> exp λᵢ`) — prove the spectral UPPER bound
+    limsup_n (1/n)·log ‖toEuclideanLin (cocycle A T n x) v‖ ≤ λᵢ
 
-    limsup_n (1/n)·log ‖toEuclideanLin (cocycle A T n x) v‖  ≤  λᵢ.
+for a slow vector `v`, without assuming the a-priori growth bound `lambdaBar A T x v ≤ λᵢ`.
 
-We are NOT allowed to assume `lambdaBar A T x v ≤ λᵢ` (growth-slow); proving the upper bound is
-the goal.
+## The tempering mechanism
 
-## How tempering defeats the fixed point (the mechanism, non-circular)
+On their own, the slow-growth upper bound and the slow–fast overlap leak are mutually
+equivalent: `oⱼ ≤ g − λⱼ` and `g ≤ maxⱼ(λⱼ+oⱼ)` compose to the vacuous `g ≤ g`. The genuine
+content needed to break this circle is that the slow–fast overlap decays at a strictly negative
+exponential rate — the splitting is *tempered*. We obtain this rate without an a-priori
+slow-growth assumption, from the qualitative convergence of the band projector together with
+the quantitative per-step increment bound.
 
-The six prior passes proved the obstruction is a genuine FIXED POINT: the slow-growth upper bound
-and the slow–fast overlap leak are mutually equivalent (`oⱼ ≤ g − λⱼ` and `g ≤ maxⱼ(λⱼ+oⱼ)`
-compose vacuously `g ≤ g`). The genuine content needed to break it is that the slow–fast overlap
-decays at a strictly NEGATIVE exponential rate — the splitting is *(ε)-tempered*. We obtain this
-rate WITHOUT a-priori slow growth, from the QUALITATIVE convergence of the band projector together
-with the QUANTITATIVE per-step increment bound, both already committed.
+`Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le` reduces the per-vector upper bound to a
+per-spectral-index exponential envelope `henv j`:
+`specTerm A n x v j = σⱼ(n)²·⟪v,uⱼ(n)⟫² ≤ exp(n(2λᵢ+ε))`. For a fast index (`λⱼ > λᵢ`), since
+`σⱼ(n)² ~ exp(2nλⱼ)` blows up, the overlap `⟪v,uⱼ(n)⟫²` must decay at rate `2(λᵢ − λⱼ) < 0`.
 
-The architecture of `Forward.lean` reduces the per-vector upper bound to a per-spectral-index
-exp-envelope `henv j`: `specTerm A n x v j = σⱼ(n)²·⟪v,uⱼ(n)⟫² ≤ exp(n(2λᵢ+ε))`
-(`limsup_inv_mul_log_norm_cocycle_apply_le`). For a fast index (`λⱼ > λᵢ`), since
-`σⱼ(n)² ~ exp(2nλⱼ)` blows up, the overlap `⟪v,uⱼ(n)⟫²` must DECAY at rate `2(λᵢ − λⱼ) < 0`.
-
-The handle identity (`Forward.inner_eq_inner_bandProjector_sub_limit`) gives, for slow `v` and a
-step-`n` fast eigenvector `uⱼ(n)` (`Pₙ uⱼ = uⱼ`):
+The handle identity `Oseledets.inner_eq_inner_bandProjector_sub_limit` gives, for slow `v` and
+a step-`n` fast eigenvector `uⱼ(n)` (so `Pₙ uⱼ = uⱼ`):
 
     ⟪v, uⱼ(n)⟫ = ⟪v, (Pₙ − Pinf) uⱼ(n)⟫,   so   |⟪v, uⱼ(n)⟫| ≤ ‖v‖ · ‖Pₙ − Pinf‖.
 
-The rate of `⟪v, uⱼ⟫` is therefore controlled by the rate of the *projector tilt* `‖Pₙ − Pinf‖`.
-The committed quantitative layer gives the per-step bound `‖Pₙ₊₁ − Pₙ‖ ≤ b(n)` with
-`(1/n) log b(n) → L < 0` (`OseledetsLimit.norm_bandProjector_succ_sub_le_cocycle`,
-`tendsto_log_bCocycle_point`; `L = λₖ − λₖ₋₁`, the spectral gap at the cut). Mathlib's
+The rate of `⟪v, uⱼ⟫` is therefore controlled by the rate of the *projector tilt*
+`‖Pₙ − Pinf‖`. The quantitative layer (`Oseledets.norm_bandProjector_succ_sub_le_cocycle`,
+`Oseledets.tendsto_log_bCocycle_point`) gives the per-step bound `‖Pₙ₊₁ − Pₙ‖ ≤ b(n)` with
+`(1/n) log b(n) → L < 0`, where `L = λₖ − λₖ₋₁` is the spectral gap at the cut. Mathlib's
 `dist_le_tsum_of_dist_le_of_tendsto` then bounds the *tail*:
 
     ‖Pₙ − Pinf‖ ≤ ∑'_m b(n+m),
 
 and the geometric tail inherits the rate: `limsup (1/n) log (∑'_m b(n+m)) ≤ L`. This is the
-**tempered-angle bound**: the slow–fast angle is subexponential with a strictly negative log-rate
-`L`, supplied by CONVERGENCE-plus-gap, NOT by an assumed growth rate. The circle is broken.
+*tempered-angle bound*: the slow–fast angle is subexponential with a strictly negative log-rate
+`L`, supplied by convergence plus a spectral gap, not by an assumed growth rate.
 
-## What this file delivers (NO `sorry`, axioms `[propext, Classical.choice, Quot.sound]`)
+## Main results
 
-1. `tsum_tail_le_geometric`, `limsup_log_tsum_tail_le` — the abstract TEMPERING lemma (decisive
-   engine): a sequence `b ≥ 0` with negative log-rate `(1/n)log b → L < 0` has its tail sums
-   `∑'_m b(n+m)` decaying at the SAME rate, `limsup (1/n) log (tail) ≤ L`.
-2. `eventually_norm_sub_tendsto_le_exp` — applied to ANY convergent sequence `f → a` in a complete
+1. `tsum_tail_le_geometric`, `limsup_log_tsum_tail_le` — the abstract tempering lemma: a
+   sequence `b ≥ 0` with negative log-rate `(1/n)log b → L < 0` has its tail sums `∑'_m b(n+m)`
+   decaying at the same rate, `limsup (1/n) log (tail) ≤ L`.
+2. `eventually_norm_sub_tendsto_le_exp` — for any convergent sequence `f → a` in a complete
    normed space with tempered increments `‖f(n+1)−f n‖ ≤ b n`: the distance to the limit is
    subexponential, `∀ ε>0, ∀ᶠ n, ‖f n − a‖ ≤ exp(n(L+ε))` (zero-safe, no `log 0`).
-3. `eventually_norm_bandProjector_sub_le_exp` — the band-projector TILT `‖Pₙ − Pinf‖` is tempered
-   with the negative rate `L` (the committed convergence + per-step increment bound, through (2)).
-   This is the TEMPERED ANGLE between the step-`n` and limit fast bands.
-4. `eventually_inner_sq_le_exp_of_tilt` — the slow–fast OVERLAP exp-envelope
-   `⟪v, uⱼ(n)⟫² ≤ (‖v‖U)²·exp(2n(L+ε))` (handle identity + (3)); the genuine NON-circular negative
-   overlap rate, with NO assumed slow growth of `v`.
-5. `specTerm_envelope_of_tempered_overlap` — the per-index `specTerm` envelope `henv j`
+3. `eventually_norm_bandProjector_sub_le_exp` — the band-projector tilt `‖Pₙ − Pinf‖` is
+   tempered with the negative rate `L` (convergence plus the per-step increment bound, through
+   (2)): the tempered angle between the step-`n` and limit fast bands.
+4. `eventually_inner_sq_le_exp_of_tilt` — the slow–fast overlap envelope
+   `⟪v, uⱼ(n)⟫² ≤ (‖v‖U)²·exp(2n(L+ε))` (handle identity + (3)); the negative overlap rate,
+   with no slow-growth assumption on `v`.
+5. `specTerm_envelope_of_tempered_overlap` — the per-index `specTerm` envelope `henv j`,
    `σⱼ(n)²⟪v,uⱼ⟫² ≤ exp(n(2λᵢ+ε))` (overlap × singular envelope), under the rate balance
    `λⱼ + L ≤ λᵢ`. Zero-safe.
-6. `limsup_log_norm_cocycle_apply_le_of_tempered_envelopes` — the SPECTRAL UPPER BOUND
-   `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ` from the per-index envelopes (committed
-   `limsup_inv_mul_log_norm_cocycle_apply_le`).
-7. `specTerm_envelope_henv_of_convergence` — the per-index CLOSURE chaining (3)→(4)→(5) from the
-   genuine committed inputs (band convergence, tempered increments, singular limit, fast-band
-   membership of `sortedGramEigenbasis`, rate balance) to `henv j`.
+6. `limsup_log_norm_cocycle_apply_le_of_tempered_envelopes` — the spectral upper bound
+   `limsup (1/n)log‖A⁽ⁿ⁾v‖ ≤ λᵢ` from the per-index envelopes (via
+   `Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le`).
+7. `specTerm_envelope_henv_of_convergence` — the per-index closure chaining (3)→(4)→(5): from
+   band convergence, tempered increments, the singular-value limit, fast-band membership of
+   `sortedGramEigenbasis`, and the rate balance, to the envelope `henv j`.
 
-## RESIDUAL — the multi-gap (deep fast-index) condition
+## The multi-gap condition
 
-The per-index rate balance `λⱼ + L ≤ λᵢ` is the load-bearing condition. `L` is the gap STRADDLING
-the cut `c = exp λᵢ` (`L = λ_k − λ_{k−1}`, last-fast minus first-slow exponents). For the NEAREST
-fast index `j = k−1` it holds with equality (`λ_{k−1} + (λ_k − λ_{k−1}) = λ_k ≤ λᵢ`). For DEEPER
-fast indices (`λⱼ ≫ λᵢ`) the single straddling gap `L` is INSUFFICIENT (`λⱼ + L > λᵢ`): this is the
-documented "nearest-gap wall" — the multi-gap product of intermediate gap ratios is not realized by
-a single-cut projector tilt. Closing every index needs either (a) the tempered tilt applied at EACH
-intermediate cut and telescoped (the slow vector `v` is killed by every higher-threshold limit
-projector by band nesting, `bandProjector_mul_of_le`, but each cut supplies only its own one-step
-gap), or (b) the ADAPTED (Lyapunov) norm in which the cocycle is block-diagonal up to `exp(εn)` and
-the norm-equivalence constant absorbs the gap product (itself tempered). The decisive engine for
-both — the tempered angle from convergence-plus-gap (1)–(4) — is what this file establishes
-non-circularly; (5)–(7) close every index for which the per-index rate balance holds (in
-particular the nearest gap, hence the FIRST nontrivial slow stratum).
+The per-index rate balance `λⱼ + L ≤ λᵢ` is the load-bearing condition. Here `L` is the gap
+straddling the cut `c = exp λᵢ` (`L = λ_k − λ_{k−1}`, last-fast minus first-slow exponents).
+For the nearest fast index `j = k−1` it holds with equality
+(`λ_{k−1} + (λ_k − λ_{k−1}) = λ_k ≤ λᵢ`). For deeper fast indices (`λⱼ ≫ λᵢ`) the single
+straddling gap `L` is insufficient (`λⱼ + L > λᵢ`): the multi-gap product of intermediate gap
+ratios is not realized by a single-cut projector tilt. Closing every index needs either (a) the
+tempered tilt applied at each intermediate cut and telescoped (a slow vector `v` is killed by
+every higher-threshold limit projector by band nesting, `bandProjector_mul_of_le`, but each cut
+supplies only its own one-step gap), or (b) an adapted (Lyapunov) norm in which the cocycle is
+block-diagonal up to `exp(εn)` and the norm-equivalence constant absorbs the gap product
+(itself tempered). The lemmas below close every index for which the per-index rate balance
+holds — in particular the nearest gap, hence the first nontrivial slow stratum.
 -/
 
 open MeasureTheory Filter Topology
 open scoped Matrix InnerProductSpace Matrix.Norms.L2Operator
-
-set_option linter.unusedSectionVars false
 
 namespace Oseledets.Tempering
 
@@ -136,8 +131,8 @@ theorem tsum_tail_le_geometric {b : ℕ → ℝ} {s : ℝ} {N : ℕ}
 
     limsup_n (1/n)·log (T n)  ≤  L.
 
-The tail inherits the negative exponential rate `L` of `b` itself. This is the engine that converts
-a.e. CONVERGENCE-with-gap (a per-step rate) into a UNIFORM subexponential bound on the distance to
+The tail inherits the negative exponential rate `L` of `b` itself. This converts a.e.
+convergence-with-gap (a per-step rate) into a uniform subexponential bound on the distance to
 the limit. -/
 theorem limsup_log_tsum_tail_le {b : ℕ → ℝ} {L : ℝ}
     (hbnn : ∀ n, 0 ≤ b n) (hbpos : ∀ᶠ n in atTop, 0 < b n) (hL : L < 0)
@@ -276,9 +271,10 @@ rate: for every `ε > 0`,
     ∀ᶠ n, ‖f n − a‖ ≤ exp (n · (L + ε)).
 
 The proof bounds `‖f n − a‖ = dist (f n) a ≤ ∑'_m d(n+m)` (`dist_le_tsum_of_dist_le_of_tendsto`,
-`d` = actual increments, summable by `summable_norm_of_logLimit_neg_of_le`), then dominates the tail
-by a geometric `b`-tail (`tsum_tail_le_geometric`). This is the **tempered-angle exp-envelope** that
-the per-index leakage consumer wants; it is zero-safe (`exp ≥ 0` even when `f n = a`). -/
+`d` = actual increments, summable by `summable_norm_of_logLimit_neg_of_le`), then dominates the
+tail by a geometric `b`-tail (`tsum_tail_le_geometric`). This is the **tempered-angle
+exp-envelope** used by the per-index leakage bound; it is zero-safe (`exp ≥ 0` even when
+`f n = a`). -/
 theorem eventually_norm_sub_tendsto_le_exp {F : Type*} [NormedAddCommGroup F] [CompleteSpace F]
     {f : ℕ → F} {a : F} {b : ℕ → ℝ} {L : ℝ}
     (hf : Tendsto f atTop (𝓝 a))
@@ -292,7 +288,7 @@ theorem eventually_norm_sub_tendsto_le_exp {F : Type*} [NormedAddCommGroup F] [C
     summable_norm_of_logLimit_neg_of_le (fun n => f (n + 1) - f n) b hbnn hbpos hL hlog hstep
   set d : ℕ → ℝ := fun n => dist (f n) (f (n + 1)) with hd
   have hdeq : ∀ n, d n = ‖f (n + 1) - f n‖ := fun n => by
-    show dist (f n) (f (n + 1)) = _; rw [dist_eq_norm, norm_sub_rev]
+    change dist (f n) (f (n + 1)) = _; rw [dist_eq_norm, norm_sub_rev]
   have hdsum : Summable d := hincr_sum.congr (fun n => (hdeq n).symm)
   have hdnn : ∀ n, 0 ≤ d n := fun n => dist_nonneg
   -- distance-to-limit tail bound: `‖f n − a‖ = dist (f n) a ≤ ∑'_m d (n+m)`.
@@ -361,7 +357,8 @@ theorem eventually_norm_sub_tendsto_le_exp {F : Type*} [NormedAddCommGroup F] [C
     rw [div_le_iff₀ hctt]
     -- `exp(n s)·1 = exp(n s) ≤ exp(n(L+ε))·(1−exp s)`:
     -- `exp(n(L+ε))·(1−exp s) = exp(n(L+ε/2))·exp(nε/2)·(1−exp s)`
-    --   `≥ exp(ns)·(1−exp s)⁻¹·(1−exp s) = exp(ns)` using `exp(nε/2) ≥ (1−exp s)⁻¹` and `s = L+ε/2`.
+    --   `≥ exp(ns)·(1−exp s)⁻¹·(1−exp s) = exp(ns)`
+    -- using `exp(nε/2) ≥ (1−exp s)⁻¹` and `s = L+ε/2`.
     have hsval : s = L + ε / 2 := hs
     have hsplit : (n : ℝ) * (L + ε) = (n : ℝ) * s + (n : ℝ) * (ε / 2) := by
       rw [hsval]; ring
@@ -375,20 +372,22 @@ theorem eventually_norm_sub_tendsto_le_exp {F : Type*} [NormedAddCommGroup F] [C
           apply mul_le_mul_of_nonneg_right _ (le_of_lt hctt)
           apply mul_le_mul_of_nonneg_left hcon (Real.exp_nonneg _)
 
-/-! ## 3. The tempered tilt of the genuine band projector
+/-! ## 3. The tempered tilt of the band projector
 
-Instantiate the abstract tempered distance-to-limit at the genuine Oseledets band projector
-`Pₙ = bandProjector A T (indicator (Ioi c) 1) n x`, converging to `Pinf`, with the committed
-per-step increment bound `‖Pₙ₊₁ − Pₙ‖ ≤ b n` and the committed negative root-test log-limit
-`(1/n) log (b n) → L < 0` (`L = lamK − lamK1`, the spectral gap straddling the cut `c`). The matrix
-space `Matrix (Fin d) (Fin d) ℝ` is a complete normed space, so the engine applies verbatim. -/
+Instantiate the abstract tempered distance-to-limit at the Oseledets band projector
+`Pₙ = bandProjector A T (indicator (Ioi c) 1) n x`, converging to `Pinf`, with the per-step
+increment bound `‖Pₙ₊₁ − Pₙ‖ ≤ b n` and the negative root-test log-limit
+`(1/n) log (b n) → L < 0` (`L = lamK − lamK1`, the spectral gap straddling the cut `c`). The
+matrix space `Matrix (Fin d) (Fin d) ℝ` is a complete normed space, so the abstract lemma
+applies verbatim. -/
 
 open Oseledets in
 /-- **Tempered band-projector tilt (exp-envelope).** At a point `x` where the band projector
 `Pₙ = bandProjector A T (indicator (Ioi c) 1) n x` converges to `Pinf`, with per-step increments
-bounded by a tempered `b` (negative root-test rate `L < 0`), the tilt is subexponential: for every
-`ε > 0`, eventually `‖Pₙ − Pinf‖ ≤ exp(n(L+ε))`. This is the **tempered angle** between the step-`n`
-and limit fast bands — the genuine non-circular negative rate, from CONVERGENCE-plus-gap. -/
+bounded by a tempered `b` (negative root-test rate `L < 0`), the tilt is subexponential: for
+every `ε > 0`, eventually `‖Pₙ − Pinf‖ ≤ exp(n(L+ε))`. This is the **tempered angle** between
+the step-`n` and limit fast bands; the negative rate comes from convergence plus a spectral
+gap. -/
 theorem eventually_norm_bandProjector_sub_le_exp
     {X : Type*} [MeasurableSpace X] {d : ℕ}
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (c : ℝ) (x : X)
@@ -410,8 +409,8 @@ theorem eventually_norm_bandProjector_sub_le_exp
 /-! ## 4. The slow–fast overlap exp-envelope (handle identity + tempered tilt)
 
 For a slow `v` (`toEuclideanLin Pinf v = 0`) and a step-`n` fast eigenvector `uⱼ(n)`
-(`toEuclideanLin Pₙ uⱼ = uⱼ`), the handle identity (committed
-`Oseledets.inner_eq_inner_bandProjector_sub_limit`) gives
+(`toEuclideanLin Pₙ uⱼ = uⱼ`), the handle identity
+(`Oseledets.inner_eq_inner_bandProjector_sub_limit`) gives
 `⟪v, uⱼ⟫ = ⟪v, (Pₙ − Pinf) uⱼ⟫`, whence `|⟪v, uⱼ⟫| ≤ ‖v‖ · ‖Pₙ − Pinf‖ · ‖uⱼ‖`. With the tempered
 tilt `‖Pₙ − Pinf‖ ≤ exp(n(L+ε))`, the overlap squared is `⟪v, uⱼ⟫² ≤ ‖v‖²‖uⱼ‖² · exp(2n(L+ε))`:
 the slow–fast overlap leaks at the strictly negative tempered rate `L`. -/
@@ -420,8 +419,8 @@ open Oseledets in
 /-- **Slow–fast overlap exp-envelope.** For slow `v` and a step-`n` fast eigenvector `uⱼ(n)` of the
 band (self-adjoint `Pₙ`, `Pₙ uⱼ = uⱼ`), with `‖uⱼ(n)‖ ≤ U` bounded, and the tempered tilt
 `‖Pₙ − Pinf‖ ≤ exp(n(L+ε/2))`, the squared overlap obeys
-`⟪v, uⱼ(n)⟫² ≤ (‖v‖·U)² · exp(2n(L+ε/2))`, eventually. The genuine NON-circular negative overlap
-rate, with NO assumed slow growth of `v`. -/
+`⟪v, uⱼ(n)⟫² ≤ (‖v‖·U)² · exp(2n(L+ε/2))`, eventually. The negative overlap rate is obtained
+with no slow-growth assumption on `v`. -/
 theorem eventually_inner_sq_le_exp_of_tilt
     {d : ℕ} [NeZero d]
     {Pn : ℕ → Matrix (Fin d) (Fin d) ℝ} {Pinf : Matrix (Fin d) (Fin d) ℝ}
@@ -477,14 +476,15 @@ Multiply the tempered overlap exp-envelope (step 4) by the singular-value exp-en
 `Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le`. Working with exp-envelopes throughout is
 zero-safe: when `⟪v,uⱼ⟫ = 0`, `specTermⱼ = 0 ≤ exp(...)` holds trivially (no `log 0` arises).
 
-The rate condition is `λⱼ + L ≤ λᵢ`, where `L` is the tempered (straddling-gap) overlap rate for the
-band projector at the cut. At the NEAREST fast index this holds with equality (`λⱼ = λ_{k-1}`,
-`L = λ_k − λ_{k-1}`, `λⱼ + L = λ_k ≤ λᵢ`); see the module residual note for the multi-gap case. -/
+The rate condition is `λⱼ + L ≤ λᵢ`, where `L` is the tempered (straddling-gap) overlap rate
+for the band projector at the cut. At the nearest fast index this holds with equality
+(`λⱼ = λ_{k-1}`, `L = λ_k − λ_{k-1}`, `λⱼ + L = λ_k ≤ λᵢ`); see the multi-gap discussion in the
+module docstring. -/
 
 open Oseledets in
 /-- **Per-index spectral envelope from the tempered overlap (fast index).** Given the singular
 exponent limit `(1/n) log σⱼ(n) → λⱼ` with `σⱼ(n) > 0`, and the tempered overlap exp-envelope
-`⟪v,uⱼ(n)⟫² ≤ C·exp(2n(L+ε'))` for every `ε' > 0` (the genuine output of step 4 with
+`⟪v,uⱼ(n)⟫² ≤ C·exp(2n(L+ε'))` for every `ε' > 0` (the output of step 4 with
 `uⱼ = sortedGramEigenbasis`, `C = (‖v‖·U)²`), and the rate balance `λⱼ + L ≤ λᵢ`, the per-index
 `specTerm` envelope holds: for every `ε > 0`, eventually `specTermⱼ(n) ≤ exp(n(2λᵢ+ε))`. This is
 exactly `henv j` of `limsup_inv_mul_log_norm_cocycle_apply_le`. Zero-safe. -/
@@ -519,7 +519,8 @@ theorem specTerm_envelope_of_tempered_overlap
   filter_upwards [hσenv, hovenv, hCdom] with n hσn hovn hCn
   rw [specTerm]
   -- multiply: σⱼ²·⟪v,uⱼ⟫² ≤ exp(n(2λⱼ+ε/4)) · C·exp(2n(L+ε/8)).
-  have hnn1 : (0 : ℝ) ≤ (Matrix.toEuclideanLin (cocycle A T n x)).singularValues j ^ 2 := by positivity
+  have hnn1 : (0 : ℝ) ≤ (Matrix.toEuclideanLin (cocycle A T n x)).singularValues j ^ 2 := by
+    positivity
   have hnn2 : (0 : ℝ) ≤ (inner ℝ v (sortedGramEigenbasis A T n x j) : ℝ) ^ 2 := by positivity
   have hCexp : C * Real.exp ((n : ℝ) * (2 * (L + ε/8)))
       ≤ Real.exp ((n : ℝ) * (ε/8)) * Real.exp ((n : ℝ) * (2 * (L + ε/8))) :=
@@ -538,25 +539,26 @@ theorem specTerm_envelope_of_tempered_overlap
         have hnn : (0 : ℝ) ≤ (n : ℝ) := by positivity
         nlinarith [hrate, hnn]
 
-/-! ## 6. The spectral UPPER bound for a Λ-slow vector (capstone)
+/-! ## 6. The spectral upper bound for a Λ-slow vector
 
-Assembling the per-index envelopes into the per-vector growth upper bound, via the committed
+Assembling the per-index envelopes into the per-vector growth upper bound, via
 `Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le`. The per-index inputs are exactly
-`specTerm_envelope_of_tempered_overlap` for each spectral index `j`: each carries its own tempered
-overlap rate `Lⱼ ≤ 0` (from the tempered angle of the band projector at the appropriate cut) and the
-rate balance `λⱼ + Lⱼ ≤ λᵢ`. The conclusion is the target spectral upper bound
+`specTerm_envelope_of_tempered_overlap` for each spectral index `j`: each carries its own
+tempered overlap rate `Lⱼ ≤ 0` (from the tempered angle of the band projector at the
+appropriate cut) and the rate balance `λⱼ + Lⱼ ≤ λᵢ`. The conclusion is the spectral upper
+bound
 
     limsup_n (1/n)·log ‖A⁽ⁿ⁾ v‖  ≤  λᵢ,
 
-with NO assumption of slow growth (`lambdaBar v ≤ λᵢ`) — the overlap rates come from CONVERGENCE +
-gap (tempering), not from an assumed growth rate. -/
+with no assumption of slow growth (`lambdaBar v ≤ λᵢ`) — the overlap rates come from
+convergence plus a spectral gap (tempering), not from an assumed growth rate. -/
 
 open Oseledets in
-/-- **Spectral upper bound for a Λ-slow vector (tempering capstone).** Given, for every spectral
-index `j`, the per-index tempered `specTerm` envelope `henv j` (the output of
-`specTerm_envelope_of_tempered_overlap`), plus eventual positivity of `‖A⁽ⁿ⁾ v‖` and the cobounded
-side-condition, the per-vector growth `limsup` is bounded by `λᵢ`. This is the target node; the
-per-index envelopes are supplied non-circularly by the tempered angle. -/
+/-- **Spectral upper bound for a Λ-slow vector.** Given, for every spectral index `j`, the
+per-index tempered `specTerm` envelope `henv j` (the output of
+`specTerm_envelope_of_tempered_overlap`), plus eventual positivity of `‖A⁽ⁿ⁾ v‖` and the
+cobounded side-condition, the per-vector growth `limsup` is bounded by `λᵢ`; the per-index
+envelopes are supplied by the tempered angle, with no slow-growth assumption. -/
 theorem limsup_log_norm_cocycle_apply_le_of_tempered_envelopes
     {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d] {T : X → X}
     (A : X → Matrix (Fin d) (Fin d) ℝ) (x : X) (v : EuclideanSpace ℝ (Fin d)) (lami : ℝ)
@@ -569,21 +571,21 @@ theorem limsup_log_norm_cocycle_apply_le_of_tempered_envelopes
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) atTop ≤ lami :=
   Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le (T := T) A x v lami henv hpos hcobdd
 
-/-! ## 7. The per-index closure: from CONVERGENCE+gap to `henv j` (the full non-circular chain)
+/-! ## 7. The per-index closure: from convergence plus gap to `henv j`
 
-This single lemma chains steps 3 → 4 → 5: it takes the genuine committed inputs at a point `x`
-(band-projector convergence, the tempered per-step increment bound, the singular-value limit, the
-fast-band membership of `uⱼ = sortedGramEigenbasis`, and the rate balance) and produces the per-index
-`specTerm` envelope `henv j`. No slow-growth assumption on `v` is used — the overlap rate is the
-tempered angle, supplied by convergence + gap. -/
+This single lemma chains steps 3 → 4 → 5: it takes as input, at a point `x`, the band-projector
+convergence, the tempered per-step increment bound, the singular-value limit, the fast-band
+membership of `uⱼ = sortedGramEigenbasis`, and the rate balance, and produces the per-index
+`specTerm` envelope `henv j`. No slow-growth assumption on `v` is used — the overlap rate is
+the tempered angle, supplied by convergence plus a spectral gap. -/
 
 open Oseledets in
 /-- **Per-index closure (tempering chain).** For a Λ-slow `v` (`toEuclideanLin Pinf v = 0`) at a
 point `x` where the band projector at cut `c` converges to `Pinf` with tempered increments
 (`hbnn`/`hbpos`/`hL`/`hlog`/`hstep`), and where `uⱼ(n) = sortedGramEigenbasis A T n x j` is a
 unit step-`n` fast eigenvector (`hunit`/`hfast`), with singular limit `(1/n) log σⱼ(n) → λⱼ`
-(`hσpos`/`hσ`) and the rate balance `λⱼ + L ≤ λᵢ`, the per-index `specTerm` envelope `henv j` holds.
-The decisive non-circular step. -/
+(`hσpos`/`hσ`) and the rate balance `λⱼ + L ≤ λᵢ`, the per-index `specTerm` envelope `henv j`
+holds. No slow-growth assumption on `v` is required. -/
 theorem specTerm_envelope_henv_of_convergence
     {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d] {T : X → X}
     (A : X → Matrix (Fin d) (Fin d) ℝ) (c : ℝ) (x : X) (j : Fin (Fintype.card (Fin d)))
@@ -617,7 +619,8 @@ theorem specTerm_envelope_henv_of_convergence
         ≤ (‖v‖ * 1) ^ 2 * Real.exp ((n : ℝ) * (2 * (L + ε'))) := by
     intro ε' hε'
     -- step 3: tempered band-projector tilt `‖Pₙ − Pinf‖ ≤ exp(n(L+ε'))`.
-    have htilt := eventually_norm_bandProjector_sub_le_exp A T c x hP hbnn hbpos hL hlog hstep ε' hε'
+    have htilt :=
+      eventually_norm_bandProjector_sub_le_exp A T c x hP hbnn hbpos hL hlog hstep ε' hε'
     -- step 4: overlap squared envelope (with `Pn n = bandProjector …`).
     exact eventually_inner_sq_le_exp_of_tilt
       (Pn := fun n => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) (Pinf := Pinf)

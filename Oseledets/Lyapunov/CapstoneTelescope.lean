@@ -1,50 +1,52 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.ForwardOverlap
 import Oseledets.Lyapunov.ForwardTempering
 import Oseledets.Lyapunov.ForwardV
 
 /-!
-# scratch_m5_alt — independent adversarial attack on the MET spectral-upper-bound capstone
+# Per-vector growth bounds from telescoped overlap rates
 
-> Worker: `mathematician` (adversarial). Goal: find a SHORTER sound path to the capstone than the
-> full Ruelle two-sided-sandwich chain (`RuelleCore.lean` + L7c back-transport), OR verify there is
-> none and deliver the best partial with the minimal missing deterministic lemma stated as a typed
-> hypothesis and EVERYTHING ELSE wired.
->
-> The capstone (exact conclusion shape):
-> ```
-> ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
->   Filter.limsup (fun n : ℕ => (n : ℝ)⁻¹ *
->     Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) Filter.atTop ≤ t
-> ```
+For the matrix cocycle `A⁽ⁿ⁾ = cocycle A T n x` of a map `T : X → X`, this file assembles the
+per-vector spectral upper bound
 
-## VERDICT (summary; full report is the agent's final message)
+`limsup (1/n) · log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`
 
-* **The single-cut handle+Cauchy–Schwarz route is the fixed point** that killed the seven prior
-  attempts.  The committed chain `Oseledets.Tempering.specTerm_envelope_henv_of_convergence` routes
-  the overlap through the OPERATOR NORM `‖Pₙ − Pinf‖` (`eventually_inner_sq_le_exp_of_tilt`), whose
-  rate `L` is the band-projector tilt rate = the **nearest gap straddling the cut `c`**.  The
-  per-index rate balance `λⱼ + L ≤ λᵢ` then HOLDS with equality only at the nearest fast band and
-  FAILS for every band strictly above it.  This is proved rigorously below as
-  `single_cut_rate_balance_fails` (a quantitative obstruction, not folklore): for `λᵢ < λ_near < λⱼ`
-  and `L = λ_near − λᵢ` (the nearest straddling gap rate), `λⱼ + L > λᵢ`.
+from per-spectral-index data: the singular-value limits `(1/n) · log σⱼ(n) → λⱼ`, an
+overlap-rate bound `limsup (1/n) · log |⟪v, uⱼ(n)⟫| ≤ rⱼ` against the sorted Gram eigenbasis
+`uⱼ(n)` (the conclusion of the multiplicative telescope
+`Oseledets.telescope_overlap_limsup_le`), and the rate balance `λⱼ + rⱼ ≤ λᵢ`.  This is the
+shape consumed for a vector `v` in the slow space `Vslow A T (Real.exp t) x` with `λᵢ = t`.
 
-* **The sound escape committed in the repo is the multiplicative telescope**
-  `Oseledets.telescope_overlap_limsup_le` (`ForwardOverlap.lean`), which composes single-cut tilts at
-  EVERY adjacent gap between `block(j)` and the slow space.  Its single un-discharged hypothesis is
-  `hprod` — the **finite-`n` multiplicative frame-overlap bound** `overlap n ≤ C n · ∏ₖ ℓₖ n`.  I
-  verified numerically (3- and 4-band toys, see report) that `hprod` is TRUE and the product
-  telescopes to the pairwise rate `λᵢ − λ_{block(j)}`, NOT the nearest gap.  This is the genuine
-  irreducible analytic content and is NOT shorter via any single-cut device.
+The file also records a quantitative obstruction explaining why the overlap rates must be
+telescoped through every adjacent spectral gap.  A single-cut estimate routes the overlap
+against every fast direction through the operator norm `‖Pₙ − P∞‖` of a band-projector
+difference at one cut `c = exp λᵢ`; the available decay rate is then the nearest gap
+`L = λ_near − λᵢ` straddling the cut, and the balance `λⱼ + L ≤ λᵢ` fails for every band
+strictly above the nearest fast one (`single_cut_rate_balance_fails`).  Composing single-cut
+tilt estimates at every adjacent gap between the band of `j` and the slow space yields the
+pairwise rate `λᵢ − λⱼ` instead, which does satisfy the balance.
 
-* **Shortest sound wiring delivered** (`capstone_pointwise_of_telescope`): I assemble the exact
-  capstone conclusion at a point/vector from the committed `telescope_overlap_limsup_le` engine +
-  `specTerm_envelope_of_rate` + `limsup_inv_mul_log_norm_cocycle_apply_le`, taking ONLY the genuinely
-  missing per-index multiplicative overlap-rate bound (`hov_rate j`) as a typed hypothesis.  Every
-  other ingredient is committed.  This proves the wiring is sound and isolates the missing piece to
-  exactly the telescope `hprod` (equivalently, the per-index pairwise overlap rate).
+## Main results
 
-Everything below is `sorry`-free.  Axiom audit at the file end:
-`[propext, Classical.choice, Quot.sound]`.
+* `single_cut_rate_balance_fails`, `single_cut_envelope_exponent_exceeds_target`: the
+  obstruction lemmas — for `λᵢ < λ_near < λⱼ` and `L = λ_near − λᵢ`, the single-cut rate
+  balance `λⱼ + L ≤ λᵢ` is strictly violated.
+* `limsup_log_sq_le_two_mul`: the bridge from the absolute-value overlap rate to the squared
+  form, `limsup (1/n) · log (aₙ²) ≤ 2L` from `limsup (1/n) · log |aₙ| ≤ L`.
+* `capstone_upper_of_overlap_rates`: the per-vector upper bound from squared overlap rates,
+  via `Oseledets.specTerm_envelope_of_rate` and
+  `Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le`.
+* `capstone_upper_of_telescope_outputs`: the end-to-end form, consuming the absolute-value
+  overlap rates produced by `Oseledets.telescope_overlap_limsup_le`.
+
+## References
+
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*,
+  Publ. Math. IHÉS **50** (1979), 27–58.
 -/
 
 open MeasureTheory Filter Topology
@@ -52,58 +54,57 @@ open scoped Matrix InnerProductSpace
 
 namespace Oseledets.CapstoneTelescope
 
-/-! ## Part A — the fixed-point obstruction, made rigorous
+/-! ## The single-cut obstruction
 
-The committed single-cut tempering chain produces the per-index rate balance `λⱼ + L ≤ λᵢ`, where
-`L = λ_near − λᵢ` is the band-projector tilt rate at the cut `c = exp λᵢ` (the nearest gap straddling
-the cut: `λ_near` is the smallest fast exponent, strictly above `λᵢ`).  For any band `j` STRICTLY
-ABOVE the nearest fast band (`λⱼ > λ_near`), the balance is violated.  This is the precise
-quantitative statement of the fixed point. -/
+A single-cut tempering estimate produces the per-index rate balance `λⱼ + L ≤ λᵢ`, where
+`L = λ_near − λᵢ` is the band-projector tilt rate at the cut `c = exp λᵢ` (the nearest gap
+straddling the cut: `λ_near` is the smallest fast exponent, strictly above `λᵢ`).  For any
+band `j` strictly above the nearest fast band (`λⱼ > λ_near`) the balance is violated.  The
+two lemmas below make this quantitative. -/
 
-/-- **The single-cut rate balance fails above the nearest fast band.**  With `L = λ_near − λᵢ` the
-nearest straddling-gap tilt rate (`λᵢ < λ_near`), and a fast band `j` strictly above the nearest one
-(`λ_near < λⱼ`), the per-index balance `λⱼ + L ≤ λᵢ` required by
-`specTerm_envelope_of_tempered_overlap` is VIOLATED: `λⱼ + L > λᵢ`.  Hence the single-cut handle+CS
-route (`eventually_inner_sq_le_exp_of_tilt`, which uses the operator-norm tilt rate) cannot close the
-top band — the seven-failure fixed point. -/
+/-- **The single-cut rate balance fails above the nearest fast band.**  With `L = λ_near − λᵢ`
+the nearest straddling-gap tilt rate (`λᵢ < λ_near`), and a fast band `j` strictly above the
+nearest one (`λ_near < λⱼ`), the per-index balance `λⱼ + L ≤ λᵢ` required by
+`specTerm_envelope_of_tempered_overlap` is violated: `λⱼ + L > λᵢ`.  Hence a single-cut
+estimate through the operator-norm tilt rate (`eventually_inner_sq_le_exp_of_tilt`) cannot
+close the bands above the nearest gap. -/
 theorem single_cut_rate_balance_fails {lami lamNear lamj : ℝ}
     (hcut : lami < lamNear) (habove : lamNear < lamj) :
     lami < lamj + (lamNear - lami) := by
   -- λⱼ + (λ_near − λᵢ) > λ_near + (λ_near − λᵢ) > λ_near > λᵢ ⇒ in particular > λᵢ.
   nlinarith [hcut, habove]
 
-/-- **Sharper: the single-cut envelope rate strictly exceeds the target.**  The exponent the
-single-cut route can certify for `specTermⱼ` is `2·(λⱼ + L)` with `L = λ_near − λᵢ`; for `j` above
-the nearest fast band this strictly exceeds the target exponent `2·λᵢ`.  So no `ε`-envelope at the
-target rate is available from the single cut — the obstruction is strict, not borderline. -/
+/-- **The single-cut envelope rate strictly exceeds the target.**  The exponent a single-cut
+estimate can certify for `specTermⱼ` is `2·(λⱼ + L)` with `L = λ_near − λᵢ`; for `j` above the
+nearest fast band this strictly exceeds the target exponent `2·λᵢ`.  So no `ε`-envelope at the
+target rate is available from a single cut — the obstruction is strict, not borderline. -/
 theorem single_cut_envelope_exponent_exceeds_target {lami lamNear lamj : ℝ}
     (hcut : lami < lamNear) (habove : lamNear < lamj) :
     2 * lami < 2 * (lamj + (lamNear - lami)) := by
   nlinarith [hcut, habove]
 
-/-! ## Part B — the shortest sound wiring (telescope engine ⟹ capstone, at a point)
+/-! ## The per-vector upper bound from per-index overlap rates
 
-I assemble the exact capstone limsup conclusion `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` at a point `x` /
-vector `v`, taking as INPUT, per spectral index `j`:
+The limsup conclusion `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` is assembled at a point `x` and
+vector `v` from the following data, per spectral index `j`:
 
-* `hσpos j`, `hσ j` — the committed singular-value limit `(1/n) log σⱼ(n) → λⱼ` (`tendsto_log_singularValue` wiring);
-* `hbal j` — the per-index **pairwise** rate balance `λⱼ + rⱼ ≤ λᵢ` with `rⱼ` the overlap rate;
-* `hov_rate j` — the per-index overlap-rate bound `limsup (1/n) log ⟪v,uⱼ(n)⟫² ≤ 2 rⱼ` (the OUTPUT of
-  the telescope `telescope_overlap_limsup_le`; this is where the pairwise rate enters, and the single
-  remaining analytic content `hprod` lives);
-* `hovbdd j` — the overlap-log boundedness side-condition.
+* `hσpos j`, `hσ j` — the singular-value limit `(1/n) log σⱼ(n) → λⱼ`;
+* `hbal j` — the per-index **pairwise** rate balance `λⱼ + rⱼ ≤ λᵢ`, with `rⱼ` the overlap
+  rate;
+* `hov_rate j` — the per-index overlap-rate bound `limsup (1/n) log ⟪v,uⱼ(n)⟫² ≤ 2 rⱼ` (the
+  output of the telescope `telescope_overlap_limsup_le`);
+* `hovbdd j` — the overlap-log boundedness side condition.
 
-Everything else (`specTerm_envelope_of_rate`, `limsup_inv_mul_log_norm_cocycle_apply_le`) is committed.
-The conclusion is the capstone limsup bound.  This proves the wiring is SOUND and isolates the missing
-piece to exactly `hov_rate` (= the telescope output), confirming the telescope is the minimal escape. -/
+The assembly goes through `specTerm_envelope_of_rate` and
+`limsup_inv_mul_log_norm_cocycle_apply_le`. -/
 
 open Oseledets in
-/-- **Capstone per-vector upper bound from per-index pairwise overlap rates (the wiring).**  Given,
-for each spectral index `j`, the committed singular-value limit, the pairwise rate balance
-`λⱼ + rⱼ ≤ λᵢ`, the overlap-rate bound (`limsup (1/n) log ⟪v,uⱼ⟫² ≤ 2 rⱼ`, the telescope output) and
-its boundedness, plus eventual positivity / coboundedness of `‖A⁽ⁿ⁾ v‖`, the per-vector growth
-`limsup` is `≤ λᵢ`.  This is the exact shape consumed by the capstone for a slow vector with top
-exponent `λᵢ = t`.  All non-`hov_rate` inputs are discharged by committed lemmas. -/
+/-- **The per-vector upper bound from per-index pairwise overlap rates.**  Given, for each
+spectral index `j`, the singular-value limit, the pairwise rate balance `λⱼ + rⱼ ≤ λᵢ`, the
+overlap-rate bound (`limsup (1/n) log ⟪v,uⱼ⟫² ≤ 2 rⱼ`, the telescope output) and its
+boundedness, plus eventual positivity and coboundedness of `‖A⁽ⁿ⁾ v‖`, the per-vector growth
+`limsup` is `≤ λᵢ`.  This is the exact shape consumed for a slow vector with top exponent
+`λᵢ = t`. -/
 theorem capstone_upper_of_overlap_rates
     {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d] {T : X → X}
     (A : X → Matrix (Fin d) (Fin d) ℝ) (x : X) (v : EuclideanSpace ℝ (Fin d)) (lami : ℝ)
@@ -123,26 +124,27 @@ theorem capstone_upper_of_overlap_rates
       (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖)) :
     limsup (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) atTop ≤ lami := by
-  -- per-index `specTerm` envelope from the committed `specTerm_envelope_of_rate`:
+  -- the per-index `specTerm` envelope, from `specTerm_envelope_of_rate`:
   have henv : ∀ j : Fin (Fintype.card (Fin d)), ∀ ε > 0,
       ∀ᶠ n : ℕ in atTop, specTerm T A n x v j ≤ Real.exp ((n : ℝ) * (2 * lami + ε)) := by
     intro j
     exact Oseledets.specTerm_envelope_of_rate (T := T) (A := A) (x := x) (v := v) j
       (hσpos j) (hσ j) (hovbdd j) (hov_rate j) (hbal j)
-  -- assemble via the committed conditional upper bound:
+  -- assemble via the conditional upper bound:
   exact Oseledets.limsup_inv_mul_log_norm_cocycle_apply_le (T := T) A x v lami henv hpos hcobdd
 
-/-! ## Part C — `hov_rate` (the squared form) from the telescope output (abs form)
+/-! ## The squared overlap rate from the absolute-value form
 
-`telescope_overlap_limsup_le` concludes `limsup (1/n) log |⟪v,uⱼ(n)⟫| ≤ rate`.  Part B consumes the
-SQUARED form `limsup (1/n) log ⟪v,uⱼ(n)⟫² ≤ 2·rate`.  The bridge is `log(a²) = 2 log|a|`.  We prove
-the `≤` direction so the chain `hprod ⟹ telescope ⟹ hov_rate (squared) ⟹ capstone` is fully wired,
-with `hprod` the only remaining gap. -/
+`telescope_overlap_limsup_le` concludes `limsup (1/n) log |⟪v,uⱼ(n)⟫| ≤ rate`, while
+`capstone_upper_of_overlap_rates` consumes the squared form
+`limsup (1/n) log ⟪v,uⱼ(n)⟫² ≤ 2·rate`.  The bridge is `log (a²) = 2 log |a|`, proved in the
+`≤` direction for `limsup`s below. -/
 
-/-- **Squared-overlap limsup `≤ 2 ×` abs-overlap limsup.**  For `a : ℕ → ℝ` eventually nonzero, with
-the squared-log sequence cobounded above and the abs-log sequence bounded above,
-`limsup (1/n) log (a n ^ 2) ≤ 2 · L` whenever `limsup (1/n) log |a n| ≤ L`.  Via `log (a²) = 2 log|a|`
-pointwise and the `<`-form `limsup_le_iff` (avoiding the absent real `limsup_const_mul`). -/
+/-- **Squared-overlap limsup `≤ 2 ×` abs-overlap limsup.**  For `a : ℕ → ℝ` eventually
+nonzero, with the squared-log sequence cobounded above and the abs-log sequence bounded
+above, `limsup (1/n) log (a n ^ 2) ≤ 2 · L` whenever `limsup (1/n) log |a n| ≤ L`.  Via
+`log (a²) = 2 log|a|` pointwise and the `<`-form `limsup_le_iff` (avoiding the absent real
+`limsup_const_mul`). -/
 theorem limsup_log_sq_le_two_mul {a : ℕ → ℝ} {L : ℝ} (ha : ∀ᶠ n in atTop, a n ≠ 0)
     (hcob : IsCoboundedUnder (· ≤ ·) atTop (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (a n ^ 2)))
     (hbdd : IsBoundedUnder (· ≤ ·) atTop (fun n : ℕ => (n : ℝ)⁻¹ * Real.log |a n|))
@@ -156,7 +158,7 @@ theorem limsup_log_sq_le_two_mul {a : ℕ → ℝ} {L : ℝ} (ha : ∀ᶠ n in a
     filter_upwards [ha] with n hn
     have hlog : Real.log (a n ^ 2) = 2 * Real.log |a n| := by
       rw [show a n ^ 2 = |a n| ^ 2 by rw [sq_abs], Real.log_pow]; push_cast; ring
-    show (n : ℝ)⁻¹ * Real.log (a n ^ 2) = 2 * ((n : ℝ)⁻¹ * Real.log |a n|)
+    change (n : ℝ)⁻¹ * Real.log (a n ^ 2) = 2 * ((n : ℝ)⁻¹ * Real.log |a n|)
     rw [hlog]; ring
   -- transport coboundedness of `g` across the eventual equality to `h2`.
   have hcob2 : IsCoboundedUnder (· ≤ ·) atTop h2 := by
@@ -180,16 +182,15 @@ theorem limsup_log_sq_le_two_mul {a : ℕ → ℝ} {L : ℝ} (ha : ∀ᶠ n in a
   have hflt : limsup f atTop < y / 2 := lt_of_le_of_lt hL hyL
   have hev := eventually_lt_of_limsup_lt hflt hbdd
   filter_upwards [hev] with n hn
-  show h2 n < y
-  show 2 * f n < y
+  change h2 n < y
+  change 2 * f n < y
   linarith [hn]
 
 open Oseledets in
-/-- **`hov_rate j` (squared form) from the telescope output.**  If the abs-overlap limsup is `≤ rⱼ`
-(the conclusion of `telescope_overlap_limsup_le` with `rate = rⱼ`), the overlap is eventually nonzero,
-and the boundedness side-conditions hold, then the squared-overlap limsup is `≤ 2 rⱼ` — exactly the
-`hov_rate j` hypothesis of `capstone_upper_of_overlap_rates`.  Closes
-`telescope ⟹ hov_rate ⟹ capstone`. -/
+/-- **The squared overlap rate from the telescope output.**  If the abs-overlap limsup is
+`≤ rⱼ` (the conclusion of `telescope_overlap_limsup_le` with `rate = rⱼ`), the overlap is
+eventually nonzero, and the boundedness side conditions hold, then the squared-overlap limsup
+is `≤ 2 rⱼ` — exactly the `hov_rate` hypothesis of `capstone_upper_of_overlap_rates`. -/
 theorem hov_rate_of_telescope_output
     {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d] {T : X → X}
     {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X} {v : EuclideanSpace ℝ (Fin d)}
@@ -207,20 +208,19 @@ theorem hov_rate_of_telescope_output
         Real.log ((inner ℝ v (sortedGramEigenbasis A T n x j) : ℝ) ^ 2)) atTop ≤ 2 * rj :=
   limsup_log_sq_le_two_mul hnz hcob hbdd htele
 
-/-! ## Part D — the full end-to-end chain (telescope output ⟹ capstone), `hprod` the only gap
+/-! ## The end-to-end composition
 
-Composing Part C (`hov_rate_of_telescope_output`) into Part B (`capstone_upper_of_overlap_rates`):
-given, per spectral index `j`, the committed singular limit and the ABS-overlap limsup bound
-`limsup (1/n) log |⟪v,uⱼ⟫| ≤ rⱼ` (= the conclusion of the committed
-`Oseledets.telescope_overlap_limsup_le`, whose single un-discharged hypothesis is the multiplicative
-frame-overlap bound `hprod`), plus the rate balance `λⱼ + rⱼ ≤ λᵢ` and the routine side-conditions,
-the capstone per-vector upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` holds.  This wires EVERYTHING
-except `hprod`, confirming the multiplicative telescope is the minimal sound escape. -/
+Composing `hov_rate_of_telescope_output` into `capstone_upper_of_overlap_rates`: given, per
+spectral index `j`, the singular-value limit and the abs-overlap limsup bound
+`limsup (1/n) log |⟪v,uⱼ⟫| ≤ rⱼ` (the conclusion of `Oseledets.telescope_overlap_limsup_le`),
+plus the rate balance `λⱼ + rⱼ ≤ λᵢ` and the routine side conditions, the per-vector upper
+bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` follows. -/
 
 open Oseledets in
-/-- **Capstone from per-index telescope outputs (`hprod` the only remaining gap).**  Feeds the
-per-index abs-overlap limsup `htele j` (the output of `telescope_overlap_limsup_le`) through Part C
-to obtain the squared-form `hov_rate`, then through Part B to the capstone upper bound. -/
+/-- **The per-vector upper bound from per-index telescope outputs.**  Feeds the per-index
+abs-overlap limsup `htele j` (the output of `telescope_overlap_limsup_le`) through
+`hov_rate_of_telescope_output` to obtain the squared form, then through
+`capstone_upper_of_overlap_rates` to the per-vector upper bound. -/
 theorem capstone_upper_of_telescope_outputs
     {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d] {T : X → X}
     (A : X → Matrix (Fin d) (Fin d) ℝ) (x : X) (v : EuclideanSpace ℝ (Fin d)) (lami : ℝ)
@@ -248,20 +248,12 @@ theorem capstone_upper_of_telescope_outputs
       (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖)) :
     limsup (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) atTop ≤ lami := by
-  -- Part C: per-index squared-overlap rate `hov_rate j` from the telescope output `htele j`.
+  -- the per-index squared-overlap rate from the telescope output `htele j`:
   have hov_rate : ∀ j : Fin (Fintype.card (Fin d)), limsup (fun n : ℕ => (n : ℝ)⁻¹ *
       Real.log ((inner ℝ v (sortedGramEigenbasis A T n x j) : ℝ) ^ 2)) atTop ≤ 2 * rj j :=
     fun j => hov_rate_of_telescope_output j (hnz j) (hcobSq j) (hbddAbs j) (htele j)
-  -- Part B: capstone from per-index squared-overlap rates.
+  -- assemble from the per-index squared-overlap rates:
   exact capstone_upper_of_overlap_rates A x v lami lamj rj
     hσpos hσ hbddSq hov_rate hbal hpos hcobdd
 
 end Oseledets.CapstoneTelescope
-
-/-! ## Axiom audit -/
-#print axioms Oseledets.CapstoneTelescope.single_cut_rate_balance_fails
-#print axioms Oseledets.CapstoneTelescope.single_cut_envelope_exponent_exceeds_target
-#print axioms Oseledets.CapstoneTelescope.capstone_upper_of_overlap_rates
-#print axioms Oseledets.CapstoneTelescope.limsup_log_sq_le_two_mul
-#print axioms Oseledets.CapstoneTelescope.hov_rate_of_telescope_output
-#print axioms Oseledets.CapstoneTelescope.capstone_upper_of_telescope_outputs

@@ -1,22 +1,37 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.FiltrationAssembly
 import Oseledets.Lyapunov.ForwardAngle
 
 /-!
-# `FiltrationAssemblyBridge` — final-assembly deliverables for `Oseledets.oseledets_filtration`
+# Bridging interfaces for the Oseledets filtration assembly
 
-This scratch file collects three independent deliverables that, together with the parallel
-spectral-upper-bound work, close `Oseledets.oseledets_filtration`:
+This file provides three independent reduction steps feeding the final assembly of
+`Oseledets.oseledets_filtration`:
 
-1. `hgrowth_of_upper_lower` — the per-vector EXACT growth interface (`hgrowth`) from the
+1. `hgrowth_of_upper_lower` — the per-vector exact growth interface (`hgrowth`) from the
    per-vector upper bound (`limsup ≤ specList`) and lower bound (`specList ≤ liminf`), squeezed
    to a genuine `Tendsto` via `tendsto_inv_mul_log_norm_cocycle_apply`.
 
-2. `oseledets_filtration_of_interfaces'` — the KEY RE-POINTING of the assembly from the
-   everywhere-measurable slow filtration `Vslow` instead of the only-a.e.-measurable `Vflag`,
-   transporting the a.e. structural interfaces along the a.e. identification `Vslow = Vflag`.
+2. `oseledets_filtration_of_interfaces'` — a re-pointing of the assembly from the
+   only-a.e.-measurable limsup flag `Vflag` onto an everywhere-measurable family (built from the
+   slow spectral filtration `Vslow`), transporting the a.e. structural interfaces along the a.e.
+   identification `Vslow = Vflag`.
 
-3. `hspec_of_ergodic` — the ergodic spectrum-constancy interface (`hspec`), reducing it to the
-   a.e. constancy of the (T-invariant) per-point Lyapunov spectrum.
+3. `hspec_of_spectrum_const` — the spectrum-constancy interface (`hspec`), reducing it to the
+   a.e. constancy of the (`T`-invariant) per-point Lyapunov spectrum.
+
+## Main results
+
+* `Oseledets.hgrowth_of_upper_lower`: the per-vector growth limit from the two one-sided bounds.
+* `Oseledets.vassembled_structure_ae`: the a.e. structural block of the assembled flag
+  `Vassembled`, stated without any measurability conclusion.
+* `Oseledets.oseledets_filtration_of_interfaces'`: the Oseledets filtration target with the
+  measurability clause carried by an everywhere-measurable witness family.
+* `Oseledets.hspec_of_spectrum_const`: the `hspec` interface from a.e. spectrum constancy.
 -/
 
 open MeasureTheory Filter Topology
@@ -26,20 +41,18 @@ namespace Oseledets
 
 variable {X : Type*} [MeasurableSpace X] {d : ℕ}
 
-/-! ## Deliverable 1 — `hgrowth` from the per-vector upper and lower bounds
+/-! ## The per-vector growth interface from the upper and lower bounds
 
 The `hgrowth` interface of `oseledets_filtration_of_interfaces` asks, a.e., for a genuine limit
-`(1/n) log‖A⁽ⁿ⁾ v‖ → specList A T x i` on each stratum `Vflag castSucc \ Vflag succ`.  The committed
+`(1/n) log‖A⁽ⁿ⁾ v‖ → specList A T x i` on each stratum `Vflag castSucc \ Vflag succ`.  The
 analytic core supplies the two one-sided bounds:
 
-* the per-vector LOWER bound `specList A T x i ≤ liminf …` (from `log_le_liminf_log_cocycle_apply`
+* the per-vector lower bound `specList A T x i ≤ liminf …` (from `log_le_liminf_log_cocycle_apply`
   at threshold `c = e^{specList i}`, packaged here as the hypothesis `hlb`); and
-* the spectral UPPER bound `limsup … ≤ specList A T x i` (from the parallel worker, packaged here
-  as the hypothesis `hub`).
+* the spectral upper bound `limsup … ≤ specList A T x i` (packaged here as the hypothesis `hub`).
 
-The squeeze `tendsto_inv_mul_log_norm_cocycle_apply` (committed in `Forward.lean`) turns the two
-bounds into the limit, modulo the two `IsBoundedUnder` side-conditions; we take those as the
-minimal a.e. hypothesis `hbdd`. -/
+The squeeze `tendsto_inv_mul_log_norm_cocycle_apply` turns the two bounds into the limit, modulo
+the two `IsBoundedUnder` side-conditions; we take those as the minimal a.e. hypothesis `hbdd`. -/
 
 /-- **`hgrowth` from upper + lower bounds.**  Given, a.e., the per-stratum-vector upper bound
 (`limsup ≤ specList`), lower bound (`specList ≤ liminf`), and the two `IsBoundedUnder`
@@ -85,13 +98,19 @@ theorem hgrowth_of_upper_lower
   exact tendsto_inv_mul_log_norm_cocycle_apply T A x v (specList A T x i)
     (hubx i v hv hvnot) (hlbx i v hv hvnot) hba hbb
 
-/-! ## The `hmeas`-independent structural core of the committed assembly
+/-! ## The measurability-independent structural core of the assembly
 
 `oseledets_filtration_of_interfaces` bundles the a.e. structural block with the existential
 (`V := Vassembled`) and the `hmeas` argument.  To re-point onto an everywhere-measurable witness
 we need that a.e. block *separately*, without the `hmeas` argument.  `vassembled_structure_ae`
-extracts exactly that block; its proof is the committed assembly's structural body (lines 93–176 of
-`FiltrationAssembly.lean`), verbatim, dropping only the existential-introduction `refine`. -/
+extracts exactly that block; its proof is the structural body of
+`oseledets_filtration_of_interfaces`, dropping only the existential-introduction `refine`. -/
+
+/-- The a.e. structural block of the assembled flag `Vassembled`: almost everywhere the flag is
+full at `0`, trivial at `Fin.last`, strictly decreasing, equivariant under `A x`, and carries the
+exact per-vector growth rates `expEnum lam0 d`.  This is the conclusion of
+`oseledets_filtration_of_interfaces` without the measurability clause and without the existential
+packaging. -/
 theorem vassembled_structure_ae
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -161,8 +180,8 @@ theorem vassembled_structure_ae
   · intro i
     rw [Vassembled_of_eq hcardx, Vassembled_of_eq hcardTx]
     by_cases hint_i : (i : ℕ) < specCard A T x
-    · have hcx : ((Fin.cast (by rw [hcardx] : k + 1 = specCard A T x + 1) i : Fin (specCard A T x + 1)) : ℕ)
-          < specCard A T x := hint_i
+    · have hcx : ((Fin.cast (by rw [hcardx] : k + 1 = specCard A T x + 1) i :
+            Fin (specCard A T x + 1)) : ℕ) < specCard A T x := hint_i
       have hcTx : ((Fin.cast (by rw [hcardTx] : k + 1 = specCard A T (T x) + 1) i :
             Fin (specCard A T (T x) + 1)) : ℕ) < specCard A T (T x) := by
         simp only [Fin.val_cast]; omega
@@ -199,28 +218,31 @@ theorem vassembled_structure_ae
       rw [this]
     rwa [hval] at hgrow
 
-/-! ## Deliverable 2 — re-pointing the assembly onto an everywhere-measurable family
+/-! ## Re-pointing the assembly onto an everywhere-measurable family
 
 `Vassembled` is built from the limsup flag `Vflag`, whose measurability is only available a.e.
 The `MeasurableSubspace` predicate is an *everywhere* statement, so `hmeas` cannot be discharged
 for `Vassembled` directly.  The fix is to carry the structural conclusion on a *different*,
 everywhere-measurable family `V'` (built from the slow spectral filtration `Vslow`, whose
-measurability is the committed `measurableSubspace_Vslow`), and transport the a.e. structural
-facts along the a.e. identification `V' = Vassembled`.
+measurability is `measurableSubspace_Vslow`), and transport the a.e. structural facts along the
+a.e. identification `V' = Vassembled`.
 
-This `oseledets_filtration_of_interfaces'` takes:
-* the SAME `hspec`/`hgrowth` interfaces as the committed assembly (they feed `Vassembled`);
+`oseledets_filtration_of_interfaces'` takes:
+* the same `hspec`/`hgrowth` interfaces as `oseledets_filtration_of_interfaces` (they feed
+  `Vassembled`);
 * `hmeas'` — `MeasurableSubspace` for the slow-based family `V'` (discharged via
   `measurableSubspace_Vslow`); and
 * `hae` — the a.e. identification `V' i x = Vassembled A T (numExp lam0 d) i x`.
 
-It produces the verbatim `oseledets_filtration` target with witness `V := V'`.  The structural
-a.e. block is the committed `Vassembled` block (obtained from `oseledets_filtration_of_interfaces`)
-rewritten, level by level, through `hae`.
+It produces the `oseledets_filtration` target with witness `V := V'`.  The structural a.e. block
+is the `Vassembled` block of `vassembled_structure_ae` rewritten, level by level, through `hae`.
 
-The a.e. identification `hae` is itself the L11 mathematical content (`Vslow = Vflag` a.e.); it is
-NOT yet committed in the repo, so it is taken here as the minimal cleanly-typed hypothesis.  Once a
-committed `Vslow = Vflag` lemma exists it discharges `hae` directly. -/
+The a.e. identification `hae` is itself the substantive mathematical content (`Vslow = Vflag`
+a.e.); it is taken here as a cleanly-typed hypothesis and is discharged by `hae_of_slowflag`. -/
+
+/-- The Oseledets filtration target from the structural interfaces, with the measurability clause
+carried by an everywhere-measurable family `V'` that agrees a.e. with the assembled flag
+`Vassembled`. -/
 theorem oseledets_filtration_of_interfaces'
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -259,7 +281,7 @@ theorem oseledets_filtration_of_interfaces'
               atTop (𝓝 (lam i))) := by
   classical
   refine ⟨numExp lam0 d, expEnum lam0 d, V', expEnum_strictAnti lam0 d, hmeas', ?_⟩
-  -- Structural a.e. block on `Vassembled` (the `hmeas`-independent core of the committed assembly),
+  -- Structural a.e. block on `Vassembled` (the measurability-independent core of the assembly),
   -- then transport level-by-level through `hae`.
   have hstruct := vassembled_structure_ae hT A hA hAmeas hint hint' lam0 hspec hgrowth
   -- The identification transported to the image point `T x` (needed for the equivariance level).
@@ -276,22 +298,22 @@ theorem oseledets_filtration_of_interfaces'
     rw [haex i.succ] at hvnot
     exact hgrow i v hv hvnot
 
-/-! ## Deliverable 3 — the `hspec` ergodic spectrum-constancy interface
+/-! ## The spectrum-constancy interface
 
 `hspec` asks that, a.e., the per-point limsup spectrum (`specCard`/`specList`, built from the finite
 limsup spectrum `spectrum A T x` of `lambdaBar`) coincides with the deterministic
 singular-value spectrum (`numExp`/`expEnum`, built from `distinctExp lam0 d`).
 
-The committed `spectrum_equivariant_ae` provides the T-invariance `spectrum A T x = spectrum A T (T x)`
-a.e.; ergodicity upgrades this to a.e. *constancy* of the finite set `spectrum A T x`, and the
-deep `Λ`-spectral identification pins that constant set to `distinctExp lam0 d`.  Packaging both as
-the single hypothesis `hspecconst : ∀ᵐ x, spectrum A T x = distinctExp lam0 d`, the `hspec` shape is
+`spectrum_equivariant_ae` provides the `T`-invariance `spectrum A T x = spectrum A T (T x)` a.e.;
+ergodicity upgrades this to a.e. *constancy* of the finite set `spectrum A T x`, and the spectral
+identification of `Λ` pins that constant set to `distinctExp lam0 d`.  Packaging both as the
+single hypothesis `hspecconst : ∀ᵐ x, spectrum A T x = distinctExp lam0 d`, the `hspec` shape is
 then a pure `Finset`/`Fin`-reindexing computation: `specCard` and `numExp` are both the cardinality
 of the (now-equal) finite set, and `specList` and `expEnum` are both its descending
 `orderEmbOfFin`-enumeration, so they agree along the cardinality cast.
 
-The constancy-to-`distinctExp` step (`hspecconst`) is the L11/ergodic content that is not yet
-committed in the repo; it is taken here as the minimal cleanly-typed hypothesis. -/
+The constancy-to-`distinctExp` step (`hspecconst`) is the ergodic content; it is taken here as a
+cleanly-typed hypothesis and is discharged by `hspecconst_of_lambdaBar`. -/
 
 /-- **`hspec` from a.e. spectrum constancy.**  If the per-point limsup spectrum `spectrum A T x`
 equals the deterministic distinct-exponent set `distinctExp lam0 d` a.e., then the `hspec` interface
@@ -317,12 +339,5 @@ theorem hspec_of_spectrum_const
     rw [Finset.orderEmbOfFin_eq_orderEmbOfFin_iff]; exact hab
   rw [specList, expEnum]
   exact key _ _ hx rfl rfl i.rev (Fin.cast hcard i).rev (by simp [Fin.val_rev, hcard])
-
-/-! ## Axiom audit -/
-
-#print axioms hgrowth_of_upper_lower
-#print axioms vassembled_structure_ae
-#print axioms oseledets_filtration_of_interfaces'
-#print axioms hspec_of_spectrum_const
 
 end Oseledets

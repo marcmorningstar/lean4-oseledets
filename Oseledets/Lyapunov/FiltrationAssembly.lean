@@ -1,14 +1,32 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Oseledets.Lyapunov.MeasurableSubspace
 import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.ForwardV
 
 /-!
-# L13 — Assembly of the Oseledets filtration target
+# Assembly of the Oseledets filtration
 
-This scratch file assembles `Oseledets.oseledets_filtration` from the proved structural
-layers (`Filtration.lean` limsup flag, `Forward.lean` deterministic exponents) together with
-two analytic interface hypotheses discharged by parallel workers.
+This file assembles the full Oseledets filtration statement from the structural layers
+already in place — the limsup flag `Oseledets.Vflag` and the deterministic exponent
+enumeration `Oseledets.expEnum` — together with explicit analytic hypotheses (ergodic
+spectrum constancy, measurability of the flag levels, and exact per-vector growth).
+
+## Main definitions
+
+* `Oseledets.Vassembled`: the limsup flag `Vflag`, reindexed to the deterministic index set
+  `Fin (k + 1)` on the set where the per-point spectrum cardinality equals `k`.
+
+## Main results
+
+* `Oseledets.oseledets_filtration_of_interfaces`: the Oseledets filtration conclusion,
+  given the three analytic hypotheses.
+* `Oseledets.oseledets_filtration_assembled`: the same statement with the exact conclusion
+  shape of `Oseledets.oseledets_filtration`.
 -/
 
 open MeasureTheory Filter Topology
@@ -16,9 +34,7 @@ open scoped Matrix Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] {d : ℕ}
+variable {X : Type*} {d : ℕ}
 
 /-- The assembled deterministic-index filtration: on the (a.e.) good set where the per-point
 spectrum cardinality equals the deterministic `k`, it is the limsup flag `Vflag` reindexed via
@@ -27,31 +43,34 @@ noncomputable def Vassembled (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X
     (i : Fin (k + 1)) (x : X) : Submodule ℝ (EuclideanSpace ℝ (Fin d)) :=
   if h : specCard A T x = k then Vflag A T x (Fin.cast (by rw [h]) i) else ⊤
 
+/-- On the good set, where the per-point spectrum cardinality equals `k`, the assembled
+filtration `Vassembled` is the limsup flag `Vflag` reindexed by the cast. -/
 theorem Vassembled_of_eq {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X} {k : ℕ}
     {x : X} (h : specCard A T x = k) (i : Fin (k + 1)) :
     Vassembled A T k i x = Vflag A T x (Fin.cast (by rw [h]) i) := by
   rw [Vassembled, dif_pos h]
 
-/-- **Assembly of the Oseledets filtration target, modulo two analytic interfaces.**
+variable [MeasurableSpace X]
+
+/-- **Assembly of the Oseledets filtration, modulo three analytic hypotheses.**
 
 The deterministic exponents `lam = expEnum lam0 d` (strictly antitone) and `k = numExp lam0 d`
 come from the ergodic singular-value Lyapunov spectrum `lam0` of
 `exists_lam_tendsto_singularValue`.  The subspace family is the limsup flag `Vflag` reindexed
 to the deterministic index set (`Vassembled`).
 
-Three structural inputs are taken as explicit hypotheses; the orchestrator discharges them
-from the parallel analytic workers and the ergodic Lyapunov-spectrum constancy layer:
+Three structural inputs are taken as explicit hypotheses; they are discharged downstream by
+the spectrum-constancy, measurability, and exact-growth layers:
 
 * `hspec` — **ergodic spectrum constancy**: for a.e. `x` the per-point limsup spectrum
   cardinality equals `k` and its descending enumeration equals the deterministic `lam`.
-* `hmeas` — **measurability (interface i)**: each reindexed flag level is a `MeasurableSubspace`
-  (discharged via worker B's `measurableSubspace_Vslow` after the a.e. flag/Λ-spectral
+* `hmeas` — **measurability**: each reindexed flag level is a `MeasurableSubspace`
+  (discharged via `measurableSubspace_Vslow` after the a.e. flag/Λ-spectral
   identification).
-* `hgrowth` — **per-vector exact growth (interface ii)**: for a.e. `x`, on each stratum
+* `hgrowth` — **per-vector exact growth**: for a.e. `x`, on each stratum
   `Vflag castSucc \ Vflag succ` the normalized log-growth converges to the stratum exponent
-  `specList A T x i` (the limsup is already pinned by `lambdaBar_eq_on_stratum`; this upgrades it
-  to a genuine limit, discharged via the capstone `tendsto_inv_mul_log_norm_cocycle_apply_of_S4`
-  fed worker A's overlap envelope). -/
+  `specList A T x i` (the limsup is already pinned by `lambdaBar_eq_on_stratum`; this is
+  upgraded to a genuine limit via `tendsto_inv_mul_log_norm_cocycle_apply_of_S4`). -/
 theorem oseledets_filtration_of_interfaces
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -132,8 +151,8 @@ theorem oseledets_filtration_of_interfaces
     rw [Vassembled_of_eq hcardx, Vassembled_of_eq hcardTx]
     by_cases hint_i : (i : ℕ) < specCard A T x
     · -- interior level: a sublevel set, transported by `Vflag_equivariant`.
-      have hcx : ((Fin.cast (by rw [hcardx] : k + 1 = specCard A T x + 1) i : Fin (specCard A T x + 1)) : ℕ)
-          < specCard A T x := hint_i
+      have hcx : ((Fin.cast (by rw [hcardx] : k + 1 = specCard A T x + 1) i :
+            Fin (specCard A T x + 1)) : ℕ) < specCard A T x := hint_i
       have hcTx : ((Fin.cast (by rw [hcardTx] : k + 1 = specCard A T (T x) + 1) i :
             Fin (specCard A T (T x) + 1)) : ℕ) < specCard A T (T x) := by
         simp only [Fin.val_cast]; omega
@@ -176,11 +195,10 @@ theorem oseledets_filtration_of_interfaces
       rw [this]
     rwa [hval] at hgrow
 
-/-- **The committed target, derived from the assembly.**  This has the *exact* statement of
-`Oseledets.oseledets_filtration`; the proof is the one-line `exact` to the assembly theorem.
-The three interface hypotheses (`lam0`, `hspec`, `hmeas`, `hgrowth`) remain as explicit
-arguments — they are precisely what the orchestrator discharges from the parallel analytic
-workers and the ergodic Lyapunov-spectrum constancy layer. -/
+/-- The exact statement of `Oseledets.oseledets_filtration`, derived from
+`oseledets_filtration_of_interfaces`.  The analytic hypotheses (`lam0`, `hspec`, `hmeas`,
+`hgrowth`) remain as explicit arguments; they are discharged by the spectrum-constancy,
+measurability, and exact-growth layers. -/
 theorem oseledets_filtration_assembled
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)

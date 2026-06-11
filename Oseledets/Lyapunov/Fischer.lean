@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Mathlib.Analysis.Matrix.Order
 import Mathlib.Analysis.Matrix.PosDef
 import Mathlib.LinearAlgebra.Matrix.SchurComplement
@@ -16,6 +21,15 @@ The route is the **Schur complement + positive-semidefinite determinant monotoni
 * `PosSemidef.det_le_det_of_le`: positive-semidefinite determinant monotonicity
   `0 ⪯ S ⪯ C, C ≻ 0 ⟹ det S ≤ det C`, by whitening `C` to `1` and applying `det_le_one_of_le_one`.
 * The Schur complement determinant formula `Matrix.det_fromBlocks₁₁` then yields Fischer.
+
+## Main results
+
+* `Fischer.PosSemidef.det_le_det_of_le'`: determinant monotonicity on the positive-semidefinite
+  cone, `0 ⪯ S ⪯ C ⟹ det S ≤ det C`.
+* `Fischer.det_fromBlocks_le`: Fischer's inequality for a positive semidefinite block matrix,
+  `det [[A, B], [Bᴴ, D]] ≤ det A · det D`.
+* `Fischer.det_gram_le`: Fischer's inequality in column-block Gram form,
+  `det (Yᴴ Y) ≤ det (Y_Fᴴ Y_F) · det (Y_Sᴴ Y_S)`.
 -/
 
 open scoped MatrixOrder
@@ -87,7 +101,7 @@ lemma posDef_exists_whitening {C : Matrix n n ℝ} (hC : C.PosDef) :
     Real.sq_sqrt hpos.le
   have hsqrt_pos : 0 < Real.sqrt (hC.isHermitian.eigenvalues i) := Real.sqrt_pos.mpr hpos
   have hsqrt_ne : Real.sqrt (hC.isHermitian.eigenvalues i) ≠ 0 := ne_of_gt hsqrt_pos
-  show s i * hC.isHermitian.eigenvalues i * s i = 1
+  change s i * hC.isHermitian.eigenvalues i * s i = 1
   have hsi : s i = (Real.sqrt (hC.isHermitian.eigenvalues i))⁻¹ := by rw [hs]
   rw [hsi]
   rw [mul_comm ((Real.sqrt (hC.isHermitian.eigenvalues i))⁻¹) (hC.isHermitian.eigenvalues i),

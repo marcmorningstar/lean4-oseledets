@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Oseledets.Cocycle.Norm
 import Oseledets.Cocycle.FurstenbergKesten
@@ -8,8 +13,7 @@ import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 /-!
 # The upper Lyapunov growth function
 
-This module (blueprint `lyapunov-to-target.md` §2, layers `L4.1`–`L4.2`) introduces the
-**upper Lyapunov growth function**
+This module introduces the **upper Lyapunov growth function**
 
 `lambdaBar A T x v = limsup_n (1/n) · log ‖A⁽ⁿ⁾(x) · v‖`,
 
@@ -17,26 +21,30 @@ the per-vector growth rate of the linear cocycle `A` over `T`. Here `A⁽ⁿ⁾(
 action `Matrix.toEuclideanCLM (cocycle A T n x) v` of the cocycle iterate on the Euclidean
 vector `v`.
 
+## Main results
+
 The key structural facts proved here, feeding the ultrametric machinery of
 `Oseledets.Lyapunov.Ultrametric`:
 
-* `lambdaBar_smul` — `lambdaBar` is invariant under nonzero scaling of the vector
+* `lambdaBar_smul`: `lambdaBar` is invariant under nonzero scaling of the vector
   (unconditional);
-* `lambdaBar_equivariant` — `A`-equivariance `lambdaBar A T x v = lambdaBar A T (T x) (A x·v)`;
-* `lambdaBar_mem_Icc` — finiteness: a.e. `x`, `lambdaBar A T x v` lies in a fixed interval
+* `lambdaBar_equivariant`: `A`-equivariance `lambdaBar A T x v = lambdaBar A T (T x) (A x·v)`;
+* `lambdaBar_mem_Icc`: finiteness: for a.e. `x`, `lambdaBar A T x v` lies in a fixed interval
   `[lamBot, lamTop]` (the extremal Lyapunov exponents from Furstenberg–Kesten);
-* `lambdaBar_add_le` / `isUltrametricGrowth_lambdaBar` — the non-Archimedean inequality and
-  the packaged statement that a.e. `lambdaBar A T x` is an `IsUltrametricGrowth` function.
+* `lambdaBar_add_le`, `isUltrametricGrowth_lambdaBar`: the non-Archimedean inequality and
+  the packaged statement that for a.e. `x` the function `lambdaBar A T x` is an
+  `IsUltrametricGrowth` function.
+
+## Implementation notes
 
 The non-Archimedean step (and the equivariance reindexing) needs the defining sequence
 `(1/n)·log‖A⁽ⁿ⁾(x)·v‖` to be bounded; boundedness holds a.e. by the Furstenberg–Kesten
 sandwich. Accordingly `lambdaBar_add_le` and `lambdaBar_equivariant` carry explicit
-`IsBoundedUnder` hypotheses on that sequence, while the primary a.e. deliverable
-`isUltrametricGrowth_lambdaBar` discharges them from the FK limits (via the private
-`growthSeq_bounded`). `lambdaBar_smul` is fully unconditional (the perturbation `(1/n)·log|c|`
-is uniformly bounded), proved through the robust helper `limsup_eq_of_tendsto_sub_zero`.
-
-Reference: Oseledets MET, upper growth function, blueprint §2.
+`IsBoundedUnder` hypotheses on that sequence, while the almost-everywhere statement
+`isUltrametricGrowth_lambdaBar` discharges them from the Furstenberg–Kesten limits (via the
+private `growthSeq_bounded`). `lambdaBar_smul` is fully unconditional (the perturbation
+`(1/n)·log|c|` is uniformly bounded), proved through the helper
+`limsup_eq_of_tendsto_sub_zero`.
 -/
 
 open MeasureTheory Filter Topology
@@ -44,9 +52,7 @@ open scoped Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
-variable {X : Type*} [MeasurableSpace X] {μ : Measure X} {T : X → X} {d : ℕ}
+variable {X : Type*} {T : X → X} {d : ℕ}
 
 /-- The image vector `A⁽ⁿ⁾(x) · v` of the cocycle action on `v`. -/
 private noncomputable def cocycleVec (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
@@ -145,7 +151,7 @@ private theorem le_growthSeq {A : X → Matrix (Fin d) (Fin d) ℝ}
       (Real.log ‖(cocycle A T n x)⁻¹‖ +
         Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖) :=
     mul_le_mul_of_nonneg_left hlogle hninv
-  show -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) + (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
+  change -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) + (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
     (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖
   nlinarith [hmul]
 
@@ -255,11 +261,11 @@ private theorem limsup_eq_of_tendsto_sub_zero {u w : ℕ → ℝ}
         linarith
       rw [Real.sInf_of_not_bddBelow hSpunb, Real.sInf_of_not_bddBelow hbddSq]
 
-/-! ### L4.2 scaling -/
+/-! ### Scaling invariance -/
 
-/-- **L4.2 scaling.** `lambdaBar` is invariant under nonzero scaling of the vector. -/
+/-- **Scaling invariance.** `lambdaBar` is invariant under nonzero scaling of the vector. -/
 theorem lambdaBar_smul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
-    {c : ℝ} (hc : c ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (hv : v ≠ 0) :
+    {c : ℝ} (hc : c ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (_hv : v ≠ 0) :
     lambdaBar A T x (c • v) = lambdaBar A T x v := by
   -- The two defining sequences differ by `(1/n)·(log‖M(c•v)‖ - log‖Mv‖)`, which tends to `0`.
   refine limsup_eq_of_tendsto_sub_zero ?_
@@ -287,13 +293,14 @@ theorem lambdaBar_smul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x :
     rw [hlogdiff]
     by_cases hs0 : s = 0 <;> simp [hs0, abs_nonneg]
   -- Assemble: difference of `growthSeq`s is `(1/n)·(that difference)`.
-  show ‖(n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) (c • v)‖ -
+  change ‖(n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) (c • v)‖ -
     (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖‖ ≤
     (n : ℝ)⁻¹ * abs (Real.log |c|)
-  rw [hnorm, ← hs, Real.norm_eq_abs, ← mul_sub, abs_mul, abs_of_nonneg (by positivity : (0:ℝ) ≤ (n:ℝ)⁻¹)]
+  rw [hnorm, ← hs, Real.norm_eq_abs, ← mul_sub, abs_mul,
+    abs_of_nonneg (by positivity : (0 : ℝ) ≤ (n : ℝ)⁻¹)]
   exact mul_le_mul_of_nonneg_left hbound (by positivity)
 
-/-! ### L4.2 `A`-equivariance -/
+/-! ### `A`-equivariance -/
 
 /-- The `(n+1)`-th `growthSeq` term at `(x, v)` equals `(n+1)⁻¹ · log‖A⁽ⁿ⁾(Tx)·(A x·v)‖`:
 the cocycle identity peels off the newest factor `A x`. -/
@@ -307,7 +314,7 @@ private theorem growthSeq_succ (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X →
   push_cast
   rfl
 
-/-- **L4.2 `A`-equivariance.** `lambdaBar A T x v = lambdaBar A T (T x) (A x · v)`.
+/-- **`A`-equivariance.** `lambdaBar A T x v = lambdaBar A T (T x) (A x · v)`.
 
 Boundedness of the target sequence `growthSeq A T (T x) (A x·v)` is required: the limsup of
 the `(x,v)` sequence is the limsup of the same log-data scaled by `(n+1)⁻¹` instead of
@@ -315,7 +322,7 @@ the `(x,v)` sequence is the limsup of the same log-data scaled by `(n+1)⁻¹` i
 which tends to `0` exactly because `n⁻¹·log‖·‖` is bounded. This boundedness holds a.e. by
 Furstenberg–Kesten and is supplied from `growthSeq_bounded`. -/
 theorem lambdaBar_equivariant (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
-    (hA : (A x).det ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (hv : v ≠ 0)
+    (_hA : (A x).det ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (_hv : v ≠ 0)
     (hbddA : IsBoundedUnder (· ≤ ·) atTop
       (growthSeq A T (T x) (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x) v)))
     (hbddB : IsBoundedUnder (· ≥ ·) atTop
@@ -376,12 +383,12 @@ theorem lambdaBar_equivariant (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → 
   field_simp
   ring
 
-/-! ### L4.1 finiteness (Furstenberg–Kesten sandwich) -/
+/-! ### Finiteness via the Furstenberg–Kesten sandwich -/
 
-/-- **L4.1 finiteness.** For a.e. `x`, every nonzero `v` has `lambdaBar A T x v` in a fixed
+/-- **Finiteness.** For a.e. `x`, every nonzero `v` has `lambdaBar A T x v` in a fixed
 interval `[lamBot, lamTop]` whose endpoints are the extremal (bottom/top) Lyapunov
 exponents from Furstenberg–Kesten. -/
-theorem lambdaBar_mem_Icc
+theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
@@ -470,7 +477,7 @@ theorem lambdaBar_mem_Icc
               exact hx1.add hlogv
           _ = lamTop := by ring
 
-/-! ### L4.2 ultrametric (non-Archimedean) inequality -/
+/-! ### The ultrametric (non-Archimedean) inequality -/
 
 /-- Per-`n` non-Archimedean bound: `growthSeq (v+w) n ≤ (1/n)log 2 + max (growthSeq v n)
 (growthSeq w n)`, from `‖M(v+w)‖ ≤ ‖Mv‖ + ‖Mw‖ ≤ 2·max(‖Mv‖, ‖Mw‖)`. -/
@@ -514,7 +521,7 @@ private theorem growthSeq_add_le {A : X → Matrix (Fin d) (Fin d) ℝ}
         rw [mul_add, mul_max_of_nonneg _ _ hninv]
     _ = (n : ℝ)⁻¹ * Real.log 2 + max (growthSeq A T x v n) (growthSeq A T x w n) := rfl
 
-/-- **L4.2 ultrametric.** The non-Archimedean inequality, with boundedness of the three
+/-- **Ultrametric inequality.** The non-Archimedean inequality, with boundedness of the three
 defining sequences (which holds a.e. by Furstenberg–Kesten; supplied via `growthSeq_bounded`
 in `isUltrametricGrowth_lambdaBar`). -/
 theorem lambdaBar_add_le {A : X → Matrix (Fin d) (Fin d) ℝ}
@@ -560,11 +567,11 @@ theorem lambdaBar_add_le {A : X → Matrix (Fin d) (Fin d) ℝ}
 
 /-! ### Packaged ultrametric growth function (a.e.) -/
 
-/-- **Packaged L4.1–4.2.** For a.e. `x`, the upper Lyapunov growth function
+/-- For a.e. `x`, the upper Lyapunov growth function
 `lambdaBar A T x` is an `IsUltrametricGrowth` function: scaling-invariant (`lambdaBar_smul`)
 and non-Archimedean (`lambdaBar_add_le`, with the required boundedness discharged from the
 Furstenberg–Kesten sandwich `growthSeq_bounded`). -/
-theorem isUltrametricGrowth_lambdaBar
+theorem isUltrametricGrowth_lambdaBar [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
@@ -595,15 +602,15 @@ theorem isUltrametricGrowth_lambdaBar
       obtain ⟨_, hbvw'⟩ := growthSeq_bounded hA x hx1 hx2 hvw
       exact lambdaBar_add_le hA x hv hw hvw hbv hbv' hbw hbw' hbvw'
 
-/-! ### L4.2 `A`-equivariance, a.e. form -/
+/-! ### `A`-equivariance, almost-everywhere form -/
 
-/-- **L4.2 `A`-equivariance (a.e.).** For a.e. `x`, the growth function satisfies the
+/-- **`A`-equivariance (a.e.).** For a.e. `x`, the growth function satisfies the
 clean equivariance `lambdaBar A T x v = lambdaBar A T (T x) (A x · v)` for *every* nonzero
 `v`, with the boundedness hypotheses of `lambdaBar_equivariant` discharged from the
 Furstenberg–Kesten sandwich. The boundedness is needed at the *image* point `T x`; it holds
 a.e. in `x` by pulling back (via `T` measure-preserving) the a.e. boundedness at a generic
 point delivered by `growthSeq_bounded`. -/
-theorem lambdaBar_equivariant_ae
+theorem lambdaBar_equivariant_ae [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :

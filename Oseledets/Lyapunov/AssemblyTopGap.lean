@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Cocycle.Basic
 import Oseledets.Lyapunov.MeasurableSubspace
 import Oseledets.Lyapunov.AssemblyFromUpperIdent
@@ -10,18 +15,31 @@ import Oseledets.Lyapunov.SpectrumResiduals
 import Oseledets.Lyapunov.RuelleReverse
 
 /-!
-# Final assembly of the Oseledets filtration theorem from the top-gap envelope
+# The Oseledets filtration theorem from the top-gap envelope
 
-This module proves `Oseledets.oseledets_filtration_of_topgap`: the verbatim statement of
-`oseledets_filtration` (from `Oseledets/MultiplicativeErgodic.lean`) with exactly one added
-hypothesis — the **sound** top-gap fast-band-mass envelope `TopGapMassEnvelope` (quantified over
-`lam0`), consumed through `forward_graded_overlap'`.
+This module proves `Oseledets.oseledets_filtration_of_topgap`: the statement of the
+Oseledets multiplicative ergodic theorem `Oseledets.oseledets_filtration` (see
+`Oseledets/MultiplicativeErgodic.lean`) with one additional hypothesis, the top-gap
+fast-band-mass envelope `Oseledets.TopGapMassEnvelope`, quantified over the deterministic
+singular-exponent data `lam0`.
 
-It supersedes `oseledets_filtration_of_chain` (whose arbitrary-cut chain envelope was refuted —
-see `Oseledets/Lyapunov/ChainRecursion.lean`); the body is identical except that step (6) feeds
-`forward_graded_overlap'` with the top-gap envelope instead of `forward_graded_overlap` with the
-chain envelope.  Once `TopGapMassEnvelope` is discharged unconditionally, this theorem closes the
-`sorry` in `MultiplicativeErgodic.lean` together with `oseledets_filtration_dim_zero`.
+The proof composes the deterministic singular-value exponents, the limit eigenbasis with its
+eigenpair and slow-orthogonality data, the spectral-identification band projectors, the forward
+graded-overlap bound (which consumes the envelope), Ruelle's reverse cofactor bound for
+orthogonal matrices, and the spectrum-identification residuals.
+
+`Oseledets.oseledets_filtration` follows by discharging the envelope hypothesis with
+`Oseledets.topGapMassEnvelope_ae` and treating dimension zero separately.
+
+## Main results
+
+* `Oseledets.oseledets_filtration_of_topgap`: the Oseledets filtration theorem for an ergodic,
+  log-integrable, invertible matrix cocycle, assuming the top-gap fast-band-mass envelope.
+
+## References
+
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*,
+  Publ. Math. IHÉS **50** (1979), 27–58.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -31,16 +49,13 @@ noncomputable section
 
 namespace Oseledets
 
-set_option linter.unusedSectionVars false
-
 variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
-/-- **Oseledets filtration theorem from the top-gap envelope.**
+/-- **The Oseledets filtration theorem, assuming the top-gap envelope.**
 
-The verbatim statement of `oseledets_filtration`, with the single added hypothesis `htopgap` —
-the sound top-gap fast-band-mass envelope (the `htopgap` slot of `forward_graded_overlap'`),
-quantified over the deterministic singular-exponent data `lam0`.  All other content is composed
-from committed assets. -/
+The statement of `oseledets_filtration` with one additional hypothesis `htopgap`: the top-gap
+fast-band-mass envelope `TopGapMassEnvelope`, quantified over the deterministic
+singular-exponent data `lam0`. -/
 theorem oseledets_filtration_of_topgap
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -72,10 +87,10 @@ theorem oseledets_filtration_of_topgap
               atTop (𝓝 (lam i))) := by
   classical
     have hTmeas : Measurable T := hT.toMeasurePreserving.measurable
-    -- (3) deterministic singular-value exponents.
+    -- the deterministic singular-value exponents.
     obtain ⟨lam0, _hmono, hlam0⟩ :=
       exists_lam_tendsto_singularValue hT hA hAmeas hint hint'
-    -- (4) the limit eigenbasis and its eigenpair / slow-orthogonality data.
+    -- the limit eigenbasis and its eigenpair / slow-orthogonality data.
     set b' : X → OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)) :=
       fun x => limitEigenbasis A T x with hb'def
     have hb' : ∀ᵐ x ∂μ, ∀ e : Fin d,
@@ -85,26 +100,26 @@ theorem oseledets_filtration_of_topgap
     have hslowperp : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, ∀ e : Fin d,
         t < lam0 (e : ℕ) → inner ℝ (b' x e) v = 0 :=
       inner_limitEigenbasis_eq_zero_of_slow hT hA hAmeas hint hint' lam0 hlam0
-    -- (5) the spectral-identification band-projector datum.
+    -- the spectral-identification band-projector datum.
     have hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c →
         (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
         Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
           Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
       ae_tendsto_bandProjector_cfc_indicator hT hA hAmeas hint hint'
-    -- (6) the forward graded overlap bound (consuming the TOP-GAP envelope).
+    -- the forward graded overlap bound, consuming the top-gap envelope.
     have hfwdN := forward_graded_overlap' hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident
       (htopgap lam0 hlam0)
-    -- the reverse cofactor bound (Ruelle step 3).
+    -- the reverse cofactor bound for orthogonal matrices, after Ruelle.
     have hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
         ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
         (∀ a b : Fin d, |S a b| ≤ c * Real.exp (-(max (g b - g a) 0))) →
         ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)) :=
       fun S hS g c hc hf => Ruelle13.entry_reverse_bound_of_orthogonal S hS g c hc hf
-    -- (7) the band-limit bridge.
+    -- the band-limit bridge.
     have hbridge := hbridge_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
     -- the grading `g x e := lam0 e`.
     set g : X → Fin d → ℝ := fun _ e => lam0 (e : ℕ) with hgdef
-    -- (8) the TRIVIAL forward graded-overlap discharge for the capstone (NO analytic content):
+    -- the trivial discharge of the forward graded-overlap hypothesis (no analytic content):
     -- pick `c := exp M` with `M` the finite max of `lam0 e - lam0 a` over pairs (and `≥ 0`);
     -- then `c · exp(-(max (g e - g a) 0)) ≥ exp 0 = 1 ≥ |⟪b' e, u_a(n)⟫|`.
     have hfwd : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
@@ -142,10 +157,10 @@ theorem oseledets_filtration_of_topgap
         rw [hgdef]
         exact max_le (hMpair a e) hMnn
       linarith
-    -- (9) the capstone: per-vector spectral upper bound on the limit slow space.
+    -- the per-vector spectral upper bound on the limit slow space.
     have hupper := limsup_le_of_mem_Vslow hT hTmeas hA hAmeas hint hint' hrev
       lam0 hlam0 b' g hfwd hbridge
-    -- residuals for the composer.
+    -- the spectrum-identification residuals.
     have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
       ae_lambdaSublevel_le_Vslow hT hA hAmeas hint hint'
     have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ, Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
@@ -164,12 +179,8 @@ theorem oseledets_filtration_of_topgap
           atTop (𝓝 (lam0' i))) →
         ∀ᵐ x ∂μ, distinctExp lam0' d ⊆ spectrum A T x :=
       fun lam0' hlam0' => hlb_spec_of_slowflag hT hA hAmeas hint hint' hslowflag lam0' hlam0'
-    -- (10) compose the headline theorem.
+    -- assemble the conclusion.
     exact oseledets_filtration_of_upper' hT hTmeas hA hAmeas hint hint' hupper hslowrev
       hub_spec hlb_spec hident
-
-/-! ## Axiom audit -/
-
-#print axioms oseledets_filtration_of_topgap
 
 end Oseledets

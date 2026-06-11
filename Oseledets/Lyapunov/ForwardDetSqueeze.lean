@@ -1,30 +1,59 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.ForwardUpperBound
 import Oseledets.Ergodic.Birkhoff
 
 /-!
-# `scratch_detsqueeze` — the spectral upper bound via the determinant squeeze + tempered angle
+# The spectral upper bound via the determinant squeeze and the tempered angle
 
-This file closes the ONE open node of the Oseledets MET: the **spectral upper bound** for a
-`Λ`-slow vector `v`,
+This file proves the **spectral upper bound** of the Oseledets multiplicative ergodic theorem
+for a `Λ`-slow vector `v`,
 
-    limsup_n (1/n)·log ‖A⁽ⁿ⁾ v‖  ≤  λᵢ,    for v in the limit slow subspace S(x).
+    limsup_n (1/n)·log ‖A⁽ⁿ⁾ v‖  ≤  λᵢ,    for `v` in the limit slow subspace `S(x)`.
 
-The mechanism is the **determinant squeeze + tempered angle** (Raghunathan 1979; Arnold §3.4;
-Filip "Notes on the MET"), the genuinely NON-CIRCULAR route. All seven prior elementary /
-single-gap routes failed at the same fixed point (the per-overlap recursion `g ≤ λᵢ ⇄ overlap`
-that composes vacuously); the squeeze breaks it by determining the slow growth GLOBALLY via the
-volume cocycle, never per-vector.
+The mechanism is the **determinant squeeze with a tempered angle** (Raghunathan; Arnold §3.4;
+Filip). Its decisive feature is non-circularity: the slow growth is determined *globally* via
+the volume cocycle, never per vector. A per-vector recursion between the growth exponent and
+the fast/slow overlap would be circular; the squeeze instead consumes only *convergence* facts
+(the Furstenberg–Kesten determinant limit, the fast-volume Kingman limit, and the tempered-angle
+limit), none of which refers to the growth of an individual vector.
 
-## The two upstreamable sub-lemmas built here
+Two self-contained ingredients are built here:
 
 1. **The tempering lemma** (`tempering_lemma`, a Birkhoff corollary): for `g ≥ 0` with
-   `log⁺ g ∈ L¹(μ)`, `(1/n)·log⁺(g ∘ Tⁿ) → 0` a.e. This is what defeats the fixed point: it uses
-   CONVERGENCE/finiteness, not a rate.
+   `log⁺ g ∈ L¹(μ)`, `(1/n)·log⁺(g ∘ Tⁿ) → 0` a.e. Only convergence/finiteness is used,
+   not a rate.
 
-2. **The determinant / angle factorization** (`det_eq_volF_mul_volS_mul_sin`, finite-dim linear
-   algebra): for a splitting `ℝ^d = F ⊕ S` with orthonormal frames `ω_F` (p cols), `ω_S` (q cols),
-   `|det M| · |det[ω_F ω_S]| = ‖⋀^p M ω_F‖ · ‖⋀^q M ω_S‖ · sin∠(M F, M S)`-type identity, in the
-   clean Gram form `|det(M·W)| = vol_F · vol_S · sin∠(M F, M S)` with `W = [ω_F ω_S]`.
+2. **The determinant / Gram factorization** (`det_gram_image_eq`, `det_sq_eq_gram_image`,
+   finite-dimensional linear algebra): for a splitting `ℝ^d = F ⊕ S` with orthonormal frames
+   `ω_F` (`p` columns) and `ω_S` (`q` columns) assembled into the block frame `W = [ω_F ω_S]`,
+   the Gram determinant of the image block factors as
+   `det((M·W)ᵀ·(M·W)) = (det M)² · (det W)²`, which underlies the geometric identity
+   `|det(M·W)| = vol_F · vol_S · sin∠(M F, M S)`.
+
+## Main results
+
+* `Oseledets.tempering_lemma`, `Oseledets.tempering_posLog`: for an integrable `h` (think
+  `h = log⁺ g`), `(1/n)·h(Tⁿ x) → 0` for almost every `x`.
+* `Oseledets.det_gram_image_eq`, `Oseledets.det_sq_eq_gram_image`: the determinant/Gram
+  factorization for a block frame.
+* `Oseledets.tendsto_slowVolume_exponent`: the squeeze arithmetic — convergence of the
+  slow-volume exponent from the determinant, fast-volume, and angle limits.
+* `Oseledets.limsup_le_of_sum_tendsto`, `Oseledets.limsup_topSlow_le_of_squeeze`: the
+  exponent-pinning squeeze forcing the top slow exponent down to `λᵢ`.
+* `Oseledets.spectral_upper_bound_of_squeeze`: the per-vector spectral upper bound
+  `limsup (1/n)·log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` for `v` in the slow subspace.
+
+## References
+
+* M. S. Raghunathan, *A proof of Oseledec's multiplicative ergodic theorem*,
+  Israel J. Math. **32** (1979), 356–362.
+* L. Arnold, *Random Dynamical Systems*, Springer Monographs in Mathematics, 1998.
+* S. Filip, *Notes on the multiplicative ergodic theorem*,
+  Ergodic Theory Dynam. Systems **39** (2019), 1153–1189.
 -/
 
 open MeasureTheory Filter Topology
@@ -34,11 +63,11 @@ namespace Oseledets
 
 variable {X : Type*} [MeasurableSpace X] {T : X → X} {d : ℕ}
 
-/-! ## 1. The tempering lemma (Birkhoff corollary)
+/-! ## The tempering lemma (a Birkhoff corollary)
 
 If `g ≥ 0` and `log⁺ g ∈ L¹(μ)`, then `(1/n) log⁺(g(Tⁿx)) → 0` for a.e. `x`. This follows by
 applying the orbit-decay theorem `ae_tendsto_orbit_div_atTop_zero` to the integrable function
-`x ↦ log⁺ g(x) = Real.posLog (g x)`. The decisive feature: only INTEGRABILITY (finiteness) of
+`x ↦ log⁺ g(x) = Real.posLog (g x)`. The decisive feature: only *integrability* (finiteness) of
 `log⁺ g` is used — no decay rate. -/
 
 /-- **Tempering lemma.** For an integrable `h` (think `h = log⁺ g`, the positive log of a tempered
@@ -57,7 +86,7 @@ theorem tempering_posLog {μ : Measure X} (hT : MeasurePreserving T μ μ) {g : 
     ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.posLog (g (T^[n] x))) atTop (𝓝 0) :=
   ae_tendsto_orbit_div_atTop_zero hT hg
 
-/-! ## 2. The determinant / angle factorization (finite-dim linear algebra)
+/-! ## The determinant / angle factorization (finite-dimensional linear algebra)
 
 For a square real matrix `W : Matrix (Fin d) (Fin d) ℝ` viewed as a block frame `W = [ω_F | ω_S]`
 (`ω_F` the first `p` columns, `ω_S` the last `q = d − p`), and any `M : Matrix (Fin d) (Fin d) ℝ`,
@@ -72,8 +101,6 @@ matrix is at most the product of the diagonal-block Gram determinants. We packag
 algebraic identity here; the squeeze uses `0 < sin² ≤ 1` (genuine splitting + Fischer). -/
 
 section DetFactor
-
-variable {p q : ℕ}
 
 /-- **Gram determinant of an image is the square of the determinant times the source Gram det.**
 For square `M W`, `det((M W)ᵀ (M W)) = (det M)² · (det W)²`. The pure algebraic core of the
@@ -93,27 +120,29 @@ theorem det_sq_eq_gram_image (M W : Matrix (Fin d) (Fin d) ℝ) (hW : (W.det) ^ 
 
 end DetFactor
 
-/-! ## 3. The determinant squeeze (volume-exponent form)
+/-! ## The determinant squeeze (volume-exponent form)
 
-The squeeze in its decisive scalar form. Write `D(n) = (1/n) log|det A⁽ⁿ⁾|` (FK: `→ Σ_all λ`),
-`VF(n) = (1/n) log vol(A⁽ⁿ⁾ ω_F)` (fast-frame volume; tempered to `→ Σ_fast λ`), `VS(n) =
-(1/n) log vol(A⁽ⁿ⁾ ω_S)` (slow-frame volume), and `S(n) = (1/n) log sin∠(A⁽ⁿ⁾F, A⁽ⁿ⁾S)`
-(tempered: `→ 0` by the tempering lemma). The factorization gives, *with the orthogonal source
-frame `W`*, `D(n) = VF(n) + VS(n) + S(n)` (taking logs of `|det A⁽ⁿ⁾| = volF·volS·sin`, using
-`|det W| = 1`). Hence
+The squeeze in its decisive scalar form. Write `D(n) = (1/n) log|det A⁽ⁿ⁾|` (by
+Furstenberg–Kesten, `→ Σ_all λ`), `VF(n) = (1/n) log vol(A⁽ⁿ⁾ ω_F)` (fast-frame volume;
+tempered to `→ Σ_fast λ`), `VS(n) = (1/n) log vol(A⁽ⁿ⁾ ω_S)` (slow-frame volume), and
+`S(n) = (1/n) log sin∠(A⁽ⁿ⁾F, A⁽ⁿ⁾S)` (tempered: `→ 0` by the tempering lemma). The
+factorization gives, *with the orthogonal source frame `W`*, `D(n) = VF(n) + VS(n) + S(n)`
+(taking logs of `|det A⁽ⁿ⁾| = volF·volS·sin`, using `|det W| = 1`). Hence
 
     VS(n) = D(n) − VF(n) − S(n)  →  Σ_all λ − Σ_fast λ − 0 = Σ_slow λ.
 
-The lemma below is the pure limit arithmetic of the squeeze: it does NOT presuppose any per-vector
-rate (the only convergence inputs are the FK det limit, the fast-volume Kingman limit, and the
-tempered-angle limit `→ 0`). This is what defeats the fixed point. -/
+The lemma below is the pure limit arithmetic of the squeeze: it does *not* presuppose any
+per-vector rate (the only convergence inputs are the Furstenberg–Kesten determinant limit, the
+fast-volume Kingman limit, and the tempered-angle limit `→ 0`). This is what makes the argument
+non-circular. -/
 
 section Squeeze
 
 /-- **Determinant squeeze (volume arithmetic).** If `D → dSum` (det exponent), `VF → fSum`
-(fast-volume exponent), and the tempered angle `S → 0`, and the factorization `D n = VF n + VS n +
-S n` holds eventually, then the slow-volume exponent converges: `VS → dSum − fSum`. Pure arithmetic of
-the squeeze; the inputs are all *convergence* facts (no rate assumed on any vector). -/
+(fast-volume exponent), and the tempered angle `S → 0`, and the factorization
+`D n = VF n + VS n + S n` holds eventually, then the slow-volume exponent converges:
+`VS → dSum − fSum`. Pure arithmetic of the squeeze; the inputs are all *convergence* facts
+(no rate assumed on any vector). -/
 theorem tendsto_slowVolume_exponent {D VF VS S : ℕ → ℝ} {dSum fSum : ℝ}
     (hD : Tendsto D atTop (𝓝 dSum)) (hVF : Tendsto VF atTop (𝓝 fSum))
     (hS : Tendsto S atTop (𝓝 0))
@@ -130,7 +159,7 @@ theorem tendsto_slowVolume_exponent {D VF VS S : ℕ → ℝ} {dSum fSum : ℝ}
 /-- **Exponent-pinning squeeze (two terms).** If `a + b → A + B` (the volume sum has the exact
 total exponent), `liminf a ≥ A` and `liminf b ≥ B` (the per-direction lower bounds), then
 `limsup a ≤ A` (and symmetrically for `b`), so each converges to its lower bound. This is the
-arithmetic that forces the TOP slow exponent to equal `λᵢ`: the slow volume `→ Σ_slow λ` decomposes
+arithmetic that forces the top slow exponent to equal `λᵢ`: the slow volume `→ Σ_slow λ` decomposes
 as `top-slow + rest`, the lower bounds pin `rest ≥ Σ_rest` and `top ≥ λᵢ`, and equality of the sum
 squeezes `top ≤ λᵢ`. Stated as a clean two-term lemma; iterates to any finite split. -/
 theorem limsup_le_of_sum_tendsto {a b : ℕ → ℝ} {A B : ℝ}
@@ -164,9 +193,9 @@ into the spectral upper bound on the slow restricted operator norm. Let:
 * lower bounds `liminf topS ≥ lamI` (the top slow direction grows at ≥ λᵢ) and
   `liminf restS ≥ restSum` with `lamI + restSum = slowSum` (the remaining directions).
 
-Then `limsup topS ≤ lamI`: the squeeze pins the TOP slow exponent at exactly `λᵢ`. This is the
-spectral upper bound on the slow subspace — NON-CIRCULAR (no per-vector growth was assumed; only the
-volume limit + the unconditional lower bounds). -/
+Then `limsup topS ≤ lamI`: the squeeze pins the top slow exponent at exactly `λᵢ`. This is the
+spectral upper bound on the slow subspace, obtained non-circularly: no per-vector growth was
+assumed, only the volume limit and the unconditional lower bounds. -/
 theorem limsup_topSlow_le_of_squeeze {volS topS restS : ℕ → ℝ} {slowSum lamI restSum : ℝ}
     (hvolS : Tendsto volS atTop (𝓝 slowSum))
     (hsplit : slowSum = lamI + restSum)
@@ -183,12 +212,12 @@ theorem limsup_topSlow_le_of_squeeze {volS topS restS : ℕ → ℝ} {slowSum la
 
 end Squeeze
 
-/-! ## 4. From the slow restricted operator norm to the per-vector spectral upper bound
+/-! ## From the slow restricted operator norm to the per-vector spectral upper bound
 
 The final step: once `limsup (1/n) log ‖A⁽ⁿ⁾|_S‖ ≤ λᵢ`, every `v` in the slow subspace `S` obeys
-`‖A⁽ⁿ⁾ v‖ ≤ ‖A⁽ⁿ⁾|_S‖ · ‖v‖`, so `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` — the TARGET. This is pure
-operator-norm monotonicity + log arithmetic; no circularity, since the slow-norm bound came from the
-global volume squeeze, not from this vector. -/
+`‖A⁽ⁿ⁾ v‖ ≤ ‖A⁽ⁿ⁾|_S‖ · ‖v‖`, so `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, the desired spectral upper
+bound. This is pure operator-norm monotonicity plus log arithmetic; no circularity, since the
+slow-norm bound came from the global volume squeeze, not from this vector. -/
 
 section PerVector
 
@@ -246,30 +275,29 @@ theorem limsup_apply_le_of_restricted_norm {Mv : ℕ → ℝ} {r : ℕ → ℝ} 
 
 end PerVector
 
-/-! ## 5. The capstone: the spectral upper bound for a slow cocycle vector (non-circular)
+/-! ## The spectral upper bound for a slow cocycle vector (non-circular)
 
 The full chain assembled into one statement about the cocycle `A⁽ⁿ⁾`. For a `Λ`-slow vector `v`
-(in the limit slow subspace `S(x)`), the determinant squeeze provides — NON-CIRCULARLY — the slow
+(in the limit slow subspace `S(x)`), the determinant squeeze provides — non-circularly — the slow
 restricted-operator-norm exponent bound `limsup (1/n) log ‖A⁽ⁿ⁾|_S‖ ≤ λᵢ` (`hslownorm`, the output
 of `limsup_topSlow_le_of_squeeze`), and the restriction bound `‖A⁽ⁿ⁾ v‖ ≤ ‖A⁽ⁿ⁾|_S‖ · ‖v‖`
-(`hrestrict`, valid because `v ∈ S`). The capstone concludes the TARGET spectral upper bound
+(`hrestrict`, valid because `v ∈ S`). The conclusion is the spectral upper bound
 
     limsup_n (1/n)·log ‖A⁽ⁿ⁾ v‖  ≤  λᵢ.
 
-The non-circularity is structural: `hslownorm` is determined by the GLOBAL volume cocycle (FK det
-limit + fast-volume Kingman limit + the tempered angle `→ 0`), and the lower bounds — none of which
-references the growth of THIS vector. The per-vector bound is then a one-line operator-norm
-consequence. This is the precise mechanism that defeats the fixed point at which all seven prior
-elementary/single-gap routes stalled. -/
+The non-circularity is structural: `hslownorm` is determined by the *global* volume cocycle (the
+Furstenberg–Kesten determinant limit, the fast-volume Kingman limit, and the tempered angle `→ 0`)
+together with the lower bounds — none of which references the growth of *this* vector. The
+per-vector bound is then a one-line operator-norm consequence. -/
 
 section Capstone
 
 omit [MeasurableSpace X] in
-/-- **Spectral upper bound for a slow cocycle vector (determinant-squeeze capstone).** Given the
+/-- **Spectral upper bound for a slow cocycle vector (via the determinant squeeze).** Given the
 slow restricted-operator-norm exponent bound `hslownorm` (the squeeze output) and the restriction
 bound `hrestrict` (valid for `v` in the slow subspace), the per-vector growth obeys
-`limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`. The two side-conditions are the routine boundedness/positivity
-facts (`hrnn`, `hMvpos`, `hRbdd`, `hcobdd`). -/
+`limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`. The remaining side conditions are the routine
+boundedness/positivity facts (`hrnn`, `hMvpos`, `hRbdd`, `hcobdd`). -/
 theorem spectral_upper_bound_of_squeeze {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     {v : EuclideanSpace ℝ (Fin d)} {lamI : ℝ} {r : ℕ → ℝ} (hv : v ≠ 0)
     (hslownorm : limsup (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (r n)) atTop ≤ lamI)

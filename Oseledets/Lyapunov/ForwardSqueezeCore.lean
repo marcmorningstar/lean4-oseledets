@@ -1,12 +1,39 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.ForwardSqueezeData
 
 /-!
-# `ForwardSqueezeCore` — constructing `SqueezeData` for the Oseledets spectral upper bound.
+# Constructing `SqueezeData` for the Oseledets spectral upper bound
 
-This file builds a constructor `SqueezeData.ofCore` that takes the genuinely-analytic
-limit/boundedness facts about the cocycle along the orbit of `x` as inputs, and discharges
-ALL the remaining (arithmetic / boundedness-from-convergence) fields of `SqueezeData`. The
-analytic inputs are then the isolated residual; everything routine is closed here with no `sorry`.
+This file builds a constructor `SqueezeData.ofCore` that takes the analytic limit and
+boundedness facts about the cocycle along the orbit of `x` as inputs, and discharges all
+the remaining (arithmetic or boundedness-from-convergence) fields of `SqueezeData`. The
+analytic inputs are thereby isolated as the only substantial obligations; everything
+routine is closed here.
+
+## Main results
+
+* `Oseledets.SqueezeData.ofCore`: assemble a `SqueezeData` from the core analytic inputs
+  (the volume/determinant limits, the tempered angle, the factorizations, the per-direction
+  lower bounds, the restriction bound, and the boundedness facts).
+* `Oseledets.spectral_upper_bound_of_core`: the per-vector spectral upper bound
+  `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, obtained by composing `SqueezeData.ofCore` with
+  `spectral_upper_bound_of_squeezeData`.
+* `Oseledets.exists_dSum_tendsto_dExponent`: almost-everywhere convergence of the
+  determinant exponent `(1/n) log |det A⁽ⁿ⁾|`, supplying the `hD` field of `SqueezeData`.
+* `Oseledets.tendsto_angle_exponent_zero`: the tempered-angle input `hS`, derived from
+  `L¹`-integrability of the positive log of the inverse splitting angle.
+
+## References
+
+* L. Arnold, *Random Dynamical Systems*, Springer, 1998, §3.4.
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*,
+  Publ. Math. IHÉS 50 (1979), 27–58.
+* S. Filip, *Notes on the multiplicative ergodic theorem*,
+  Ergodic Theory Dynam. Systems 39 (2019), 1153–1189.
 -/
 
 open MeasureTheory Filter Topology
@@ -21,12 +48,12 @@ theorem isCoboundedUnder_le_of_boundedUnder_ge {f : ℕ → ℝ}
     (h : IsBoundedUnder (· ≥ ·) atTop f) : IsCoboundedUnder (· ≤ ·) atTop f :=
   h.isCoboundedUnder_le
 
-/-! ## Concrete discharge of the determinant exponent `hD`.
+/-! ## The determinant exponent `hD`
 
-`Sprod A T d n x = ∏_{i<d} σᵢ(A⁽ⁿ⁾) = |det A⁽ⁿ⁾|`, so the det exponent is the top
-`Γ`-limit `Γ_d`. This is the cleanest concrete field: it follows directly from the committed
-ergodic `Γ_k` Kingman limit `tendsto_GammaK_of_integrableLogNorm` at `k = d`, with NO frame
-geometry. We expose it as `dExponent`/`hD_concrete` to show the wiring is non-vacuous. -/
+`Sprod A T d n x = ∏_{i<d} σᵢ(A⁽ⁿ⁾) = |det A⁽ⁿ⁾|`, so the determinant exponent is the top
+`Γ`-limit `Γ_d`. This is the cleanest concrete field: it follows directly from the ergodic
+Kingman limit `tendsto_GammaK_of_integrableLogNorm` at `k = d`, with no frame geometry
+involved. It is exposed here as `dExponent` and `exists_dSum_tendsto_dExponent`. -/
 
 variable {μ : MeasureTheory.Measure X}
 
@@ -34,18 +61,19 @@ variable {μ : MeasureTheory.Measure X}
 noncomputable def dExponent (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) : ℕ → ℝ :=
   fun n => (n : ℝ)⁻¹ * Real.log (Sprod A T d n x)
 
-/-- **`hD` discharged from committed infrastructure.** For an ergodic `T`, an everywhere-invertible
-measurable cocycle generator with integrable log-norms, the det exponent
-`(1/n) log Sprod_d(A⁽ⁿ⁾) → Γ_d` for `μ`-a.e. `x`. (`Sprod_d = ∏ all σ = |det|`.) This is the
-`hD` field of `SqueezeData`, concretely, with `dSum := Γ_d`. -/
+/-- For an ergodic `T` and an everywhere-invertible measurable cocycle generator with
+integrable log-norms, the determinant exponent `(1/n) log Sprod_d(A⁽ⁿ⁾) → Γ_d` for
+`μ`-a.e. `x` (here `Sprod_d = ∏ all σ = |det|`). This supplies the `hD` field of
+`SqueezeData`, with `dSum := Γ_d`. -/
 theorem exists_dSum_tendsto_dExponent [NeZero d] [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
     ∃ dSum : ℝ, ∀ᵐ x ∂μ, Tendsto (dExponent A T x) atTop (𝓝 dSum) :=
   tendsto_GammaK_of_integrableLogNorm hT hA hAmeas hint hint' (le_refl d)
 
-/-- **`hMvpos` discharged.** For `v ≠ 0` and an invertible cocycle (`det ≠ 0`), the per-vector
-growth `‖A⁽ⁿ⁾ v‖` is strictly positive at every `n`. Concrete, frame-free. -/
+omit [MeasurableSpace X] in
+/-- For `v ≠ 0` and an invertible cocycle (`det ≠ 0`), the per-vector growth `‖A⁽ⁿ⁾ v‖` is
+strictly positive at every `n`. This supplies the `hMvpos` field of `SqueezeData`. -/
 theorem norm_cocycle_apply_pos {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0)
     {x : X} {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) (n : ℕ) :
     0 < ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
@@ -54,24 +82,25 @@ theorem norm_cocycle_apply_pos {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ 
   intro h
   exact hv (injective_toEuclideanLin hdet (by rw [h, map_zero]))
 
-/-! ## Concrete discharge of the tempered angle `hS` (resolution (ii): L¹-temperedness).
+/-! ## The tempered angle `hS` via `L¹`-temperedness
 
-NUMERICS (mpmath dps=220, autonomous non-normal `A` with `|eig| = 3,2,1`, `p=1/q=2`) confirm:
-the image angle `sin∠(A⁽ⁿ⁾F, A⁽ⁿ⁾S)` converges to a POSITIVE CONSTANT (≈ 0.8865 here), NOT to
-`1`. So `S n = (1/n) log sin∠ → 0` because `sin∠` is bounded below by a positive constant — in the
-AUTONOMOUS case this is resolution (i) (sin∠ eventually ≥ const > 0). In the GENERAL ergodic case,
-equivariance `A⁽ⁿ⁾S(x) = S(Tⁿx)` plus the forward-fast-limit `F` give
-`sin∠(A⁽ⁿ⁾F(x), A⁽ⁿ⁾S(x)) = θ(Tⁿx)` for the FIXED splitting-angle function `θ : X → (0,1]`, and
-`(1/n) log θ(Tⁿx) → 0` is resolution (ii): it needs `log(1/θ) ∈ L¹(μ)` (Arnold §3.4 / Ruelle /
-Filip), discharged by `tempering_posLog`. Fischer's `sin∠ ≤ 1` gives the upper side `θ ≤ 1`.
+In general the image angle `sin∠(A⁽ⁿ⁾F, A⁽ⁿ⁾S)` between the fast and slow images converges
+to a positive constant, not to `1`. In the autonomous case `S n = (1/n) log sin∠ → 0` simply
+because `sin∠` is eventually bounded below by a positive constant. In the general ergodic
+case, equivariance `A⁽ⁿ⁾S(x) = S(Tⁿx)` together with the forward fast limit `F` gives
+`sin∠(A⁽ⁿ⁾F(x), A⁽ⁿ⁾S(x)) = θ(Tⁿx)` for a fixed splitting-angle function `θ : X → (0,1]`,
+and `(1/n) log θ(Tⁿx) → 0` follows from the `L¹`-temperedness hypothesis `log(1/θ) ∈ L¹(μ)`
+(see Arnold §3.4 and Ruelle), discharged by `tempering_posLog`. Fischer's inequality
+`sin∠ ≤ 1` gives the upper side `θ ≤ 1`.
 
-The lemma below CLOSES `hS` from exactly that residual: the equivariant representation
+The lemma below derives `hS` from exactly this data: the equivariant representation
 `S n = (1/n) log (θ(Tⁿx))`, the range `0 < θ ≤ 1`, and the temperedness `posLog(1/θ) ∈ L¹`. -/
 
-/-- **`hS` discharged from L¹-temperedness (resolution (ii)).** Suppose the angle sequence is the
+/-- **The tempered angle from `L¹`-temperedness.** Suppose the angle sequence is the
 orbit sample of a fixed splitting-angle function: `S n = (n)⁻¹ · log (θ (Tⁿ x))` with
 `0 < θ y ≤ 1` for all `y`, and the temperedness `y ↦ posLog ((θ y)⁻¹) ∈ L¹(μ)`. Then for
-`μ`-a.e. `x`, `S → 0`. This is the precise content of the tempered angle. -/
+`μ`-a.e. `x`, `S → 0`. This is the precise content of the tempered angle, the `hS` field
+of `SqueezeData`. -/
 theorem tendsto_angle_exponent_zero {μ : MeasureTheory.Measure X}
     (hT : MeasurePreserving T μ μ) {θ : X → ℝ}
     (hθpos : ∀ y, 0 < θ y) (hθle : ∀ y, θ y ≤ 1)
@@ -97,13 +126,13 @@ theorem tendsto_angle_exponent_zero {μ : MeasureTheory.Measure X}
 
 /-- **Core constructor for `SqueezeData`.**
 
-Takes the genuinely-analytic inputs (the three volume/det limits, the tempered angle, the
-factorizations, the per-direction lower bounds, the restriction bound, and the FK-type
-boundedness facts) and assembles them into a `SqueezeData`. Each hypothesis is named after the
-field it supplies; the four derived fields (`hrnn`, `hMvpos`, `hcobdd` and the bounded-under
-sides not directly given) are produced from the supplied data.
+Takes the analytic inputs (the volume/determinant limits, the tempered angle, the
+factorizations, the per-direction lower bounds, the restriction bound, and the
+Furstenberg–Kesten-type boundedness facts) and assembles them into a `SqueezeData`. Each
+hypothesis is named after the field it supplies; the coboundedness field `hcobdd` is
+derived from the lower-boundedness hypothesis `hMvlb`.
 
-The point: this isolates EXACTLY the analytic residual. -/
+This constructor isolates exactly the analytic content of the spectral upper bound. -/
 def SqueezeData.ofCore
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (v : EuclideanSpace ℝ (Fin d)) (lamI : ℝ)
@@ -158,12 +187,16 @@ def SqueezeData.ofCore
   hMvpos := hMvpos
   hcobdd := isCoboundedUnder_le_of_boundedUnder_ge hMvlb
 
-/-! ## The capstone, fed by the core analytic inputs.
+/-! ## The spectral upper bound from the core analytic inputs
 
-Composing `SqueezeData.ofCore` with the committed `spectral_upper_bound_of_squeezeData` gives the
-TARGET spectral upper bound directly from the analytic residual. This is the assembled deliverable:
-once the (precisely-typed) analytic inputs are supplied, the per-vector spectral upper bound
-`limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` follows with NO further work. -/
+Composing `SqueezeData.ofCore` with `spectral_upper_bound_of_squeezeData` gives the
+spectral upper bound directly from the analytic inputs: once they are supplied, the
+per-vector spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` follows with no
+further work. -/
+
+/-- The per-vector spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, assembled from
+the core analytic inputs via `SqueezeData.ofCore` and
+`spectral_upper_bound_of_squeezeData`. -/
 theorem spectral_upper_bound_of_core
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (v : EuclideanSpace ℝ (Fin d)) (lamI : ℝ)
@@ -196,4 +229,3 @@ theorem spectral_upper_bound_of_core
       hrestrict hrnn hMvpos hMvlb)
 
 end Oseledets
-

@@ -1,20 +1,37 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
 import Oseledets.Lyapunov.CapstoneWiring
 
 /-!
-# The `hbridge` residual of the Oseledets MET capstone
+# The fast-index spectral envelope from the graded overlap bound
 
-This module proves `hbridge_of_forward_graded`, the `hbridge` slot of
-`Oseledets.limsup_le_of_mem_Vslow` (see `Oseledets/Lyapunov/CapstoneWiring.lean`),
-instantiated at `lam := lam0`, `g := fun x e => lam0 (e : ℕ)`, `b' := b'`.
+This module proves `hbridge_of_forward_graded`, which discharges the `hbridge` hypothesis of
+`Oseledets.limsup_le_of_mem_Vslow` (see `Oseledets/Lyapunov/CapstoneWiring.lean`), instantiated
+at `lam := lam0`, `g := fun x e ↦ lam0 (e : ℕ)`, `b' := b'`.
 
 The proof consumes:
 * `hslowperp` — slow orthogonality of `b'` against `Vslow`;
-* `hfwdN`     — the n-scaled forward graded overlap bound;
-* `hlam0`     — per-index singular-exponent convergence;
-* `hrev`      — Ruelle's reverse cofactor bound.
+* `hfwdN` — the `n`-scaled forward graded overlap bound;
+* `hlam0` — per-index singular-exponent convergence;
+* `hrev` — Ruelle's reverse cofactor bound.
 
-It produces the fast-index `specTerm` envelope outright; the reverse-bound premise inside
-the `hbridge` conclusion is introduced and ignored.
+It produces the fast-index `specTerm` envelope outright; the reverse-bound premise inside the
+`hbridge` conclusion is introduced and ignored.
+
+## Main results
+
+* `Oseledets.hbridge_of_forward_graded`: for a.e. `x`, every nonzero vector `v` of the slow
+  subspace `Vslow A T (Real.exp t) x` and every fast index `j` (one with `t < lam0 j`) satisfy
+  the eventual spectral-term bound `specTerm T A n x v j ≤ Real.exp (n * (2 * t + ε))`.
+
+## References
+
+The reverse cofactor bound consumed as the `hrev` premise is the reverse side of Lemma 1.4 in
+D. Ruelle, *Ergodic theory of differentiable dynamical systems*, Publ. Math. IHÉS 50 (1979),
+27–58.
 -/
 
 open MeasureTheory Filter Topology Matrix
@@ -28,9 +45,11 @@ variable {X : Type*} [MeasurableSpace X] {μ : MeasureTheory.Measure X}
 variable {d : ℕ} {T : X → X}
 
 set_option maxHeartbeats 800000 in
-/-- **M6 — the `hbridge` residual.**  The `hbridge` slot of `limsup_le_of_mem_Vslow`, derived from
-the n-scaled forward graded overlap bound, slow orthogonality, singular-exponent convergence, and the
-reverse cofactor bound. -/
+-- the five-step assembly elaborates many `EuclideanSpace ℝ (Fin d)` inner products and
+-- `sortedGramEigenbasis` index casts inside nested `filter_upwards`/`calc` blocks
+/-- The `hbridge` hypothesis of `limsup_le_of_mem_Vslow`, derived from the `n`-scaled forward
+graded overlap bound, slow orthogonality, singular-exponent convergence, and Ruelle's reverse
+cofactor bound. -/
 theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     (lam0 : ℕ → ℝ)
@@ -52,7 +71,8 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
     ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       (∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in Filter.atTop, ∀ i e : Fin d,
         |(inner ℝ (b' x e)
-            (sortedGramEigenbasis A T n x ⟨(i : ℕ), lt_of_lt_of_eq i.isLt (Fintype.card_fin d).symm⟩) : ℝ)|
+            (sortedGramEigenbasis A T n x
+              ⟨(i : ℕ), lt_of_lt_of_eq i.isLt (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(lam0 (i : ℕ) - lam0 (e : ℕ)))) →
         ∀ j : Fin (Fintype.card (Fin d)), t < lam0 (j : ℕ) → ∀ ε : ℝ, 0 < ε →
           ∀ᶠ n : ℕ in Filter.atTop,
@@ -283,7 +303,7 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
       have : ((d - 1 : ℕ) : ℝ) = (d : ℝ) - 1 := by
         have : (1 : ℕ) ≤ d := Nat.one_le_iff_ne_zero.mpr (NeZero.ne d)
         push_cast [this]; ring
-      rw [this]; ring
+      rw [this]; ring_nf
     -- Rewrite the squared envelope as `D² · exp(...)`.
     have hsq : ((d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
             * Real.exp (-((n : ℝ) * lam0 (j : ℕ) - (n : ℝ) * t))) ^ 2
@@ -298,7 +318,7 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
       rw [mul_pow, ← Real.exp_nat_mul]
       congr 1
       push_cast
-      ring
+      ring_nf
     rw [hsq]
     rw [show Real.exp ((n : ℝ) * (2 * lam0 (j : ℕ) + 2 * δ'))
           * (D ^ 2 * Real.exp ((n : ℝ) * δ * ((d : ℝ) - 1) * 2
@@ -356,7 +376,5 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
         have hcoef : (ε / 2) + (2 * t + 2 * δ' + 2 * (d - 1) * δ) ≤ 2 * t + ε := by
           linarith [hslack]
         nlinarith [hcoef, hnpos]
-
-#print axioms hbridge_of_forward_graded
 
 end Oseledets

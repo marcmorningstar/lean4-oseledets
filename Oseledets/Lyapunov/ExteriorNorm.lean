@@ -23,16 +23,25 @@ For finite-dimensional real inner product spaces `E`, `F`, this module studies t
 norm of the `k`-th exterior power `⋀^k f` of a linear map `f : E →ₗ[ℝ] F`, and connects it to
 the singular values of `f`.
 
-The headline facts are:
+## Main results
 
-* `exteriorOpNorm_comp_le` — **submultiplicativity** of the exterior-power operator norm under
-  composition. This is pure functoriality (`exteriorPower.map_comp`) combined with the
-  submultiplicativity of the continuous-linear-map operator norm, and is fully proved.
-* `exteriorOpNorm_eq_prod_singularValues` — the bridge identifying the exterior operator norm
-  with the product of the top-`k` singular values `∏_{i<k} σᵢ(f)`.
-* `prod_singularValues_comp_le` — the consequence
-  `∏_{i<k} σᵢ(g ∘ f) ≤ (∏_{i<k} σᵢ(g)) · (∏_{i<k} σᵢ(f))`, feeding the Oseledets
-  singular-value exponents (via Kingman) in the next module.
+* `ExteriorNorm.exteriorOpNorm_comp_le` — **submultiplicativity** of the exterior-power operator
+  norm under composition. This is pure functoriality (`exteriorPower.map_comp`) combined with
+  the submultiplicativity of the continuous-linear-map operator norm.
+* `ExteriorNorm.exteriorOpNorm_hodge_eq_prod_singularValues` — the bridge identifying the
+  exterior operator norm with the product of the top-`k` singular values `∏_{i<k} σᵢ(f)`.
+* `ExteriorNorm.prod_singularValues_comp_le` — the consequence
+  `∏_{i<k} σᵢ(g ∘ f) ≤ (∏_{i<k} σᵢ(g)) · (∏_{i<k} σᵢ(f))`, which yields the Oseledets
+  singular-value exponents (via Kingman's subadditive ergodic theorem).
+* `ExteriorNorm.compoundMatrix` — the `k`-th compound matrix, whose entries are the `k × k`
+  minors, with the Cauchy–Binet multiplicativity `ExteriorNorm.compoundMatrix_mul` and the
+  operator-norm identity `ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound`.
+* `ExteriorNorm.plucker_eigenpair_ceiling_standard` — for a symmetric map with an eigenvalue
+  gap, the top eigenpair and second-eigenvalue ceiling of the compound, in compound-matrix
+  coordinates (the Plücker bridge).
+* `Weyl.abs_eigenvalues₀_sub_le`, `Weyl.tendsto_eigenvalues₀` — the Weyl perturbation
+  inequality: sorted eigenvalues of Hermitian matrices are 1-Lipschitz in the `L²` operator
+  norm, hence continuous along limits.
 
 ## Implementation notes — the diamond trap
 
@@ -242,10 +251,12 @@ private def hodgeForm (k : ℕ) : (⋀[ℝ]^k E) →ₗ[ℝ] (⋀[ℝ]^k E) →�
   map_add' x y := by simp [map_add]
   map_smul' c x := by simp [map_smul]
 
+omit [FiniteDimensional ℝ E] in
 private lemma hodgeForm_apply (k : ℕ) (ω η : ⋀[ℝ]^k E) :
     hodgeForm k ω η
       = exteriorPower.pairingDual ℝ E k (exteriorPower.map k (innerₗ E) ω) η := rfl
 
+omit [FiniteDimensional ℝ E] in
 /-- On `ιMulti` families, the Hodge form is the determinant of the Gram matrix `⟪vⱼ, wᵢ⟫`. -/
 private lemma hodgeForm_ιMulti (k : ℕ) (v w : Fin k → E) :
     hodgeForm k (exteriorPower.ιMulti ℝ k v) (exteriorPower.ιMulti ℝ k w)
@@ -259,7 +270,8 @@ private def hodgeFormComp (k : ℕ) (Q : E →ₗ[ℝ] F) :
     (⋀[ℝ]^k E) →ₗ[ℝ] (⋀[ℝ]^k E) →ₗ[ℝ] ℝ :=
   (hodgeForm k).compl₁₂ (exteriorPower.map k Q) (exteriorPower.map k Q)
 
-/-- **Kernel (ii): the compound of an orthogonal map is orthogonal.** `⋀^k Q` preserves the Hodge
+omit [FiniteDimensional ℝ E] [FiniteDimensional ℝ F] in
+/-- **The compound of an orthogonal map is orthogonal.** `⋀^k Q` preserves the Hodge
 form whenever `Q` is a linear isometry (`⟪Q x, Q y⟫ = ⟪x, y⟫`). On `ιMulti` families this is the
 identity `det ⟪Q vⱼ, Q wᵢ⟫ = det ⟪vⱼ, wᵢ⟫`. -/
 private lemma hodgeForm_map_isometry (k : ℕ) (Q : E →ₗ[ℝ] F)
@@ -274,6 +286,7 @@ private lemma hodgeForm_map_isometry (k : ℕ) (Q : E →ₗ[ℝ] F)
   simp only [Matrix.of_apply]
   exact hQ _ _
 
+omit [FiniteDimensional ℝ E] in
 open scoped Classical in
 /-- For an orthonormal basis `b`, the coordinate dual `b.toBasis.coord i` equals
 `innerₗ E (b i) = ⟪b i, ·⟫`. -/
@@ -282,6 +295,7 @@ private lemma innerₗ_eq_coord {ι : Type*} [Fintype ι] (b : OrthonormalBasis 
   ext x
   rw [innerₗ_apply_apply, Basis.coord_apply, b.coe_toBasis_repr_apply, b.repr_apply_apply]
 
+omit [FiniteDimensional ℝ E] in
 open scoped Classical in
 /-- **The wedge basis of an orthonormal basis is orthonormal for the Hodge form.** This is the
 det-Gram of the identity Gram matrix, packaged through the exterior dual pairing
@@ -296,7 +310,7 @@ private lemma hodgeForm_wedgeBasis {ι : Type*} [Fintype ι] [LinearOrder ι]
     rw [Function.comp_apply, b.coe_toBasis, innerₗ_eq_coord]
   have key : hodgeForm k (exteriorPower.ιMulti_family ℝ k b.toBasis s)
       = exteriorPower.ιMultiDual ℝ k b.toBasis s := by
-    show exteriorPower.pairingDual ℝ E k
+    change exteriorPower.pairingDual ℝ E k
         (exteriorPower.map k (innerₗ E) (exteriorPower.ιMulti_family ℝ k b.toBasis s))
       = exteriorPower.ιMultiDual ℝ k b.toBasis s
     rw [exteriorPower.map_apply_ιMulti_family, hcoord, exteriorPower.ιMultiDual]
@@ -333,6 +347,7 @@ private lemma onbTriv_apply (b : OrthonormalBasis ι ℝ E) (k : ℕ) (x : ⋀[�
     onbTriv b k x i = ((b.toBasis.exteriorPower k).reindex (wIndexEquiv b k)).repr x i := by
   simp only [onbTriv, LinearEquiv.trans_apply, Basis.equivFun_apply]; rfl
 
+omit [FiniteDimensional ℝ E] in
 open scoped Classical in
 /-- **Parseval for the Hodge form:** in the wedge basis of an o.n. basis it diagonalises. -/
 private lemma hodgeForm_eq_sum_repr (b : OrthonormalBasis ι ℝ E) (k : ℕ) (x y : ⋀[ℝ]^k E) :
@@ -372,8 +387,8 @@ variable {ιE ιE' ιF ιF' : Type*}
   [Fintype ιF] [LinearOrder ιF] [Fintype ιF'] [LinearOrder ιF']
 
 open scoped Classical in
-/-- **Kernel (i)+(ii) assembled:** change-of-coordinates between two o.n.-basis wedge
-trivializations of the *same* space is an L2 isometry (the compound `⋀^k Q`). The two bases may be
+/-- **Change of coordinates between two o.n.-basis wedge trivializations of the *same* space is
+an L2 isometry** (the compound `⋀^k Q` of the orthogonal change of basis). The two bases may be
 indexed differently; only the space `E` (hence `finrank (⋀^k E)`) matters. -/
 private def onbChange (b : OrthonormalBasis ιE ℝ E) (b' : OrthonormalBasis ιE' ℝ E) (k : ℕ) :
     EuclideanSpace ℝ (Fin (Module.finrank ℝ (⋀[ℝ]^k E)))
@@ -484,7 +499,7 @@ open Set.powersetCard in
 two `k`-subsets `S`, `T`), then its determinant is `∏_{a ∈ S} d a` when `S = T` and `0` otherwise.
 The off-diagonal case has a zero column (an element of `S ∖ T`); the diagonal case is a literal
 diagonal matrix. -/
-private lemma gram_det {ι : Type*} [Fintype ι] [LinearOrder ι] {k : ℕ}
+private lemma gram_det {ι : Type*} [LinearOrder ι] {k : ℕ}
     (d : ι → ℝ) (S T : Set.powersetCard ι k) :
     (Matrix.of fun i j : Fin k =>
       if (ofFinEmbEquiv.symm S j : ι) = (ofFinEmbEquiv.symm T i : ι)
@@ -592,13 +607,13 @@ private lemma top_elem_ge {n k : ℕ} (hk1 : 1 ≤ k) (hkn : k ≤ n) (e : Fin k
 subset) is at most the second-largest product `(∏_{i<k-1} lam i)·lam k`. The top factor drops from
 `lam (k-1)` to `lam k`; the remaining `k-1` factors are bounded by the prefix `{0,…,k-2}`. -/
 private lemma prod_le_second_aux {n : ℕ} (m : ℕ) (lam : ℕ → ℝ)
-    (hanti : Antitone lam) (hpos : ∀ i, 0 ≤ lam i) (e : Fin (m+1) ↪o Fin n)
+    (hanti : Antitone lam) (hpos : ∀ i, 0 ≤ lam i) (e : Fin (m + 1) ↪o Fin n)
     (htopge : m + 1 ≤ (e ⟨m, by omega⟩ : ℕ)) :
-    ∏ j : Fin (m+1), lam (e j : ℕ) ≤ (∏ i ∈ Finset.range m, lam i) * lam (m+1) := by
+    ∏ j : Fin (m + 1), lam (e j : ℕ) ≤ (∏ i ∈ Finset.range m, lam i) * lam (m + 1) := by
   rw [Fin.prod_univ_castSucc]
-  have hlast : lam (e (Fin.last m) : ℕ) ≤ lam (m+1) := by
+  have hlast : lam (e (Fin.last m) : ℕ) ≤ lam (m + 1) := by
     apply hanti
-    rw [show (Fin.last m : Fin (m+1)) = ⟨m, by omega⟩ from rfl]; exact htopge
+    rw [show (Fin.last m : Fin (m + 1)) = ⟨m, by omega⟩ from rfl]; exact htopge
   have hcast : ∏ j : Fin m, lam (e j.castSucc : ℕ) ≤ ∏ i ∈ Finset.range m, lam i := by
     rw [Finset.prod_range fun i => lam i]
     apply Finset.prod_le_prod (fun i _ => hpos _)
@@ -609,7 +624,7 @@ private lemma prod_le_second_aux {n : ℕ} (m : ℕ) (lam : ℕ → ℝ)
   calc (∏ j : Fin m, lam (e j.castSucc : ℕ)) * lam (e (Fin.last m) : ℕ)
       ≤ (∏ i ∈ Finset.range m, lam i) * lam (e (Fin.last m) : ℕ) :=
         mul_le_mul_of_nonneg_right hcast (hpos _)
-    _ ≤ (∏ i ∈ Finset.range m, lam i) * lam (m+1) :=
+    _ ≤ (∏ i ∈ Finset.range m, lam i) * lam (m + 1) :=
         mul_le_mul_of_nonneg_left hlast (Finset.prod_nonneg (fun _ _ => hpos _))
 
 /-- **The bridge.** Through the Hodge trivializations of source and target, the exterior operator
@@ -662,7 +677,8 @@ theorem exteriorOpNorm_hodge_eq_prod_singularValues (k : ℕ) (f : E →ₗ[ℝ]
     by_cases hij : i = j <;> simp [hij]
   -- orthogonality of the basis images, with weights `c`.
   have hortho : ∀ i j : Fin N,
-      (inner ℝ (conjExteriorMap k (onbTriv u k) (onbTriv wF k) f (EuclideanSpace.basisFun (Fin N) ℝ i))
+      (inner ℝ
+        (conjExteriorMap k (onbTriv u k) (onbTriv wF k) f (EuclideanSpace.basisFun (Fin N) ℝ i))
         (conjExteriorMap k (onbTriv u k) (onbTriv wF k) f (EuclideanSpace.basisFun (Fin N) ℝ j))
         : ℝ) = if i = j then c i else 0 := by
     intro i j
@@ -773,8 +789,8 @@ theorem exteriorOpNorm_hodge_eq_prod_singularValues (k : ℕ) (f : E →ₗ[ℝ]
 
 For a symmetric map `f` with orthonormal eigenbasis `u` and eigenvalues `lam`, the compound
 `⋀^k f` is diagonal in the wedge basis of `u`: it scales the wedge `u_S` by `∏_{a ∈ S} lam a`.
-This is the abstract spectral core feeding the Plücker-bridge eigenpair (PB1) and the
-second-eigenvalue ceiling (PB2). -/
+This is the abstract spectral core behind the Plücker top eigenpair and the second-eigenvalue
+ceiling established below. -/
 
 /-- **Product reindexing.** A product of `lam` over the ordered enumeration of a `k`-subset `S`
 equals the product of `lam` over `S`. -/
@@ -786,8 +802,10 @@ private lemma prod_ofFinEmbEquiv_symm {ι : Type*} [LinearOrder ι] {k : ℕ} (l
   rw [himg, Finset.prod_image
     (fun i _ j _ h => (Set.powersetCard.ofFinEmbEquiv.symm S).injective h)]
 
-/-- **`ιMulti_family` scalar pull-out.** A family rescaled entrywise by `lam` factors a product of
-scalars out of the wedge: `ιMulti_family (fun j ↦ lam j • g j) S = (∏_{a ∈ S} lam a) • ιMulti_family g S`.
+omit [FiniteDimensional ℝ E] in
+/-- **`ιMulti_family` scalar pull-out.** A family rescaled entrywise by `lam` factors a product
+of scalars out of the wedge:
+`ιMulti_family (fun j ↦ lam j • g j) S = (∏_{a ∈ S} lam a) • ιMulti_family g S`.
 Multilinearity of the alternating map `ιMulti` (`AlternatingMap.map_smul_univ`). -/
 private lemma ιMulti_family_smul {ι : Type*} [LinearOrder ι] {k : ℕ} (lam : ι → ℝ) (g : ι → E)
     (S : Set.powersetCard ι k) :
@@ -801,6 +819,7 @@ private lemma ιMulti_family_smul {ι : Type*} [LinearOrder ι] {k : ℕ} (lam :
     funext i; simp
   rw [hcomp, AlternatingMap.map_smul_univ, prod_ofFinEmbEquiv_symm]
 
+omit [FiniteDimensional ℝ E] in
 open scoped Classical in
 /-- **Eigen-diagonalization of the compound (abstract).** For a linear map `f` with an orthonormal
 eigenbasis `u` (`f (u i) = lam i • u i`), the compound `⋀^k f` scales each wedge basis vector
@@ -946,10 +965,10 @@ private lemma toEuclideanLin_mul (B M : Matrix (Fin d) (Fin d) ℝ) :
     Matrix.toEuclideanLin (B * M)
       = (Matrix.toEuclideanLin B) ∘ₗ (Matrix.toEuclideanLin M) := by
   ext v i
-  simp only [Matrix.toEuclideanLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
+  simp only [Matrix.toLpLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
 
 open scoped Classical in
-/-- **L7c.3b.0 — matrix-level Cauchy–Binet.** The `k`-th compound of a matrix product is the
+/-- **Matrix-level Cauchy–Binet.** The `k`-th compound of a matrix product is the
 product of the compounds: `C_k(B * M) = C_k(B) * C_k(M)`. This is the multiplicativity of the
 compound matrix, proved via the functoriality `⋀^k(B ∘ M) = ⋀^k B ∘ ⋀^k M`
 (`exteriorPower.map_comp`) transported through the standard orthonormal-wedge trivialization by
@@ -960,7 +979,8 @@ theorem compoundMatrix_mul (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ) :
   apply (Matrix.toEuclideanLin (n := Fin _) (m := Fin _)).injective
   rw [toEuclideanLin_mul, ← conjExteriorMap_eq_toEuclideanLin_compound,
     ← conjExteriorMap_eq_toEuclideanLin_compound, ← conjExteriorMap_eq_toEuclideanLin_compound]
-  -- `toEuclideanLin (B * M) = toEuclideanLin B ∘ₗ toEuclideanLin M`, then telescope the trivializations.
+  -- `toEuclideanLin (B * M) = toEuclideanLin B ∘ₗ toEuclideanLin M`,
+  -- then telescope the trivializations.
   rw [toEuclideanLin_mul]
   unfold conjExteriorMap
   rw [exteriorPower.map_comp]
@@ -986,23 +1006,25 @@ theorem compoundMatrix_gram (k : ℕ) (M : Matrix (Fin d) (Fin d) ℝ) :
   rw [compoundMatrix_mul, compoundMatrix_transpose]
 
 open scoped Classical in
-/-- **L7c.3b.0 (linear-map form).** `toEuclideanLin` of the `k`-th compound of a product is the
-composition of the compounds. The form consumed by the rank-1 exterior Rayleigh-deficit chain
-(L7c.3b), where the right-hand factor is post-composed with the inverse compound. -/
+/-- **Cauchy–Binet, linear-map form.** `toEuclideanLin` of the `k`-th compound of a product is
+the composition of the compounds. This is the form consumed by the rank-1 exterior
+Rayleigh-deficit chain below, where the right-hand factor is post-composed with the inverse
+compound. -/
 theorem toEuclideanLin_compoundMatrix_mul (k : ℕ) (B M : Matrix (Fin d) (Fin d) ℝ) :
     Matrix.toEuclideanLin (compoundMatrix k (B * M))
-      = Matrix.toEuclideanLin (compoundMatrix k B) ∘ₗ Matrix.toEuclideanLin (compoundMatrix k M) := by
+      = Matrix.toEuclideanLin (compoundMatrix k B)
+        ∘ₗ Matrix.toEuclideanLin (compoundMatrix k M) := by
   rw [compoundMatrix_mul, toEuclideanLin_mul]
 
 /-! ### Top singular value vs. the sum of squared singular values (Frobenius)
 
-The Frobenius back-transport (L7c.3c) needs `‖M‖_op ≤ ‖M‖_F`. Stated through the committed
+The Frobenius back-transport below needs `‖M‖_op ≤ ‖M‖_F`. Stated through the
 singular-value bridge (`toEuclideanLin`) to avoid the L2-operator vs. Frobenius
 `NormedAddCommGroup`-instance diamond on `Matrix`. The core inequality is that the top squared
 singular value is at most the sum of all squared singular values; the sum equals
 `tr(MᵀM) = ‖M‖_F²`. -/
 
-/-- **L7c.3c.0 core.** The top squared singular value of `toEuclideanLin M` is at most the sum of
+/-- The top squared singular value of `toEuclideanLin M` is at most the sum of
 all squared singular values. The sum over `Fin d` equals `tr(MᵀM) = ‖M‖_F²` (the Hilbert–Schmidt
 norm squared); combined with `‖M‖_op = σ₀` this yields `‖M‖_op ≤ ‖M‖_F`. -/
 theorem singularValues_zero_sq_le_sum (M : Matrix (Fin d) (Fin d) ℝ) :
@@ -1021,7 +1043,7 @@ theorem singularValues_zero_sq_le_sum (M : Matrix (Fin d) (Fin d) ℝ) :
       (fun i _ => sq_nonneg _) (Finset.mem_univ (⟨0, hd⟩ : Fin d))
     simpa using hmem
 
-/-- **L7c.3c.0.** The top singular value of `toEuclideanLin M` is at most the Frobenius norm
+/-- The top singular value of `toEuclideanLin M` is at most the Frobenius norm
 `√(∑ σᵢ²)`. Immediate from `singularValues_zero_sq_le_sum` and `Real.sqrt`. -/
 theorem opNorm_le_frobenius (M : Matrix (Fin d) (Fin d) ℝ) :
     (Matrix.toEuclideanLin M).singularValues 0
@@ -1031,7 +1053,7 @@ theorem opNorm_le_frobenius (M : Matrix (Fin d) (Fin d) ℝ) :
     (Real.sqrt_sq ((Matrix.toEuclideanLin M).singularValues_nonneg 0)).symm]
   exact Real.sqrt_le_sqrt (singularValues_zero_sq_le_sum M)
 
-/-- **L7c.3c.0 — the L2 operator-norm Frobenius bridge.** The squared L2 operator norm `‖M‖²` of a
+/-- **The L2 operator-norm/Frobenius bridge.** The squared L2 operator norm `‖M‖²` of a
 matrix is at most the sum of the squared singular values of `toEuclideanLin M` (the squared
 Frobenius norm). The L2 matrix norm `‖M‖` is by definition the operator norm of `toEuclideanLin M`
 on `EuclideanSpace`; expanding any vector in the singular-value eigenbasis `u` of
@@ -1103,7 +1125,7 @@ theorem l2_opNorm_sq_le_sum_singularValues (M : Matrix (Fin d) (Fin d) ℝ) :
     rw [Matrix.l2_opNorm_def]
     apply ContinuousLinearMap.opNorm_le_bound _ (Real.sqrt_nonneg S)
     intro v
-    show ‖_‖ ≤ Real.sqrt S * ‖v‖
+    change ‖_‖ ≤ Real.sqrt S * ‖v‖
     rw [LinearEquiv.trans_apply, LinearMap.coe_toContinuousLinearMap', ← hf]
     have h2 := hpt v
     have hrhs : 0 ≤ Real.sqrt S * ‖v‖ := mul_nonneg (Real.sqrt_nonneg S) (norm_nonneg v)
@@ -1144,7 +1166,7 @@ private lemma toEuclideanLin_mul_rect {a b c : ℕ} (B : Matrix (Fin a) (Fin b) 
     Matrix.toEuclideanLin (B * M)
       = (Matrix.toEuclideanLin B) ∘ₗ (Matrix.toEuclideanLin M) := by
   ext v i
-  simp only [Matrix.toEuclideanLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
+  simp only [Matrix.toLpLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
 
 /-- A matrix `U` with orthonormal columns (`Uᵀ U = 1`) is an isometry, so its L2 operator norm is
 at most `1`. -/
@@ -1154,7 +1176,7 @@ theorem norm_le_one_of_cols_orthonormal {k : ℕ} (U : Matrix (Fin d) (Fin k) �
   apply ContinuousLinearMap.opNorm_le_bound _ zero_le_one
   intro x
   rw [one_mul]
-  show ‖Matrix.toEuclideanLin U x‖ ≤ ‖x‖
+  change ‖Matrix.toEuclideanLin U x‖ ≤ ‖x‖
   have hsq : ‖Matrix.toEuclideanLin U x‖ ^ 2 = ‖x‖ ^ 2 := by
     rw [← real_inner_self_eq_norm_sq, ← real_inner_self_eq_norm_sq]
     have hadj : (inner ℝ (Matrix.toEuclideanLin U x) (Matrix.toEuclideanLin U x) : ℝ)
@@ -1184,7 +1206,7 @@ theorem gram_eigenvalues_le_opNorm_sq {k : ℕ} (W : Matrix (Fin k) (Fin k) ℝ)
     have hinner : (inner ℝ (Matrix.toEuclideanLin G (b i)) (b i) : ℝ)
         = hGherm.eigenvalues i := by
       have hsmul : Matrix.toEuclideanLin G (b i) = hGherm.eigenvalues i • (b i) := by
-        rw [Matrix.toEuclideanLin_apply, hmv]; rfl
+        rw [Matrix.toLpLin_apply, hmv]; rfl
       rw [hsmul, inner_smul_left, real_inner_self_eq_norm_sq, b.orthonormal.1 i]
       simp
     rw [← hinner, hGlin, LinearMap.comp_apply, LinearMap.adjoint_inner_left,
@@ -1197,7 +1219,7 @@ theorem gram_eigenvalues_le_opNorm_sq {k : ℕ} (W : Matrix (Fin k) (Fin k) ℝ)
   rw [b.orthonormal.1 i, mul_one] at hbnd
   nlinarith [norm_nonneg (W' (b i)), norm_nonneg W, hbnd]
 
-/-- **L7c.3c.1 — the Frobenius back-transport.** For matrices `U, V` with orthonormal columns
+/-- **The Frobenius back-transport.** For matrices `U, V` with orthonormal columns
 (`Uᵀ U = 1`, `Vᵀ V = 1`), the squared L2 operator norm of the difference of the orthogonal
 projectors `U Uᵀ` and `V Vᵀ` is bounded by `2 k (1 - det(Uᵀ V)²)`. Chain: self-adjoint idempotents
 of trace `k`; `‖P − P'‖²_op ≤ ∑σᵢ² = tr((P−P')²) = 2k − 2 tr(P P')`; `tr(P P') = ‖Uᵀ V‖_F² = tr(G)`
@@ -1295,6 +1317,7 @@ theorem norm_proj_sub_le_wedge {k : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ)
   exact le_trans hnorm hfinal
 
 set_option maxHeartbeats 800000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **The product of singular values is the L2 operator norm of the compound matrix.** Combining
 the singular-value bridge with the compound identity: `∏_{i<k} σᵢ(toEuclideanLin M) = ‖C_k(M)‖`. -/
 theorem prod_singularValues_eq_l2_opNorm_compound (k : ℕ) (M : Matrix (Fin d) (Fin d) ℝ) :
@@ -1350,10 +1373,10 @@ theorem prod_singularValues_comp_le (k : ℕ) (f : E →ₗ[ℝ] F) (g : F →�
 
 end Crux
 
-/-! ## L7c.3b — the rank-1 exterior Rayleigh-deficit bound
+/-! ## The rank-1 exterior Rayleigh-deficit bound
 
-The orchestrator (L7c.3c) reduces the band-projector increment to a rank-1 dominant-eigenvector
-`sin Θ` estimate (the committed/forthcoming `sin_sq_le_rayleigh_deficit_div_gap`). This section
+The band-projector increment reduces to a rank-1 dominant-eigenvector `sin Θ` estimate
+(`sin_sq_le_rayleigh_deficit_div_gap` in `Oseledets.Lyapunov.OseledetsLimit`). This section
 provides the deficit-side pieces feeding that core: the per-vector compound operator-norm step
 (Lemma 1), the Rayleigh quotient identity and top-eigenvalue ceiling `μ₀ = ‖compound‖²`
 (Lemma 2), and the assembled deficit bound `μ₀ − ⟨C_n v', v'⟩ ≤ (1 − 1/κ²)·μ₀` (Lemma 3),
@@ -1413,7 +1436,7 @@ theorem compoundMatrix_eq_inv_mul (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB
   rw [← compoundMatrix_mul, ← Matrix.mul_assoc, Matrix.nonsing_inv_mul _ (Ne.isUnit hB),
     Matrix.one_mul]
 
-/-- **L7c.4 deliverable (1) — the rank-1 lower bound `μ̃₀ ≥ cM²/cBi²`.** For invertible `B`, the
+/-- **The rank-1 lower bound `μ̃₀ ≥ cM²/cBi²`.** For invertible `B`, the
 squared compound operator norm of the perturbed cocycle step `B · M` (= the top eigenvalue `μ̃₀` of
 `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁`) is bounded below by `cM²/cBi²`, where `cM = ‖compound k M‖` and
 `cBi = ‖compound k B⁻¹‖`. Route: `compound k M = compound k B⁻¹ · compound k (B·M)` gives
@@ -1432,6 +1455,7 @@ theorem norm_sq_compound_mul_ge (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB :
   nlinarith [hstep, hcMnn, norm_nonneg (compoundMatrix k (B * M)), hcBipos]
 
 set_option maxHeartbeats 800000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **Lemma 1 — the rank-1 per-vector step.** The squared norm of the compound of a product,
 applied to `w`, is dominated by `‖compound B‖²` times the squared norm of the `M`-compound at `w`:
 `‖compound(B·M) w‖² ≤ ‖compound B‖²·‖compound M w‖²`. This relates the Rayleigh quotients of the
@@ -1501,6 +1525,7 @@ theorem rayleigh_deficit_kernel {BM CB r CBi mu : ℝ}
     linarith [hr2, heq.ge, heq.le]
 
 set_option maxHeartbeats 1600000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **Lemma 3 — the rank-1 exterior Rayleigh-deficit bound.**
 For invertible `B` and a unit vector `v'` that achieves the operator norm of the compound
 `compound (B·M)` (so `‖compound(B·M) v'‖ = ‖compound(B·M)‖`, i.e. `v'` is a top right-singular
@@ -1536,23 +1561,23 @@ theorem rayleigh_deficit_le (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB : B.d
 
 end Rayleigh
 
-/-! ## L7c.3b (corrected §J) — the off-diagonal residual estimate and the perturbed Gram ceiling
+/-! ## The off-diagonal residual estimate and the perturbed Gram ceiling
 
-The corrected route (§J of `oseledets-l7c-route.md`) replaces the circular Rayleigh-deficit bound by
-the refined Davis–Kahan sin-Θ in **off-diagonal/residual form** (`offdiag_sin_le_residual_div_gap`,
-committed in `OseledetsLimit.lean`). That sin-Θ core needs two cocycle-specific inputs:
+The refined Davis–Kahan sin-Θ estimate in **off-diagonal/residual form**
+(`offdiag_sin_le_residual_div_gap` in `Oseledets.Lyapunov.OseledetsLimit`) needs two
+cocycle-specific inputs:
 
 * the **off-diagonal residual numerator** `‖Cₙ₊₁ v₀ − ⟪Cₙ₊₁ v₀, v₀⟫ v₀‖ ≤ τ₀ τ₁ ‖H‖²`, where
-  `Cₙ₊₁ = adjoint G' ∘ₗ G'`, `G' = H ∘ₗ G`, and `v₀` is the top eigenvector of `Cₙ = adjoint G ∘ₗ G`
-  (`offdiag_residual_norm_le`);
+  `Cₙ₊₁ = adjoint G' ∘ₗ G'`, `G' = H ∘ₗ G`, and `v₀` is the top eigenvector of
+  `Cₙ = adjoint G ∘ₗ G` (`offdiag_residual_norm_le`);
 * the **`ν`-ceiling** `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖H‖²) ‖z‖²` transported from the `Cₙ`-ceiling
   `∀ z ⊥ v₀, ⟪Cₙ z, z⟫ ≤ μ₁ ‖z‖²` (`perturbed_gram_ceiling`).
 
 Both are abstract operator facts (no compound/exterior structure); the cocycle specialisation in
 standard coordinates (where `G = toEuclideanLin (compoundMatrix k ·)`) follows by
 `toEuclideanLin_compoundMatrix_mul` (functoriality `G' = H ∘ₗ G`) and the per-vector operator-norm
-bound `norm_toEuclideanLin_apply_le`. These pieces feed the band-projector increment bound (L7c.3c)
-together with the committed back-transport `norm_proj_sub_le_wedge`. -/
+bound `norm_toEuclideanLin_apply_le`. These pieces feed the band-projector increment bound
+together with the back-transport `norm_proj_sub_le_wedge`. -/
 
 section OffDiag
 
@@ -1562,33 +1587,35 @@ variable {E F : Type*}
 
 open scoped RealInnerProductSpace
 
-/-- **J2.a — the off-diagonal residual is orthogonal to `v₀`.** For a unit `v₀`, the residual
+omit [FiniteDimensional ℝ E] in
+/-- **The off-diagonal residual is orthogonal to `v₀`.** For a unit `v₀`, the residual
 `C v₀ − ⟪C v₀, v₀⟫ v₀ = (I − P) C v₀` is orthogonal to `v₀`. -/
 theorem residual_orthogonal {C : E →ₗ[ℝ] E} {v₀ : E} (hv₀ : ‖v₀‖ = 1) :
     (inner ℝ (C v₀ - (inner ℝ (C v₀) v₀ : ℝ) • v₀) v₀ : ℝ) = 0 := by
   have hv₀v₀ : (inner ℝ v₀ v₀ : ℝ) = 1 := by rw [real_inner_self_eq_norm_sq, hv₀]; norm_num
   rw [inner_sub_left, real_inner_smul_left, hv₀v₀, mul_one, sub_self]
 
-/-- **J2.b — Rayleigh of the Gram operator is the squared norm.** `⟪(adjoint G ∘ₗ G) v, v⟫ = ‖G v‖²`
+/-- **Rayleigh of the Gram operator is the squared norm:** `⟪(adjoint G ∘ₗ G) v, v⟫ = ‖G v‖²`
 (abstract form; `rayleigh_compound_eq_norm_sq` is the compound-matrix specialisation). -/
 theorem gram_rayleigh_eq_norm_sq (G : E →ₗ[ℝ] F) (v : E) :
     (inner ℝ ((LinearMap.adjoint G ∘ₗ G) v) v : ℝ) = ‖G v‖ ^ 2 := by
   rw [LinearMap.comp_apply, LinearMap.adjoint_inner_left, real_inner_self_eq_norm_sq]
 
-/-- **J2.c — the off-diagonal inner product reduction.** `⟪(adjoint G' ∘ₗ G') v₀, z⟫ = ⟪G' v₀, G' z⟫`
+/-- **The off-diagonal inner product reduction:**
+`⟪(adjoint G' ∘ₗ G') v₀, z⟫ = ⟪G' v₀, G' z⟫`
 (plain adjoint move; for `z ⊥ v₀` this is the off-diagonal block of `Cₙ₊₁`). -/
 theorem offdiag_inner_eq (G' : E →ₗ[ℝ] F) (v₀ z : E) :
     (inner ℝ ((LinearMap.adjoint G' ∘ₗ G') v₀) z : ℝ) = inner ℝ (G' v₀) (G' z) := by
   rw [LinearMap.comp_apply, LinearMap.adjoint_inner_left]
 
-/-- **NODE 1 (L7c.3b, §J.2) — the off-diagonal residual norm estimate.**
+/-- **The off-diagonal residual norm estimate.**
 For the perturbed Gram operator `Cₙ₊₁ = adjoint G' ∘ₗ G'` with `G' = H ∘ₗ G` (functoriality) and
 `v₀` the top unit eigenvector of `Cₙ = adjoint G ∘ₗ G`, the off-diagonal residual
 `Cₙ₊₁ v₀ − ⟪Cₙ₊₁ v₀, v₀⟫ v₀` has norm at most `τ₀ · τ₁ · ‖H‖²`, where `τ₀ = ‖G v₀‖` (the top
 singular value of `G`) and `τ₁` is the second-singular-value ceiling on `v₀^⊥`
 (`hperp : ∀ z ⊥ v₀, ‖z‖ ≤ 1 → ‖G z‖ ≤ τ₁`).
 
-Proof (§J.2): the residual `res ⊥ v₀`; `‖res‖² = ⟪res, res⟫ = ⟪Cₙ₊₁ v₀, res⟫` (since `res ⊥ v₀`)
+Proof: the residual `res ⊥ v₀`; `‖res‖² = ⟪res, res⟫ = ⟪Cₙ₊₁ v₀, res⟫` (since `res ⊥ v₀`)
 `= ⟪H G v₀, H G res⟫ ≤ ‖H‖²‖G v₀‖‖G res‖ ≤ ‖H‖² τ₀ τ₁ ‖res‖` by Cauchy–Schwarz, the per-vector
 operator-norm bound on `H`, `htop`, and `hperp` applied to the unit normalisation of `res`. Dividing
 by `‖res‖` gives the bound. -/
@@ -1640,7 +1667,7 @@ theorem offdiag_residual_norm_le
     have hmul : ‖res‖ * ‖res‖ ≤ (τ₀ * τ₁ * nH ^ 2) * ‖res‖ := by nlinarith [hb]
     exact le_of_mul_le_mul_right hmul hrpos
 
-/-- **NODE 1 ceiling (L7c.3b.ν, §J.3) — the `ν`-ceiling for the perturbed Gram operator.**
+/-- **The `ν`-ceiling for the perturbed Gram operator.**
 From a Rayleigh ceiling `∀ z ⊥ v₀, ⟪Cₙ z, z⟫ ≤ μ₁ ‖z‖²` on the unperturbed Gram operator
 `Cₙ = adjoint G ∘ₗ G`, the perturbed operator `Cₙ₊₁ = adjoint G' ∘ₗ G'` with `G' = H ∘ₗ G` obeys
 the amplified ceiling `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖H‖²) ‖z‖²`. Proof: `⟪Cₙ₊₁ z, z⟫ = ‖H G z‖²
@@ -1669,7 +1696,7 @@ theorem perturbed_gram_ceiling
 
 end OffDiag
 
-/-! ### The cocycle specialisation of NODE 1 (compound-matrix coordinates)
+/-! ### The cocycle specialisation in compound-matrix coordinates
 
 Specialising `offdiag_residual_norm_le` / `perturbed_gram_ceiling` to the cocycle Gram operators
 `Cₙ = adjoint Gₙ ∘ₗ Gₙ`, `Gₙ = toEuclideanLin (compoundMatrix k Mₙ)`, with the one-step left factor
@@ -1684,7 +1711,7 @@ variable {d : ℕ}
 
 open scoped RealInnerProductSpace
 
-/-- **NODE 1 (cocycle, §J.2) — the off-diagonal residual estimate for the compound Gram operators.**
+/-- **The off-diagonal residual estimate for the compound Gram operators.**
 With `Gₙ = toEuclideanLin (compoundMatrix k M)`, `Cₙ = adjoint Gₙ ∘ₗ Gₙ`, the one-step left factor
 `B`, and `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁` for `Gₙ₊₁ = toEuclideanLin (compoundMatrix k (B * M))`: if
 `v₀` is a unit vector achieving the compound operator norm `‖Gₙ v₀‖ = ‖compoundMatrix k M‖ = τ₀`
@@ -1720,7 +1747,7 @@ theorem norm_offdiag_residual_compound_le (k : ℕ) (B M : Matrix (Fin d) (Fin d
         = Real.sqrt (‖Matrix.toEuclideanLin (compoundMatrix k M) z‖ ^ 2) :=
           (Real.sqrt_sq hnn).symm
       _ ≤ Real.sqrt μ₁ := Real.sqrt_le_sqrt hsq
-  -- apply the abstract NODE 1 with the functoriality `G' = H ∘ₗ G`.
+  -- apply the abstract residual estimate with the functoriality `G' = H ∘ₗ G`.
   exact offdiag_residual_norm_le
     (G := Matrix.toEuclideanLin (compoundMatrix k M))
     (H := Matrix.toEuclideanLin (compoundMatrix k B))
@@ -1730,7 +1757,7 @@ theorem norm_offdiag_residual_compound_le (k : ℕ) (B M : Matrix (Fin d) (Fin d
     (fun y => norm_toEuclideanLin_apply_le (compoundMatrix k B) y)
     hperp
 
-/-- **NODE 1 ceiling (cocycle, §J.3) — the `ν`-ceiling for the perturbed compound Gram operator.**
+/-- **The `ν`-ceiling for the perturbed compound Gram operator.**
 From a `μ₁`-Rayleigh ceiling on `Cₙ = adjoint Gₙ ∘ₗ Gₙ` over `v₀^⊥`, the perturbed compound Gram
 operator `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁` (with `Gₙ₊₁ = toEuclideanLin (compoundMatrix k (B * M))`)
 obeys the amplified ceiling `∀ z ⊥ v₀, ⟪Cₙ₊₁ z, z⟫ ≤ (μ₁ ‖compoundMatrix k B‖²) ‖z‖²`. This is the
@@ -1755,14 +1782,15 @@ theorem perturbed_compound_gram_ceiling (k : ℕ) (B M : Matrix (Fin d) (Fin d) 
 
 end CompoundOffDiag
 
-/-! ## The Plücker bridge (PB1/PB2/PB3)
+/-! ## The Plücker bridge
 
 For a symmetric PD map `f` with orthonormal eigenbasis `u` and eigenvalues `lam`, the compound
 `⋀^k f`, conjugated through the eigenbasis wedge trivialization `onbTriv u`, is a **diagonal**
 Euclidean operator: it scales `basisFun i` by the subset product `∏_{a ∈ Sᵢ} lam a`. The top set
 `{0,…,k-1}` (maximal by `prod_le_prod_top` for antitone weights) gives the top eigenvector
-`v₀ = basisFun i₀` with eigenvalue `μ₀` (PB1), and every other weight is `≤ μ₁` (PB2). PB3 is the
-det-Gram identity for the Plücker (wedge) inner product. -/
+`v₀ = basisFun i₀` with eigenvalue `μ₀`, and every other weight is `≤ μ₁` (the second-eigenvalue
+ceiling). The bridge is completed by the det-Gram identity for the Plücker (wedge) inner
+product. -/
 
 section Plucker
 
@@ -1791,7 +1819,7 @@ private lemma conjExteriorMap_onbTriv_diag {ι : Type*} [Fintype ι] [LinearOrde
   rw [map_exteriorPower_wedgeBasis_eq f u lam hf k, map_smul, onbTriv_wedge_eq_basisFun]
 
 open scoped Classical in
-/-- **PB3 — the Plücker (wedge) inner product is the cross-Gram determinant.** For two families
+/-- **The Plücker (wedge) inner product is the cross-Gram determinant.** For two families
 `v, w : Fin k → E`, the L2 inner product of their Hodge-trivialized wedges equals the determinant
 of the cross-Gram matrix `⟪v j, w i⟫`. With orthonormal frames this is the wedge-sine identity
 `⟪w_E, w_E'⟫ = det(UᵀV)` feeding the Frobenius back-transport `norm_proj_sub_le_wedge`. -/
@@ -1821,7 +1849,7 @@ theorem inner_colE {d k : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ) (i j : Fin k) 
   simp only [RCLike.inner_apply, conj_trivial, EuclideanSpace.equiv, Matrix.transpose_apply]
   exact Finset.sum_congr rfl (fun a _ => mul_comm _ _)
 
-/-- **Deliverable (1) — the Plücker frame ↔ wedge determinant bridge (matrix form).** For two `d×k`
+/-- **The Plücker frame ↔ wedge determinant bridge (matrix form).** For two `d×k`
 column-frames `U`, `V`, the determinant of the cross-Gram `Uᵀ V` equals the L2 inner product of the
 Hodge-trivialized wedges of their columns. This is the `hdet : det(UᵀV) = ⟪vt, v₀⟫` plumbing fact
 consumed by `Oseledets.norm_bandProjector_succ_sub_le`, with `v₀ = wedge of U-columns` (the Plücker
@@ -1851,12 +1879,14 @@ theorem det_transpose_mul_eq_inner_hodge {d k : ℕ} (U V : Matrix (Fin d) (Fin 
 /-- A Euclidean operator diagonal in the standard basis (with real weights) is symmetric. -/
 private lemma diag_isSymmetric {N : ℕ}
     (g : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] EuclideanSpace ℝ (Fin N)) (c : Fin N → ℝ)
-    (hg : ∀ i, g (EuclideanSpace.basisFun (Fin N) ℝ i) = c i • EuclideanSpace.basisFun (Fin N) ℝ i) :
+    (hg : ∀ i, g (EuclideanSpace.basisFun (Fin N) ℝ i)
+      = c i • EuclideanSpace.basisFun (Fin N) ℝ i) :
     g.IsSymmetric := by
   -- check symmetry on the standard basis, then extend bilinearly.
   have hbasis : ∀ i j, (inner ℝ (g (EuclideanSpace.basisFun (Fin N) ℝ i))
       (EuclideanSpace.basisFun (Fin N) ℝ j) : ℝ)
-      = inner ℝ (EuclideanSpace.basisFun (Fin N) ℝ i) (g (EuclideanSpace.basisFun (Fin N) ℝ j)) := by
+      = inner ℝ (EuclideanSpace.basisFun (Fin N) ℝ i)
+          (g (EuclideanSpace.basisFun (Fin N) ℝ j)) := by
     intro i j
     rw [hg i, hg j, inner_smul_left, inner_smul_right,
       (EuclideanSpace.basisFun (Fin N) ℝ).inner_eq_ite i j]
@@ -1873,7 +1903,7 @@ private lemma diag_isSymmetric {N : ℕ}
   apply Finset.sum_congr rfl; intro j _
   rw [hbasis j i]
 
-/-- **PB1 (abstract).** A Euclidean operator `g` diagonal in the standard basis with weights `c`
+/-- A Euclidean operator `g` diagonal in the standard basis with weights `c`
 (`g (basisFun i) = c i • basisFun i`) has `basisFun i₀` as an eigenvector with eigenvalue `c i₀`. -/
 private lemma diag_apply_basisFun_eigenpair {N : ℕ}
     (g : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] EuclideanSpace ℝ (Fin N)) (c : Fin N → ℝ)
@@ -1882,14 +1912,15 @@ private lemma diag_apply_basisFun_eigenpair {N : ℕ}
     g (EuclideanSpace.basisFun (Fin N) ℝ i₀) = c i₀ • EuclideanSpace.basisFun (Fin N) ℝ i₀ :=
   hg i₀
 
-/-- **PB2 (abstract).** For a diagonal Euclidean operator `g` with weights `c`, the Rayleigh
+/-- For a diagonal Euclidean operator `g` with weights `c`, the Rayleigh
 quotient on a vector `w` orthogonal to `basisFun i₀` is bounded by `μ₁ ‖w‖²`, provided every weight
 off the top index `i₀` is `≤ μ₁` (and `0 ≤ μ₁`). -/
 private lemma diag_rayleigh_ceiling {N : ℕ}
     (g : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] EuclideanSpace ℝ (Fin N)) (c : Fin N → ℝ)
     (hg : ∀ i, g (EuclideanSpace.basisFun (Fin N) ℝ i) = c i • EuclideanSpace.basisFun (Fin N) ℝ i)
     {μ₁ : ℝ} (i₀ : Fin N) (hcap : ∀ i, i ≠ i₀ → c i ≤ μ₁) (_hμpos : 0 ≤ μ₁)
-    (w : EuclideanSpace ℝ (Fin N)) (hw : (inner ℝ w (EuclideanSpace.basisFun (Fin N) ℝ i₀) : ℝ) = 0) :
+    (w : EuclideanSpace ℝ (Fin N))
+    (hw : (inner ℝ w (EuclideanSpace.basisFun (Fin N) ℝ i₀) : ℝ) = 0) :
     (inner ℝ (g w) w : ℝ) ≤ μ₁ * ‖w‖ ^ 2 := by
   -- expand `w` in the standard basis; the Rayleigh quotient is the weighted sum `∑ cᵢ (wᵢ)²`.
   have hwi₀ : w i₀ = 0 := by
@@ -1928,18 +1959,18 @@ private lemma diag_rayleigh_ceiling {N : ℕ}
   · rw [mul_comm (c i), mul_comm μ₁]
     exact mul_le_mul_of_nonneg_left (hcap i hi) (sq_nonneg _)
 
-/-! ### The Plücker eigenpair and second-eigenvalue ceiling (PB1 + PB2 assembled) -/
+/-! ### The Plücker eigenpair and second-eigenvalue ceiling -/
 
 open scoped Classical in
-/-- **PB1 + PB2 — the Plücker bridge for a symmetric map.** Let `f` be symmetric with orthonormal
+/-- **The Plücker bridge for a symmetric map.** Let `f` be symmetric with orthonormal
 eigenbasis `u : OrthonormalBasis (Fin n)` and antitone nonnegative eigenvalues
 `lam : ℕ → ℝ` (`f (u i) = lam i • u i`). At a genuine gap `lam k < lam (k-1)` (with `1 ≤ k ≤ n`),
 the conjugated compound `C = ⋀^k f` (through the eigenbasis wedge trivialization `onbTriv u`) is a
 **symmetric operator** with:
 
-* **top eigenpair (PB1):** `C v₀ = μ₀ • v₀`, where `v₀ = basisFun i₀` is the Plücker image of the
+* **top eigenpair:** `C v₀ = μ₀ • v₀`, where `v₀ = basisFun i₀` is the Plücker image of the
   top-`k` eigenframe and `μ₀ = ∏_{i<k} lam i`;
-* **second-eigenvalue ceiling (PB2):** `∀ w ⊥ v₀, ⟪C w, w⟫ ≤ μ₁ ‖w‖²` with
+* **second-eigenvalue ceiling:** `∀ w ⊥ v₀, ⟪C w, w⟫ ≤ μ₁ ‖w‖²` with
   `μ₁ = (∏_{i<k-1} lam i)·lam k`;
 * **the gap:** `μ₁ < μ₀`.
 
@@ -2029,7 +2060,8 @@ theorem plucker_eigenpair_ceiling {n : ℕ} (f : E →ₗ[ℝ] E)
     rw [hprodeq]
     -- non-top: the images differ.
     have himgS : (S : Finset (Fin n)) = Finset.univ.image (fun j : Fin k => e j) := by
-      have himg : (S : Finset (Fin n)) = Finset.univ.image (Set.powersetCard.ofFinEmbEquiv.symm S) := by
+      have himg : (S : Finset (Fin n))
+          = Finset.univ.image (Set.powersetCard.ofFinEmbEquiv.symm S) := by
         rw [Set.powersetCard.ofFinEmbEquiv_symm_apply, Finset.image_orderEmbOfFin_univ]
       rw [himg, he]
     have htopImg : topSet.val = Finset.univ.image topEmb := by
@@ -2067,7 +2099,7 @@ theorem plucker_eigenpair_ceiling {n : ℕ} (f : E →ₗ[ℝ] E)
       -- `lam j ≥ lam (k-1) > lam k ≥ 0`, since `j ≤ k-1` and `lam` antitone.
       have hjle : lam (k-1) ≤ lam j := hanti (by omega)
       exact lt_of_lt_of_le (lt_of_le_of_lt (hpos k) hgap) hjle
-    show μ₁ < μ₀
+    change μ₁ < μ₀
     calc μ₁ = (∏ i ∈ Finset.range (k-1), lam i) * lam k := rfl
       _ < (∏ i ∈ Finset.range (k-1), lam i) * lam (k-1) := mul_lt_mul_of_pos_left hgap hpre_pos
       _ = μ₀ := by
@@ -2084,9 +2116,10 @@ open scoped Classical in
 /-- **Witness-exposing Plücker bridge (eigenbasis coords).** Same as `plucker_eigenpair_ceiling`,
 but with the top eigenvector index `i₀` produced *explicitly* as `wIndexEquiv u k topSet` (where
 `topSet` is the top-`k` prefix subset), and with the extra identity pinning the standard basis
-vector `basisFun i₀` to the explicit Hodge-trivialized wedge `onbTriv u k (e_{u₀} ∧ ⋯ ∧ e_{u_{k-1}})`
-of the top-`k` eigenframe. This is the variant `plucker_eigenpair_ceiling_standard'` transports to
-standard coordinates to expose the band-projector frame wedge. -/
+vector `basisFun i₀` to the explicit Hodge-trivialized wedge
+`onbTriv u k (e_{u₀} ∧ ⋯ ∧ e_{u_{k-1}})` of the top-`k` eigenframe. This is the variant
+`plucker_eigenpair_ceiling_standard'` transports to standard coordinates to expose the
+band-projector frame wedge. -/
 theorem plucker_eigenpair_ceiling' {n : ℕ} (f : E →ₗ[ℝ] E)
     (u : OrthonormalBasis (Fin n) ℝ E) (lam : ℕ → ℝ) (hanti : Antitone lam)
     (hpos : ∀ i, 0 ≤ lam i) (hf : ∀ i, f (u i) = lam (i : ℕ) • u i)
@@ -2163,7 +2196,8 @@ theorem plucker_eigenpair_ceiling' {n : ℕ} (f : E →ₗ[ℝ] E)
       rw [he]; exact (prod_ofFinEmbEquiv_symm (fun a : Fin n => lam (a : ℕ)) S).symm
     rw [hprodeq]
     have himgS : (S : Finset (Fin n)) = Finset.univ.image (fun j : Fin k => e j) := by
-      have himg : (S : Finset (Fin n)) = Finset.univ.image (Set.powersetCard.ofFinEmbEquiv.symm S) := by
+      have himg : (S : Finset (Fin n))
+          = Finset.univ.image (Set.powersetCard.ofFinEmbEquiv.symm S) := by
         rw [Set.powersetCard.ofFinEmbEquiv_symm_apply, Finset.image_orderEmbOfFin_univ]
       rw [himg, he]
     have htopImg : topSet.val = Finset.univ.image topEmb := by
@@ -2209,7 +2243,7 @@ theorem plucker_eigenpair_ceiling' {n : ℕ} (f : E →ₗ[ℝ] E)
       rw [Finset.mem_range] at hj
       have hjle : lam (k-1) ≤ lam j := hanti (by omega)
       exact lt_of_lt_of_le (lt_of_le_of_lt (hpos k) hgap) hjle
-    show μ₁ < μ₀
+    change μ₁ < μ₀
     calc μ₁ = (∏ i ∈ Finset.range (k-1), lam i) * lam k := rfl
       _ < (∏ i ∈ Finset.range (k-1), lam i) * lam (k-1) := mul_lt_mul_of_pos_left hgap hpre_pos
       _ = μ₀ := by
@@ -2251,7 +2285,7 @@ private lemma conjExteriorMap_onbChange_conj {ιE ιE' : Type*}
     conjExteriorMap k (onbTriv b' k) (onbTriv b' k) f p
       = onbChange b b' k (conjExteriorMap k (onbTriv b k) (onbTriv b k) f
           ((onbChange b b' k).symm p)) := by
-  show conjExteriorMap k (onbTriv b' k) (onbTriv b' k) f p
+  change conjExteriorMap k (onbTriv b' k) (onbTriv b' k) f p
       = onbTriv b' k ((onbTriv b k).symm (conjExteriorMap k (onbTriv b k) (onbTriv b k) f
           (onbTriv b k ((onbTriv b' k).symm p))))
   simp only [conjExteriorMap, LinearMap.comp_apply, LinearEquiv.coe_coe,
@@ -2311,7 +2345,7 @@ lemma eigenpair_ceiling_transport {ιE ιE' : Type*}
   have hWv₀ : W (W.symm e₀) = e₀ := LinearIsometryEquiv.apply_symm_apply W e₀
   refine ⟨?_, ?_, ?_⟩
   · rw [LinearIsometryEquiv.norm_map, he₀, EuclideanSpace.basisFun_apply,
-      EuclideanSpace.norm_single, norm_one]
+      PiLp.norm_single, norm_one]
   · rw [hconj (W.symm e₀), hWv₀, hev, map_smul]
   · intro w hw
     rw [hconj w]
@@ -2333,13 +2367,14 @@ The matrix-level packaging `plucker_eigenpair_ceiling_standard` transports
 (via `eigenpair_ceiling_transport`) into the **standard** wedge trivialization
 `onbTriv (EuclideanSpace.basisFun (Fin d) ℝ)`, where the compound bridge
 `conjExteriorMap_eq_toEuclideanLin_compound` identifies the conjugated compound of
-`toEuclideanLin Q` with `toEuclideanLin (compoundMatrix k Q)` — exactly the operator consumed by the
-NODE 1 lemmas `norm_offdiag_residual_compound_le` / `perturbed_compound_gram_ceiling`.
+`toEuclideanLin Q` with `toEuclideanLin (compoundMatrix k Q)` — exactly the operator consumed by
+the off-diagonal residual lemmas `norm_offdiag_residual_compound_le` /
+`perturbed_compound_gram_ceiling`.
 
-The single declaration combining plucker ∘ transport ∘ matrix-identification timed out even at
-`maxHeartbeats 1600000`. The fix is to *split* the heavy matrix-identification step into an isolated
-scoped lemma (`conjExteriorMap_basisFun_toEuclideanLin_eq_compound` below — a thin alias of the
-committed compound bridge, kept separate so its `⋀^k` finrank elaboration cost is contained) and to
+A single declaration combining plucker ∘ transport ∘ matrix-identification times out even at
+`maxHeartbeats 1600000`. The fix is to *split* the heavy matrix-identification step into an
+isolated scoped lemma (`conjExteriorMap_basisFun_toEuclideanLin_eq_compound` below — a thin alias
+of the compound bridge, kept separate so its `⋀^k` finrank elaboration cost is contained) and to
 keep the transport/assembly in its own scoped declaration. -/
 
 section StandardCoords
@@ -2347,10 +2382,11 @@ section StandardCoords
 variable {d : ℕ}
 
 set_option maxHeartbeats 800000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(A) — the isolated matrix-identification step.** Through the standard orthonormal-wedge
 trivialization (`onbTriv (EuclideanSpace.basisFun (Fin d) ℝ)`), the conjugated compound of
-`toEuclideanLin M` is `toEuclideanLin (compoundMatrix k M)`. This is a thin re-export of the
-committed `conjExteriorMap_eq_toEuclideanLin_compound`, isolated in its own scoped declaration so
+`toEuclideanLin M` is `toEuclideanLin (compoundMatrix k M)`. This is a thin re-export of
+`conjExteriorMap_eq_toEuclideanLin_compound`, isolated in its own scoped declaration so
 that the (heavy) `⋀^k` finrank-indexed elaboration is paid here exactly once, keeping the
 assembled `plucker_eigenpair_ceiling_standard` under budget. -/
 theorem conjExteriorMap_basisFun_toEuclideanLin_eq_compound
@@ -2361,6 +2397,7 @@ theorem conjExteriorMap_basisFun_toEuclideanLin_eq_compound
   conjExteriorMap_eq_toEuclideanLin_compound k M
 
 set_option maxHeartbeats 1200000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(B) — `plucker_eigenpair_ceiling_standard`.** The Plücker eigenpair + second-eigenvalue
 ceiling in *standard* compound-matrix coordinates. For a symmetric PSD `f = toEuclideanLin Q` with
 orthonormal eigenbasis `u` and antitone nonnegative eigenvalues `lam`, at a genuine gap
@@ -2374,8 +2411,8 @@ trivialization) has:
 
 Assembled from `plucker_eigenpair_ceiling` (eigenbasis-wedge coords) → `eigenpair_ceiling_transport`
 (`onbChange` to standard `basisFun` coords) → `conjExteriorMap_basisFun_toEuclideanLin_eq_compound`
-(matrix identification, isolated in (A)). This is the top spectral data of `Cₙ = ⋀^k Qₙ` that the
-NODE 1 lemmas `norm_offdiag_residual_compound_le` / `perturbed_compound_gram_ceiling` consume. -/
+(matrix identification, isolated in (A)). This is the top spectral data of `Cₙ = ⋀^k Qₙ` that
+`norm_offdiag_residual_compound_le` / `perturbed_compound_gram_ceiling` consume. -/
 theorem plucker_eigenpair_ceiling_standard {n : ℕ} (Q : Matrix (Fin d) (Fin d) ℝ)
     (u : OrthonormalBasis (Fin n) ℝ (EuclideanSpace ℝ (Fin d)))
     (lam : ℕ → ℝ) (hanti : Antitone lam) (hpos : ∀ i, 0 ≤ lam i)
@@ -2391,7 +2428,7 @@ theorem plucker_eigenpair_ceiling_standard {n : ℕ} (Q : Matrix (Fin d) (Fin d)
           (inner ℝ (Matrix.toEuclideanLin (compoundMatrix k Q) w) w : ℝ)
             ≤ ((∏ i ∈ Finset.range (k-1), lam i) * lam k) * ‖w‖ ^ 2 := by
   classical
-  -- eigenbasis-coords Plücker data (PB1 + PB2).
+  -- eigenbasis-coords Plücker data (top eigenpair + ceiling).
   obtain ⟨i₀, _hsym, hev, hgapμ, hceil⟩ :=
     plucker_eigenpair_ceiling (Matrix.toEuclideanLin Q) u lam hanti hpos hf hk1 hkn hgap
   -- transport to standard (`basisFun`) wedge coordinates via the orthogonal `onbChange`.
@@ -2422,6 +2459,7 @@ private lemma onbChange_symm_apply {E : Type*}
     LinearEquiv.symm_apply_apply, LinearEquiv.apply_symm_apply]
 
 set_option maxHeartbeats 1600000 in
+-- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(B') — witness-exposing `plucker_eigenpair_ceiling_standard`.** Same spectral data as
 `plucker_eigenpair_ceiling_standard`, but with the top eigenvector produced *explicitly* as the
 standard-trivialization wedge `w₀ = onbTriv basisFun k (e_{u₀} ∧ ⋯ ∧ e_{u_{k-1}})` of the top-`k`
@@ -2503,8 +2541,8 @@ The sorted eigenvalues of a self-adjoint operator are 1-Lipschitz in the operato
 difference (the **Weyl perturbation inequality**, a consequence of the Courant–Fischer min-max
 characterization). Mathlib's `Mathlib/Analysis/InnerProductSpace/Rayleigh.lean` provides only the
 *extreme* eigenvalues as Rayleigh `iSup`/`iInf`; the per-index variational bound below — and the
-resulting continuity of `Matrix.IsHermitian.eigenvalues₀` — are new. This is the missing analytic
-ingredient that lets the eigenvalues pass to the Oseledets matrix limit (L9). -/
+resulting continuity of `Matrix.IsHermitian.eigenvalues₀` — are new. This is the analytic
+ingredient that lets the eigenvalues pass to the Oseledets matrix limit. -/
 
 namespace Weyl
 
@@ -2709,3 +2747,5 @@ end Matrix
 end Weyl
 
 end
+
+set_option linter.style.longFile 2900
