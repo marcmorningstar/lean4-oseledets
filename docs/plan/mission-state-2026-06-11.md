@@ -1,4 +1,10 @@
-# Autonomous mission state — paused on monthly spend limit (2026-06-11 ~16:30 UTC)
+# Autonomous mission state — PAUSED (user request + monthly spend limit)
+
+> Update (2026-06-11 ~17:00 UTC): build green (2934 jobs); Stage B COMPLETE and
+> committed (`3c6077f`, corollaries, sorry-free, axioms clean); Stage A phase 1
+> partial state committed (`0816507`). Working tree clean. Resume from "Resume
+> protocol" below — remaining: Stage A phase 1 finish (~28 files) + phase 2,
+> Stage C (two-sided, blueprint ready), Stage D (final QA).
 
 Mission (user mandate): (A) fix all findings of `docs/plan/style-review-2026-06-11.md`,
 (B) add companion corollaries per `docs/plan/blueprints/companion-corollaries.md`,
