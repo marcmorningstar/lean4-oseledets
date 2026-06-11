@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lake env lean *)",
+      "Bash(lake build)",
+      "Bash(lake build *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(firecrawl search *)",
+      "Bash(firecrawl scrape *)",
+      "Bash(firecrawl map *)"
+    ]
+  }
+}
