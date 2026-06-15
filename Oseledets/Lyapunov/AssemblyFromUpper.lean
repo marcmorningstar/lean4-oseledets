@@ -59,12 +59,12 @@ variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
 /-! ## Forward inclusion of `hslowflag` from `hupper` -/
 
-omit [NeZero d] in
-/-- **`Vslow (exp t) ⊆ lambdaSublevel t` from `hupper`.**  A nonzero vector in the Λ-slow band at
-level `e^t` has, by `hupper`, `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ t`; that `limsup` *is* `lambdaBar A T x v`
-(`limsup_log_norm_cocycle_eq_lambdaBar`), so `lambdaBar A T x v ≤ t`, i.e. `v ∈ lambdaSublevel t`.
-The zero vector lies in every submodule.  Requires only the `IsUltrametricGrowth` good set (to use
-the sublevel membership criterion `mem_lambdaSublevel`). -/
+omit [MeasurableSpace X] [NeZero d] in
+/-- **`Vslow (exp t) ⊆ lambdaSublevel t` from `hupper`.**  A nonzero vector in the Λ-slow band
+at level `e^t` has, by `hupper`, `limsup (1/n) log‖A⁽ⁿ⁾ v‖ ≤ t`; that `limsup` *is*
+`lambdaBar A T x v` (`limsup_log_norm_cocycle_eq_lambdaBar`), so `lambdaBar A T x v ≤ t`, i.e.
+`v ∈ lambdaSublevel t`.  The zero vector lies in every submodule.  Requires only the
+`IsUltrametricGrowth` good set (to use the sublevel membership criterion `mem_lambdaSublevel`). -/
 theorem vslow_subset_lambdaSublevel_of_upper
     {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x))
@@ -82,16 +82,16 @@ theorem vslow_subset_lambdaSublevel_of_upper
 
 /-! ## The `hgrowth` upper half from `Vflag` membership
 
-The upper half `hub` of `Oseledets.hgrowth_of_upper_lower` is, in fact, *unconditional* given the
-`IsUltrametricGrowth` good set: a vector in the stratum `Vflag i.castSucc \ Vflag i.succ` has
-`lambdaBar = specList i` exactly (`lambdaBar_eq_on_stratum`), and that `lambdaBar` is the `limsup`
-(`limsup_log_norm_cocycle_eq_lambdaBar`).  So `limsup ≤ specList i` holds (with equality) and `hub`
-needs no separate analytic input. -/
+The upper half `hub` of `Oseledets.hgrowth_of_upper_lower` is, in fact, *unconditional* given
+the `IsUltrametricGrowth` good set: a vector in the stratum `Vflag i.castSucc \ Vflag i.succ`
+has `lambdaBar = specList i` exactly (`lambdaBar_eq_on_stratum`), and that `lambdaBar` is the
+`limsup` (`limsup_log_norm_cocycle_eq_lambdaBar`).  So `limsup ≤ specList i` holds (with
+equality) and `hub` needs no separate analytic input. -/
 
 omit [NeZero d] in
-/-- **`hub` from `Vflag` membership (a.e.).**  On the `IsUltrametricGrowth` good set the per-stratum
-`limsup` equals the exact exponent `specList i`, so in particular `limsup ≤ specList i` — the upper
-half consumed by `Oseledets.hgrowth_of_upper_lower`. -/
+/-- **`hub` from `Vflag` membership (a.e.).**  On the `IsUltrametricGrowth` good set the
+per-stratum `limsup` equals the exact exponent `specList i`, so in particular
+`limsup ≤ specList i` — the upper half consumed by `Oseledets.hgrowth_of_upper_lower`. -/
 theorem hub_of_growthFunction
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
@@ -108,6 +108,7 @@ theorem hub_of_growthFunction
 
 /-! ## Assembling `hslowflag` from the forward (`hupper`) and reverse inclusions -/
 
+omit [NeZero d] in
 /-- **`hslowflag` from `hupper` and the reverse inclusion.**  Combines the forward inclusion
 `Vslow (exp t) ⊆ lambdaSublevel t` (derived from `hupper` via
 `vslow_subset_lambdaSublevel_of_upper`) with the reverse inclusion `hslowrev`
@@ -188,7 +189,8 @@ theorem oseledets_filtration_of_upper
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) =
+            V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto

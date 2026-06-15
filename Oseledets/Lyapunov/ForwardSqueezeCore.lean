@@ -194,6 +194,7 @@ spectral upper bound directly from the analytic inputs: once they are supplied, 
 per-vector spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` follows with no
 further work. -/
 
+omit [MeasurableSpace X] in
 /-- The per-vector spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`, assembled from
 the core analytic inputs via `SqueezeData.ofCore` and
 `spectral_upper_bound_of_squeezeData`. -/

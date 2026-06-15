@@ -61,7 +61,8 @@ theorem oseledets_filtration_of_upper'
         atTop (𝓝 (lam0 i))) →
       ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x)
     -- The spectral-identification band-projector convergence hypothesis.
-    (hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c → (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
+    (hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c →
+      (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
       Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
         Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x)))) :
     ∃ (k : ℕ) (lam : Fin k → ℝ)
@@ -72,7 +73,8 @@ theorem oseledets_filtration_of_upper'
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) =
+            V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto

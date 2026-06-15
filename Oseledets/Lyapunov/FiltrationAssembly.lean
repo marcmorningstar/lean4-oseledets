@@ -99,7 +99,8 @@ theorem oseledets_filtration_of_interfaces
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x)
+            = V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto
@@ -227,7 +228,8 @@ theorem oseledets_filtration_assembled
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x)
+            = V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto

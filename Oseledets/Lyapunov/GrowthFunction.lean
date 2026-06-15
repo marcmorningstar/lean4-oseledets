@@ -79,7 +79,8 @@ theorem lambdaBar_eq_limsup_growthSeq (A : X → Matrix (Fin d) (Fin d) ℝ) (T 
 
 /-- If `det (cocycle) ≠ 0` and `v ≠ 0`, the image vector `A⁽ⁿ⁾(x)·v` is nonzero. -/
 private theorem cocycleVec_ne_zero {A : X → Matrix (Fin d) (Fin d) ℝ}
-    (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) :
+    (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) {v : EuclideanSpace ℝ (Fin d)}
+    (hv : v ≠ 0) :
     Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v ≠ 0 := by
   intro h
   -- `toEuclideanCLM` of an invertible matrix is injective (it is a ring iso composed with a
@@ -94,7 +95,8 @@ private theorem cocycleVec_ne_zero {A : X → Matrix (Fin d) (Fin d) ℝ}
 
 /-! ### The per-`n` sandwich inequalities -/
 
-/-- Upper bound on the defining sequence: `(1/n)log‖M·v‖ ≤ (1/n)log‖M‖ + (1/n)log‖v‖`. -/
+/-- Upper bound on the defining sequence:
+`(1/n)log‖M·v‖ ≤ (1/n)log‖M‖ + (1/n)log‖v‖`. -/
 private theorem growthSeq_le {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) [NeZero d] (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0)
     (n : ℕ) :
@@ -114,17 +116,20 @@ private theorem growthSeq_le {A : X → Matrix (Fin d) (Fin d) ℝ}
     exact Real.log_le_log hMvpos hle
   have hninv : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
   calc growthSeq A T x v n
-      = (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖ := rfl
+      = (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖ :=
+        rfl
     _ ≤ (n : ℝ)⁻¹ * (Real.log ‖cocycle A T n x‖ + Real.log ‖v‖) := by
         exact mul_le_mul_of_nonneg_left hlogle hninv
-    _ = (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ + (n : ℝ)⁻¹ * Real.log ‖v‖ := by ring
+    _ = (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ + (n : ℝ)⁻¹ * Real.log ‖v‖ := by
+        ring
 
 /-- Lower bound on the defining sequence:
 `-(1/n)log‖M⁻¹‖ + (1/n)log‖v‖ ≤ (1/n)log‖M·v‖`. -/
 private theorem le_growthSeq {A : X → Matrix (Fin d) (Fin d) ℝ}
-    (hA : ∀ x, (A x).det ≠ 0) [NeZero d] (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0)
-    (n : ℕ) :
-    -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) + (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
+    (hA : ∀ x, (A x).det ≠ 0) [NeZero d] (x : X) {v : EuclideanSpace ℝ (Fin d)}
+    (hv : v ≠ 0) (n : ℕ) :
+    -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) +
+        (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
       growthSeq A T x v n := by
   have hMipos : 0 < ‖(cocycle A T n x)⁻¹‖ := norm_inv_cocycle_pos hA n x
   have hvpos : 0 < ‖v‖ := norm_pos_iff.mpr hv
@@ -151,7 +156,8 @@ private theorem le_growthSeq {A : X → Matrix (Fin d) (Fin d) ℝ}
       (Real.log ‖(cocycle A T n x)⁻¹‖ +
         Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖) :=
     mul_le_mul_of_nonneg_left hlogle hninv
-  change -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) + (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
+  change -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) +
+      (n : ℝ)⁻¹ * Real.log ‖v‖ ≤
     (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖
   nlinarith [hmul]
 
@@ -161,7 +167,8 @@ private theorem le_growthSeq {A : X → Matrix (Fin d) (Fin d) ℝ}
 defining sequence `growthSeq A T x v` has range bounded above and below. -/
 private theorem growthSeq_bounded {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) [NeZero d] (x : X) {lam₁ lamk' : ℝ}
-    (htop : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖) atTop (𝓝 lam₁))
+    (htop : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖) atTop
+      (𝓝 lam₁))
     (hbot : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) atTop
       (𝓝 lamk'))
     {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) :
@@ -267,7 +274,8 @@ private theorem limsup_eq_of_tendsto_sub_zero {u w : ℕ → ℝ}
 theorem lambdaBar_smul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     {c : ℝ} (hc : c ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (_hv : v ≠ 0) :
     lambdaBar A T x (c • v) = lambdaBar A T x v := by
-  -- The two defining sequences differ by `(1/n)·(log‖M(c•v)‖ - log‖Mv‖)`, which tends to `0`.
+  -- The two defining sequences differ by `(1/n)·(log‖M(c•v)‖ - log‖Mv‖)`, which
+  -- tends to `0`.
   refine limsup_eq_of_tendsto_sub_zero ?_
   -- Show the difference sequence tends to `0`: it is bounded by `(1/n)·|log|c|| → 0`.
   have hcb : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * abs (Real.log |c|)) atTop (𝓝 0) := by
@@ -293,7 +301,8 @@ theorem lambdaBar_smul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x :
     rw [hlogdiff]
     by_cases hs0 : s = 0 <;> simp [hs0, abs_nonneg]
   -- Assemble: difference of `growthSeq`s is `(1/n)·(that difference)`.
-  change ‖(n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) (c • v)‖ -
+  change ‖(n : ℝ)⁻¹ *
+      Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) (c • v)‖ -
     (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖‖ ≤
     (n : ℝ)⁻¹ * abs (Real.log |c|)
   rw [hnorm, ← hs, Real.norm_eq_abs, ← mul_sub, abs_mul,
@@ -302,8 +311,9 @@ theorem lambdaBar_smul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x :
 
 /-! ### `A`-equivariance -/
 
-/-- The `(n+1)`-th `growthSeq` term at `(x, v)` equals `(n+1)⁻¹ · log‖A⁽ⁿ⁾(Tx)·(A x·v)‖`:
-the cocycle identity peels off the newest factor `A x`. -/
+/-- The `(n+1)`-th `growthSeq` term at `(x, v)` equals
+`(n+1)⁻¹ · log‖A⁽ⁿ⁾(Tx)·(A x·v)‖`: the cocycle identity peels off the newest
+factor `A x`. -/
 private theorem growthSeq_succ (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (v : EuclideanSpace ℝ (Fin d)) (n : ℕ) :
     growthSeq A T x v (n + 1) =
@@ -316,10 +326,11 @@ private theorem growthSeq_succ (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X →
 
 /-- **`A`-equivariance.** `lambdaBar A T x v = lambdaBar A T (T x) (A x · v)`.
 
-Boundedness of the target sequence `growthSeq A T (T x) (A x·v)` is required: the limsup of
-the `(x,v)` sequence is the limsup of the same log-data scaled by `(n+1)⁻¹` instead of
-`n⁻¹`, and the two scalings differ by `(1/(n+1) - 1/n)·log‖·‖ = -(n+1)⁻¹·(n⁻¹·log‖·‖)`,
-which tends to `0` exactly because `n⁻¹·log‖·‖` is bounded. This boundedness holds a.e. by
+Boundedness of the target sequence `growthSeq A T (T x) (A x·v)` is required: the
+limsup of the `(x,v)` sequence is the limsup of the same log-data scaled by
+`(n+1)⁻¹` instead of `n⁻¹`, and the two scalings differ by
+`(1/(n+1) - 1/n)·log‖·‖ = -(n+1)⁻¹·(n⁻¹·log‖·‖)`, which tends to `0` exactly
+because `n⁻¹·log‖·‖` is bounded. This boundedness holds a.e. by
 Furstenberg–Kesten and is supplied from `growthSeq_bounded`. -/
 theorem lambdaBar_equivariant (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
     (_hA : (A x).det ≠ 0) (v : EuclideanSpace ℝ (Fin d)) (_hv : v ≠ 0)
@@ -364,7 +375,8 @@ theorem lambdaBar_equivariant (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → 
     · calc a n ≤ U := hUn
         _ ≤ |U| := le_abs_self _
         _ ≤ max |U| |Lo| := le_max_left _ _
-  -- The difference `(n+1)⁻¹ L n - a n` equals `-(n+1)⁻¹ · a n` eventually (`n ≥ 1`), → 0.
+  -- The difference `(n+1)⁻¹ L n - a n` equals `-(n+1)⁻¹ · a n` eventually
+  -- (`n ≥ 1`), → 0.
   refine limsup_eq_of_tendsto_sub_zero ?_
   have hsucc : Tendsto (fun n : ℕ => -(((n : ℝ) + 1)⁻¹)) atTop (𝓝 0) := by
     have h1 : Tendsto (fun n : ℕ => (n : ℝ) + 1) atTop atTop :=
@@ -379,7 +391,8 @@ theorem lambdaBar_equivariant (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → 
   have hn1 : 1 ≤ n := hn
   have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn1
   simp only [ha]
-  -- `(n+1)⁻¹ L n - n⁻¹ L n = -(n+1)⁻¹·(n⁻¹ L n)` ⟺ `((n+1)⁻¹ - n⁻¹)L n = -(n+1)⁻¹ n⁻¹ L n`.
+  -- `(n+1)⁻¹ L n - n⁻¹ L n = -(n+1)⁻¹·(n⁻¹ L n)`
+  -- ⟺ `((n+1)⁻¹ - n⁻¹)L n = -(n+1)⁻¹ n⁻¹ L n`.
   field_simp
   ring
 
@@ -390,10 +403,12 @@ interval `[lamBot, lamTop]` whose endpoints are the extremal (bottom/top) Lyapun
 exponents from Furstenberg–Kesten. -/
 theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
-    {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0)
+    (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
     ∃ lamBot lamTop : ℝ, lamBot ≤ lamTop ∧ ∀ᵐ x ∂μ,
-      ∀ v : EuclideanSpace ℝ (Fin d), v ≠ 0 → lambdaBar A T x v ∈ Set.Icc lamBot lamTop := by
+      ∀ v : EuclideanSpace ℝ (Fin d), v ≠ 0 →
+        lambdaBar A T x v ∈ Set.Icc lamBot lamTop := by
   rcases Nat.eq_zero_or_pos d with hd | hd
   · -- `d = 0`: every `v = 0`, so the statement is vacuous.
     subst hd
@@ -403,7 +418,8 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
     obtain ⟨lamTop, htop⟩ := furstenbergKesten_top hT hA hAmeas hint hint'
     obtain ⟨lamk', hbot⟩ := furstenbergKesten_bot hT hA hAmeas hint hint'
     refine ⟨-lamk', lamTop, ?_, ?_⟩
-    · -- `-lamk' ≤ lamTop`: `0 ≤ lamTop + lamk'` from `log‖M‖ + log‖M⁻¹‖ ≥ log 1 = 0`.
+    · -- `-lamk' ≤ lamTop`: `0 ≤ lamTop + lamk'` from
+      -- `log‖M‖ + log‖M⁻¹‖ ≥ log 1 = 0`.
       -- Take any `x` in both a.e. sets; the two limits add to a nonnegative quantity.
       obtain ⟨x, hx1, hx2⟩ := (htop.and hbot).exists
       have hsum : Tendsto
@@ -420,7 +436,8 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
         have h1 : (1 : ℝ) ≤ ‖cocycle A T n x‖ * ‖(cocycle A T n x)⁻¹‖ := by
           have := Matrix.l2_opNorm_mul (cocycle A T n x) (cocycle A T n x)⁻¹
           rw [hmulinv, norm_one_matrix] at this; exact this
-        have hlog : 0 ≤ Real.log ‖cocycle A T n x‖ + Real.log ‖(cocycle A T n x)⁻¹‖ := by
+        have hlog : 0 ≤ Real.log ‖cocycle A T n x‖ +
+            Real.log ‖(cocycle A T n x)⁻¹‖ := by
           rw [← Real.log_mul (ne_of_gt hposc) (ne_of_gt hposi)]; exact Real.log_nonneg h1
         have hninv : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
         nlinarith [mul_le_mul_of_nonneg_left hlog hninv]
@@ -439,13 +456,15 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
         have hlo : Tendsto (fun n : ℕ =>
             -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) +
               (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 (-lamk' + 0)) := by
-          have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 0) := by
+          have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop
+              (𝓝 0) := by
             simpa using (tendsto_inv_atTop_nhds_zero_nat).mul_const (Real.log ‖v‖)
           exact hx2.neg.add hlogv
         have hliminf : -lamk' ≤ Filter.liminf (growthSeq A T x v) atTop := by
           have hmono : Filter.liminf (fun n : ℕ =>
               -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) +
-                (n : ℝ)⁻¹ * Real.log ‖v‖) atTop ≤ Filter.liminf (growthSeq A T x v) atTop :=
+                (n : ℝ)⁻¹ * Real.log ‖v‖) atTop ≤
+              Filter.liminf (growthSeq A T x v) atTop :=
             Filter.liminf_le_liminf (Eventually.of_forall fun n => le_growthSeq hA x hv n)
               hlo.isBoundedUnder_ge hba.isCoboundedUnder_ge
           calc -lamk' = -lamk' + 0 := by ring
@@ -461,8 +480,10 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
             ((n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ + (n : ℝ)⁻¹ * Real.log ‖v‖) :=
           fun n => growthSeq_le hA x hv n
         have hbddRHS : IsBoundedUnder (· ≤ ·) atTop
-            (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ + (n : ℝ)⁻¹ * Real.log ‖v‖) := by
-          have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 0) := by
+            (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ +
+              (n : ℝ)⁻¹ * Real.log ‖v‖) := by
+          have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop
+              (𝓝 0) := by
             simpa using (tendsto_inv_atTop_nhds_zero_nat).mul_const (Real.log ‖v‖)
           exact (hx1.add hlogv).isBoundedUnder_le
         calc lambdaBar A T x v
@@ -472,7 +493,8 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
               Filter.limsup_le_limsup (Eventually.of_forall hub) hcobdd hbddRHS
           _ = lamTop + 0 := by
               refine Filter.Tendsto.limsup_eq ?_
-              have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 0) := by
+              have hlogv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖v‖) atTop
+                  (𝓝 0) := by
                 simpa using (tendsto_inv_atTop_nhds_zero_nat).mul_const (Real.log ‖v‖)
               exact hx1.add hlogv
           _ = lamTop := by ring
@@ -505,7 +527,8 @@ private theorem growthSeq_add_le {A : X → Matrix (Fin d) (Fin d) ℝ}
     have hstep : Real.log ‖M (v + w)‖ ≤ Real.log (2 * max (‖M v‖) (‖M w‖)) :=
       Real.log_le_log hMvw htri
     rw [Real.log_mul (by norm_num) (ne_of_gt hmaxpos)] at hstep
-    have hlogmax : Real.log (max (‖M v‖) (‖M w‖)) = max (Real.log ‖M v‖) (Real.log ‖M w‖) := by
+    have hlogmax : Real.log (max (‖M v‖) (‖M w‖)) =
+        max (Real.log ‖M v‖) (Real.log ‖M w‖) := by
       rcases le_total (‖M v‖) (‖M w‖) with h | h
       · rw [max_eq_right h, max_eq_right (Real.log_le_log hMv h)]
       · rw [max_eq_left h, max_eq_left (Real.log_le_log hMw h)]
@@ -555,7 +578,8 @@ theorem lambdaBar_add_le {A : X → Matrix (Fin d) (Fin d) ℝ}
         -- `(1/n)log2 → 0` drops out; then `limsup max = max limsup`.
         have hdrop : Filter.limsup (fun n : ℕ => (n : ℝ)⁻¹ * Real.log 2 +
             max (growthSeq A T x v n) (growthSeq A T x w n)) atTop =
-            Filter.limsup (fun n : ℕ => max (growthSeq A T x v n) (growthSeq A T x w n)) atTop := by
+            Filter.limsup
+              (fun n : ℕ => max (growthSeq A T x v n) (growthSeq A T x w n)) atTop := by
           refine limsup_eq_of_tendsto_sub_zero ?_
           have hlog2 : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log 2) atTop (𝓝 0) := by
             simpa using (tendsto_inv_atTop_nhds_zero_nat).mul_const (Real.log 2)

@@ -20,13 +20,14 @@ where `v` is a *slow* vector (upper Lyapunov growth `lambdaBar A T x v ≤ λᵢ
 `σⱼ(n)` has exponent `λ_l`. For a fast direction (`λ_l > λᵢ`) the rate is the full multi-gap
 difference `λᵢ − λ_l`, the sum of all adjacent spectral gaps between the two exponents.
 
-Eigenvector-perturbation arguments (Davis–Kahan / sin-Θ bounds) only reach the nearest adjacent
-gap, because the residual leak at a nested cut is cut-invariant. The proof here instead goes
-through the sharp Gram-eigenvector cross bound `|⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾ v‖ / σⱼ(n)`. The required
-slow-growth input `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` is not an output of the spectral split it
-feeds: it is the inequality `lambdaBar A T x v ≤ λᵢ`, the defining property of membership in
-the limsup flag (`Oseledets.Vflag`, `Oseledets/Lyapunov/Filtration.lean`), which is established
-strictly upstream of the overlap split. No circularity arises.
+Eigenvector-perturbation arguments (Davis–Kahan / sin-Θ bounds) only reach the nearest
+adjacent gap, because the residual leak at a nested cut is cut-invariant. The proof here
+instead goes through the sharp Gram-eigenvector cross bound
+`|⟪uⱼ(n), v⟫| ≤ ‖A⁽ⁿ⁾ v‖ / σⱼ(n)`. The required slow-growth input
+`limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ` is not an output of the spectral split it feeds: it is the
+inequality `lambdaBar A T x v ≤ λᵢ`, the defining property of membership in the limsup flag
+`Oseledets.Vflag`, which is established strictly upstream of the overlap split. No circularity
+arises.
 
 ## Main results
 
@@ -59,8 +60,9 @@ variable {X : Type*} [MeasurableSpace X] {d : ℕ}
     |⟪u, v⟫| ≤ ‖f v‖ / √μ.
 
 Indeed `μ · ⟪u, v⟫ = ⟪adjoint f (f u), v⟫ = ⟪f u, f v⟫`, so Cauchy–Schwarz gives
-`|⟪u, v⟫| ≤ ‖f u‖ · ‖f v‖ / μ`, and `‖f u‖² = ⟪adjoint f (f u), u⟫ = μ` for unit `u`, so
-`‖f u‖ = √μ`. Pure linear algebra: no perturbation theory and no symmetry of `f` is used. -/
+`|⟪u, v⟫| ≤ ‖f u‖ · ‖f v‖ / μ`, and `‖f u‖² = ⟪adjoint f (f u), u⟫ = μ` for unit `u`,
+so `‖f u‖ = √μ`. Pure linear algebra: no perturbation theory and no symmetry of `f` is
+used. -/
 theorem abs_inner_gramEig_le_norm_div_singularValue
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     (f : E →ₗ[ℝ] E) {u v : E} (hu : ‖u‖ = 1) {μ : ℝ} (hμ : 0 < μ)
@@ -82,7 +84,8 @@ theorem abs_inner_gramEig_le_norm_div_singularValue
   have habs : |(inner ℝ u v : ℝ)| = |(inner ℝ (f u) (f v) : ℝ)| / μ := by
     rw [eq_div_iff (ne_of_gt hμ), ← abs_of_pos hμ, ← abs_mul, mul_comm, hkey]
   rw [habs]
-  have hcs : |(inner ℝ (f u) (f v) : ℝ)| ≤ ‖f u‖ * ‖f v‖ := abs_real_inner_le_norm (f u) (f v)
+  have hcs : |(inner ℝ (f u) (f v) : ℝ)| ≤ ‖f u‖ * ‖f v‖ :=
+    abs_real_inner_le_norm (f u) (f v)
   have hμsqrt : Real.sqrt μ * Real.sqrt μ = μ := Real.mul_self_sqrt (le_of_lt hμ)
   calc |(inner ℝ (f u) (f v) : ℝ)| / μ ≤ (‖f u‖ * ‖f v‖) / μ := by gcongr
     _ = (Real.sqrt μ * ‖f v‖) / μ := by rw [hfu]

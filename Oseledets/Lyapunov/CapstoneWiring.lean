@@ -76,9 +76,9 @@ variable {d : ℕ} {T : X → X}
 
 /-! ## Positivity of the cocycle applied to a nonzero vector -/
 
-/-- **Eventual (in fact universal) positivity of `‖A⁽ⁿ⁾ v‖`.**  Since `det (A x) ≠ 0`, every cocycle
-matrix `A⁽ⁿ⁾` is invertible, hence `toEuclideanLin (A⁽ⁿ⁾)` is injective, so it sends the nonzero `v`
-to a nonzero (positive-norm) vector for *every* `n`. -/
+/-- **Eventual (in fact universal) positivity of `‖A⁽ⁿ⁾ v‖`.**  Since `det (A x) ≠ 0`, every
+cocycle matrix `A⁽ⁿ⁾` is invertible, hence `toEuclideanLin (A⁽ⁿ⁾)` is injective, so it sends the
+nonzero `v` to a nonzero (positive-norm) vector for *every* `n`. -/
 theorem eventually_pos_norm_cocycle_apply [NeZero d]
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (x : X)
     {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) :
@@ -88,8 +88,8 @@ theorem eventually_pos_norm_cocycle_apply [NeZero d]
 
 /-! ## The slow-index `specTerm` envelope -/
 
-/-- The squared overlap with the orthonormal Gram eigenbasis is bounded by `‖v‖²` (Cauchy–Schwarz,
-the basis vectors being unit). -/
+/-- The squared overlap with the orthonormal Gram eigenbasis is bounded by `‖v‖²`
+(Cauchy–Schwarz, the basis vectors being unit). -/
 theorem inner_sq_sortedGramEigenbasis_le [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (n : ℕ) (x : X) (v : EuclideanSpace ℝ (Fin d))
     (j : Fin (Fintype.card (Fin d))) :
@@ -114,8 +114,8 @@ theorem eventually_const_le_exp (C : ℝ) (hC : 0 ≤ C) {δ : ℝ} (hδ : 0 < �
     exact hgrow.eventually_ge_atTop C
 
 /-- **The slow-index `specTerm` envelope.**  If the `j`-th singular exponent converges to
-`lamj ≤ lami` (a *slow* index), then `specTermⱼ(n) ≤ exp(n(2 lami + ε))` eventually, for every
-`ε > 0`.  Pure SVD + Cauchy–Schwarz: `specTerm = σⱼ²·⟪v,uⱼ⟫² ≤ σⱼ²·‖v‖²`, with
+`lamj ≤ lami` (a *slow* index), then `specTermⱼ(n) ≤ exp(n(2 lami + ε))` eventually, for
+every `ε > 0`.  Pure SVD + Cauchy–Schwarz: `specTerm = σⱼ²·⟪v,uⱼ⟫² ≤ σⱼ²·‖v‖²`, with
 `σⱼ² ≤ exp(n(2lamj+ε/2)) ≤ exp(n(2lami+ε/2))` and `‖v‖² ≤ exp(n·ε/2)` eventually.  No
 overlap-decay input is needed at a slow index. -/
 theorem specTerm_envelope_slow [NeZero d]
@@ -132,7 +132,8 @@ theorem specTerm_envelope_slow [NeZero d]
       0 < (Matrix.toEuclideanLin (cocycle A T n x)).singularValues j :=
     fun n _ => singularValues_cocycle_pos hA n x hjd
   have hσenv := eventually_sq_singularValue_le_exp (T := T) j hσpos hσ (ε/2) (by linarith)
-  have hCdom := eventually_const_le_exp (‖v‖ ^ 2) (sq_nonneg _) (show (0:ℝ) < ε/2 by linarith)
+  have hCdom :=
+    eventually_const_le_exp (‖v‖ ^ 2) (sq_nonneg _) (show (0:ℝ) < ε/2 by linarith)
   filter_upwards [hσenv, hCdom] with n hσn hCn
   rw [specTerm]
   have hov : (inner ℝ v (sortedGramEigenbasis A T n x j) : ℝ) ^ 2 ≤ ‖v‖ ^ 2 :=
@@ -165,7 +166,8 @@ orthogonal; given the forward graded decay of its entries, the cofactor bound `h
 transposed-graded reverse bound on every entry. -/
 theorem reverse_graded_overlap_bound
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 → ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
+    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
+      ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
       (∀ a b : Fin d, |S a b| ≤ c * Real.exp (-(max (g b - g a) 0))) →
       ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)))
     (b b' : OrthonormalBasis (Fin d) ℝ E) (g : Fin d → ℝ) (c : ℝ) (hc : 1 ≤ c)
@@ -173,7 +175,8 @@ theorem reverse_graded_overlap_bound
       |(inner ℝ (b' e) (b a) : ℝ)| ≤ c * Real.exp (-(max (g e - g a) 0))) :
     ∀ i j : Fin d, |(inner ℝ (b' j) (b i) : ℝ)|
       ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)) := by
-  set S : Matrix (Fin d) (Fin d) ℝ := Matrix.of (fun i j => (inner ℝ (b' j) (b i) : ℝ)) with hS
+  set S : Matrix (Fin d) (Fin d) ℝ :=
+    Matrix.of (fun i j => (inner ℝ (b' j) (b i) : ℝ)) with hS
   have hortho : S * Sᵀ = 1 := by
     ext i k
     simp only [hS, Matrix.mul_apply, Matrix.transpose_apply, Matrix.of_apply, Matrix.one_apply]
@@ -232,7 +235,8 @@ theorem limsup_le_of_mem_Vslow
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
-    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 → ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
+    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
+      ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
       (∀ a b : Fin d, |S a b| ≤ c * Real.exp (-(max (g b - g a) 0))) →
       ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)))
     -- `lam`: the deterministic per-index singular exponents.
@@ -248,15 +252,18 @@ theorem limsup_le_of_mem_Vslow
     (hfwd : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       ∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in atTop,
         ∀ a e : Fin d, |(inner ℝ (b' x e)
-            (sortedGramEigenbasis A T n x ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
+            (sortedGramEigenbasis A T n x
+              ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ c * Real.exp (-(max (g x e - g x a) 0)))
     -- `hbridge`: the band-limit bridge from reverse graded entries to the fast envelope.
     (hbridge : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       (∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in atTop, ∀ i e : Fin d,
         |(inner ℝ (b' x e)
-            (sortedGramEigenbasis A T n x ⟨i, lt_of_lt_of_eq i.2 (Fintype.card_fin d).symm⟩) : ℝ)|
+            (sortedGramEigenbasis A T n x
+              ⟨i, lt_of_lt_of_eq i.2 (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g x i - g x e))) →
-        ∀ j : Fin (Fintype.card (Fin d)), t < lam (j : ℕ) → ∀ ε > 0, ∀ᶠ n : ℕ in atTop,
+        ∀ j : Fin (Fintype.card (Fin d)), t < lam (j : ℕ) → ∀ ε > 0,
+          ∀ᶠ n : ℕ in atTop,
           specTerm T A n x v j ≤ Real.exp ((n : ℝ) * (2 * t + ε))) :
     ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
       Filter.limsup (fun n : ℕ => (n : ℝ)⁻¹ *
@@ -283,14 +290,17 @@ theorem limsup_le_of_mem_Vslow
       Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) :=
     isCoboundedUnder_le_of_boundedUnder_ge hbddge
   -- the fast-index `specTerm` envelope, derived by consuming `hrev`:
-  --   forward graded decay (`hfwd`) ──hrev──▶ reverse graded decay ──hbridge──▶ fast envelope.
-  have hfast : ∀ j : Fin (Fintype.card (Fin d)), t < lam (j : ℕ) → ∀ ε > 0, ∀ᶠ n : ℕ in atTop,
+  --   forward graded decay (`hfwd`) ──hrev──▶ reverse graded decay ──hbridge──▶ fast
+  --   envelope.
+  have hfast : ∀ j : Fin (Fintype.card (Fin d)), t < lam (j : ℕ) → ∀ ε > 0,
+      ∀ᶠ n : ℕ in atTop,
       specTerm T A n x v j ≤ Real.exp ((n : ℝ) * (2 * t + ε)) := by
     -- the reverse graded entry bound at the (forward) constant `c0`, via `hrev`.
     obtain ⟨c0, hc0, hfwdn⟩ := hfwdx t v hvmem hv
     have hrevbound : ∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in atTop, ∀ i e : Fin d,
         |(inner ℝ (b' x e)
-            (sortedGramEigenbasis A T n x ⟨i, lt_of_lt_of_eq i.2 (Fintype.card_fin d).symm⟩) : ℝ)|
+            (sortedGramEigenbasis A T n x
+              ⟨i, lt_of_lt_of_eq i.2 (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g x i - g x e)) := by
       refine ⟨c0, hc0, ?_⟩
       filter_upwards [hfwdn] with n hn

@@ -50,7 +50,8 @@ variable {X : Type*} {T : X → X} {d : ℕ}
 /-- The (finite) **limsup spectrum** at `x`: the set of values of `lambdaBar A T x` on nonzero
 vectors. Defined totally, with junk value `∅` off the set where `lambdaBar A T x` is an
 `IsUltrametricGrowth` function. -/
-noncomputable def spectrum (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) : Finset ℝ :=
+noncomputable def spectrum (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) :
+    Finset ℝ :=
   open Classical in
   if h : IsUltrametricGrowth (lambdaBar A T x) then h.finite_range.toFinset else ∅
 
@@ -58,7 +59,8 @@ noncomputable def spectrum (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) 
 nonzero vector. -/
 theorem mem_spectrum {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     (hx : IsUltrametricGrowth (lambdaBar A T x)) {r : ℝ} :
-    r ∈ spectrum A T x ↔ ∃ v : EuclideanSpace ℝ (Fin d), v ≠ 0 ∧ lambdaBar A T x v = r := by
+    r ∈ spectrum A T x ↔
+      ∃ v : EuclideanSpace ℝ (Fin d), v ≠ 0 ∧ lambdaBar A T x v = r := by
   rw [spectrum, dif_pos hx, Set.Finite.mem_toFinset, Set.mem_range]
   exact ⟨fun ⟨v, hv⟩ => ⟨v.1, v.2, hv⟩, fun ⟨v, hv, hvr⟩ => ⟨⟨v, hv⟩, hvr⟩⟩
 
@@ -72,8 +74,9 @@ theorem lambdaBar_mem_spectrum {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
 noncomputable def specCard (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) : ℕ :=
   (spectrum A T x).card
 
-/-- The **descending** enumeration of the limsup spectrum, `specList A T x : Fin (specCard …) → ℝ`.
-Index `0` is the largest exponent; the listing is strictly antitone. -/
+/-- The **descending** enumeration of the limsup spectrum,
+`specList A T x : Fin (specCard …) → ℝ`. Index `0` is the largest exponent; the listing is
+strictly antitone. -/
 noncomputable def specList (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) :
     Fin (specCard A T x) → ℝ :=
   fun i => (spectrum A T x).orderEmbOfFin rfl i.rev
@@ -100,7 +103,8 @@ theorem exists_specList_eq {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X} {r : �
 
 /-- The sublevel submodule of `lambdaBar A T x` at threshold `t`, defined totally with junk
 value `⊥` off the `IsUltrametricGrowth` set. -/
-noncomputable def lambdaSublevel (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) (t : ℝ) :
+noncomputable def lambdaSublevel (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
+    (t : ℝ) :
     Submodule ℝ (EuclideanSpace ℝ (Fin d)) :=
   open Classical in
   if h : IsUltrametricGrowth (lambdaBar A T x) then h.sublevel t else ⊥
@@ -152,7 +156,8 @@ theorem Vflag_zero {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
   intro v _
   by_cases hv : v = 0
   · simp [hv]
-  · -- `lambdaBar x v ∈ spectrum`, so `specCard > 0`, and `lambdaBar x v ≤ specList ⟨0,_⟩ = max'`.
+  · -- `lambdaBar x v ∈ spectrum`, so `specCard > 0`, and
+    -- `lambdaBar x v ≤ specList ⟨0,_⟩ = max'`.
     have hmem : lambdaBar A T x v ∈ spectrum A T x := lambdaBar_mem_spectrum hx hv
     have hpos : 0 < specCard A T x := Finset.card_pos.mpr ⟨_, hmem⟩
     have h0 : ((0 : Fin (specCard A T x + 1)) : ℕ) < specCard A T x := by simpa using hpos
@@ -209,7 +214,8 @@ theorem Vflag_strictAnti {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
       obtain ⟨hsucc, hle⟩ := hvmem
       refine ⟨hcastlt, ?_⟩
       -- `specList (succ) < specList i`, and the index `⟨i.castSucc⟩ = i`.
-      have hid : (⟨(i.castSucc : Fin (specCard A T x + 1)), hcastlt⟩ : Fin (specCard A T x)) = i :=
+      have hid :
+          (⟨(i.castSucc : Fin (specCard A T x + 1)), hcastlt⟩ : Fin (specCard A T x)) = i :=
         Fin.ext rfl
       rw [hid]
       exact hle.trans (succ_lt_specList i hsucc).le
@@ -219,7 +225,8 @@ theorem Vflag_strictAnti {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
     have hwcast : w ∈ Vflag A T x i.castSucc := by
       rw [mem_Vflag hx hw]
       refine ⟨hcastlt, ?_⟩
-      have hid : (⟨(i.castSucc : Fin (specCard A T x + 1)), hcastlt⟩ : Fin (specCard A T x)) = i :=
+      have hid :
+          (⟨(i.castSucc : Fin (specCard A T x + 1)), hcastlt⟩ : Fin (specCard A T x)) = i :=
         Fin.ext rfl
       rw [hid, hwval]
     have hwsucc : w ∈ Vflag A T x i.succ := heq ▸ hwcast
@@ -259,7 +266,8 @@ theorem lambdaBar_eq_on_stratum {A : X → Matrix (Fin d) (Fin d) ℝ} {x : X}
   · -- Interior successor: `hnot hsucc` gives `¬ (specList j ≤ specList (succ))`,
     -- i.e. `specList (succ) < specList j`, hence `j < succ-index ≤ i + 1`, so `j ≤ i`.
     have hnle := hnot hsucc
-    have hlt : specList A T x ⟨(i.succ : Fin (specCard A T x + 1)), hsucc⟩ < specList A T x j := by
+    have hlt :
+        specList A T x ⟨(i.succ : Fin (specCard A T x + 1)), hsucc⟩ < specList A T x j := by
       rw [hj]; exact not_le.mp hnle
     have hji : j < (⟨(i.succ : Fin (specCard A T x + 1)), hsucc⟩ : Fin (specCard A T x)) :=
       (specList_strictAnti A T x).lt_iff_gt.mp hlt
@@ -298,7 +306,8 @@ private theorem Aclm_inv_left {A : X → Matrix (Fin d) (Fin d) ℝ}
 
 private theorem Aclm_inv_right {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
-    Matrix.toEuclideanCLM (𝕜 := ℝ) (A x) (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)⁻¹ v) = v := by
+    Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)
+        (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)⁻¹ v) = v := by
   rw [← ContinuousLinearMap.mul_apply, ← map_mul,
     Matrix.mul_nonsing_inv _ (Ne.isUnit (hA x)), map_one, ContinuousLinearMap.one_apply]
 

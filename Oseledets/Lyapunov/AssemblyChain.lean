@@ -91,7 +91,8 @@ theorem oseledets_filtration_of_chain
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x)
+            = V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto
@@ -117,7 +118,8 @@ theorem oseledets_filtration_of_chain
     have hident : ∀ᵐ x ∂μ, ∀ c : ℝ, 0 < c →
         (∀ i : Fin d, Real.exp (lamSing A T x (i : ℕ)) ≠ c) →
         Filter.Tendsto (fun n : ℕ => bandProjector A T (Set.indicator (Set.Ioi c) 1) n x)
-          Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
+          Filter.atTop
+            (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
       ae_tendsto_bandProjector_cfc_indicator hT hA hAmeas hint hint'
     -- the forward graded overlap bound, consuming the chain envelope.
     have hfwdN := forward_graded_overlap hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident
@@ -138,7 +140,8 @@ theorem oseledets_filtration_of_chain
     have hfwd : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
         ∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in atTop,
           ∀ a e : Fin d, |(inner ℝ (b' x e)
-              (sortedGramEigenbasis A T n x ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
+              (sortedGramEigenbasis A T n x
+                ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
             ≤ c * Real.exp (-(max (g x e - g x a) 0)) := by
       refine Filter.Eventually.of_forall (fun x t v _ _ => ?_)
       -- `M`: the finite max of `lam0 e - lam0 a` over pairs, clamped at `0`.
@@ -153,7 +156,8 @@ theorem oseledets_filtration_of_chain
       refine ⟨Real.exp M, Real.one_le_exp hMnn, Filter.Eventually.of_forall (fun n a e => ?_)⟩
       -- `|⟪·,·⟫| ≤ 1 ≤ exp M · exp(-(max (g e - g a) 0))`.
       have hCS : |(inner ℝ (b' x e)
-          (sortedGramEigenbasis A T n x ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
+          (sortedGramEigenbasis A T n x
+            ⟨a, lt_of_lt_of_eq a.2 (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ 1 := by
         have hb1 : ‖b' x e‖ = 1 := (b' x).orthonormal.1 e
         have hb2 : ‖sortedGramEigenbasis A T n x
@@ -174,9 +178,11 @@ theorem oseledets_filtration_of_chain
     have hupper := limsup_le_of_mem_Vslow hT hTmeas hA hAmeas hint hint' hrev
       lam0 hlam0 b' g hfwd hbridge
     -- the spectrum-identification residuals.
-    have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
+    have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ,
+        lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
       ae_lambdaSublevel_le_Vslow hT hA hAmeas hint hint'
-    have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ, Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
+    have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ,
+        Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
       hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
     have hub_spec : ∀ lam0' : ℕ → ℝ,
         (∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Tendsto
@@ -207,7 +213,8 @@ private lemma submodule_zero_subsingleton :
     have hv : v = 0 := Subsingleton.elim v 0
     simp [hv]⟩
 
-/-- **The Oseledets filtration theorem, dimension-zero case.** Trivial: `k = 0`, `V ≡ ⊤ = ⊥`. -/
+/-- **The Oseledets filtration theorem, dimension-zero case.**
+Trivial: `k = 0`, `V ≡ ⊤ = ⊥`. -/
 theorem oseledets_filtration_dim_zero
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (_hT : Ergodic T μ)
@@ -224,7 +231,8 @@ theorem oseledets_filtration_dim_zero
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x)
+            = V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin 0))),
             v ∉ V i.succ x →
             Tendsto

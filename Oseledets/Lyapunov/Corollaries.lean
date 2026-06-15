@@ -140,7 +140,8 @@ theorem oseledets_filtration'
   exact ⟨k, lam, V, h1, h2, h3⟩
 
 variable {μ : Measure X} {T : X → X} {A : X → Matrix (Fin d) (Fin d) ℝ}
-  {k : ℕ} {lam : Fin k → ℝ} {V : Fin (k + 1) → X → Submodule ℝ (EuclideanSpace ℝ (Fin d))}
+  {k : ℕ} {lam : Fin k → ℝ}
+  {V : Fin (k + 1) → X → Submodule ℝ (EuclideanSpace ℝ (Fin d))}
 
 /-! ## Flag-order helpers
 
@@ -171,7 +172,8 @@ private theorem exists_stratum {k : ℕ}
     rw [hlast, hbot, Submodule.mem_bot] at hmem
     exact hv hmem
   have hlt : (j₀ : ℕ) < k := lt_of_le_of_ne (Nat.lt_succ_iff.mp j₀.isLt) hne
-  refine ⟨⟨(j₀ : ℕ), hlt⟩, fun j => ⟨fun hj => Fin.le_def.mp (hmax j hj), fun hj => ?_⟩⟩
+  refine ⟨⟨(j₀ : ℕ), hlt⟩,
+    fun j => ⟨fun hj => Fin.le_def.mp (hmax j hj), fun hj => ?_⟩⟩
   exact hanti (Fin.le_def.mpr hj) hmem
 
 omit [MeasurableSpace X] in
@@ -266,7 +268,8 @@ theorem IsOseledetsFiltration.ae_mem_iff_limsup_le
     ∀ᵐ x ∂μ, ∀ (i : Fin k) (v : EuclideanSpace ℝ (Fin d)),
       v ∈ V i.castSucc x ↔ v = 0 ∨
         limsup (fun n : ℕ => (n : ℝ)⁻¹ *
-          Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖) atTop ≤ lam i := by
+            Real.log ‖Matrix.toEuclideanCLM (𝕜 := ℝ) (cocycle A T n x) v‖) atTop
+          ≤ lam i := by
   filter_upwards [hV.2.2] with x hx i v
   obtain ⟨htop, hbot, hlt, -, hgrow⟩ := hx
   have hanti : Antitone fun j => V j x := (Fin.strictAnti_iff_succ_lt.mpr hlt).antitone
@@ -352,7 +355,7 @@ theorem IsOseledetsFiltration.unique
   -- levelwise identity from the canonical characterization
   filter_upwards [hV.ae_mem_iff_limsup_le, hV₂.ae_mem_iff_limsup_le, hV.2.2, hV₂.2.2]
     with x hc hc₂ hx hx₂ i
-  show V i x = V₂ i x
+  change V i x = V₂ i x
   induction i using Fin.lastCases with
   | last => rw [hx.2.1, hx₂.2.1]
   | cast j =>

@@ -68,7 +68,8 @@ theorem condExp_invariants_comp
     (hT : MeasurePreserving T μ μ) (hTm : Measurable T) {g : X → ℝ} (hg : Integrable g μ) :
     μ[g ∘ T | MeasurableSpace.invariants T] =ᵐ[μ]
       (μ[g | MeasurableSpace.invariants T]) ∘ T := by
-  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› := MeasurableSpace.invariants_le T
+  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› :=
+    MeasurableSpace.invariants_le T
   -- It suffices to prove the symmetric statement `(μ[g | I]) ∘ T =ᵐ μ[g ∘ T | I]`.
   symm
   by_cases hσ : SigmaFinite (μ.trim hI)
@@ -107,13 +108,15 @@ this to `g ∘ T^[n]`. -/
 
 omit [MeasurableSpace X] in
 /-- Pointwise bound for the count of thresholds crossed: for `0 ≤ a` and `0 < δ`,
-`∑'ₙ {x | (n+1)·δ ≤ a}.indicator 1 ≤ a / δ` (as an `ℝ≥0∞`-valued tsum over `n`). The sum
-counts the integers `n` with `(n+1)·δ ≤ a`, which is at most `a / δ`. -/
+`∑'ₙ {x | (n+1)·δ ≤ a}.indicator 1 ≤ a / δ` (as an `ℝ≥0∞`-valued tsum over `n`).
+The sum counts the integers `n` with `(n+1)·δ ≤ a`, which is at most `a / δ`. -/
 private theorem tsum_indicator_threshold_le {δ : ℝ} (hδ : 0 < δ) (a : ℝ) (ha : 0 ≤ a) :
-    ∑' n : ℕ, (if ((n : ℝ) + 1) * δ ≤ a then (1 : ℝ≥0∞) else 0) ≤ ENNReal.ofReal (a / δ) := by
+    ∑' n : ℕ, (if ((n : ℝ) + 1) * δ ≤ a then (1 : ℝ≥0∞) else 0)
+      ≤ ENNReal.ofReal (a / δ) := by
   -- Every contributing `n` satisfies `n + 1 ≤ a / δ`, hence lies in `range ⌊a/δ⌋₊`.
   have hdiv : 0 ≤ a / δ := div_nonneg ha hδ.le
-  have hsupp : (Function.support fun n : ℕ => (if ((n : ℝ) + 1) * δ ≤ a then (1 : ℝ≥0∞) else 0))
+  have hsupp : (Function.support fun n : ℕ =>
+      (if ((n : ℝ) + 1) * δ ≤ a then (1 : ℝ≥0∞) else 0))
       ⊆ Finset.range ⌊a / δ⌋₊ := by
     intro n hn
     simp only [Function.mem_support, ne_eq, ite_eq_right_iff, one_ne_zero, imp_false,
@@ -129,7 +132,8 @@ private theorem tsum_indicator_threshold_le {δ : ℝ} (hδ : 0 < δ) (a : ℝ) 
           (if ((n : ℝ) + 1) * δ ≤ a then (1 : ℝ≥0∞) else 0)
       ≤ ∑ _n ∈ Finset.range ⌊a / δ⌋₊, (1 : ℝ≥0∞) := by
         apply Finset.sum_le_sum; intro n _; split <;> simp
-    _ = (⌊a / δ⌋₊ : ℝ≥0∞) := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
+    _ = (⌊a / δ⌋₊ : ℝ≥0∞) := by
+        rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one]
     _ ≤ ENNReal.ofReal (a / δ) := by
         rw [← ENNReal.ofReal_natCast]
         exact ENNReal.ofReal_le_ofReal (Nat.floor_le hdiv)
@@ -148,7 +152,8 @@ private theorem tsum_measure_threshold_ne_top {δ : ℝ} (hδ : 0 < δ) {g : X �
     nullMeasurableSet_le measurable_const.aemeasurable hgabs
   -- `μ s = ∫⁻ indicator`, and Tonelli swaps the sum with the integral.
   -- The indicator of each threshold set, written pointwise as an `if`.
-  have hind : ∀ n : ℕ, (fun x => (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0))
+  have hind : ∀ n : ℕ, (fun x =>
+        (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0))
       = {x | ((n : ℝ) + 1) * δ ≤ |g x|}.indicator (fun _ => (1 : ℝ≥0∞)) := by
     intro n
     funext x
@@ -163,12 +168,14 @@ private theorem tsum_measure_threshold_ne_top {δ : ℝ} (hδ : 0 < δ) {g : X �
     intro n
     rw [hind n, lintegral_indicator_const₀ (hmeas n), one_mul]
   have key : (∑' n : ℕ, μ {x | ((n : ℝ) + 1) * δ ≤ |g x|})
-      = ∫⁻ x, ∑' n : ℕ, (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0) ∂μ := by
+      = ∫⁻ x, ∑' n : ℕ,
+          (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0) ∂μ := by
     rw [lintegral_tsum hae]
     exact tsum_congr hterm
   rw [key]
   -- Bound the inner tsum pointwise by `|g x| / δ`, then by `(1/δ)·∫⁻ |g|`.
-  have hbound : ∫⁻ x, ∑' n : ℕ, (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0) ∂μ
+  have hbound : ∫⁻ x, ∑' n : ℕ,
+        (if ((n : ℝ) + 1) * δ ≤ |g x| then (1 : ℝ≥0∞) else 0) ∂μ
       ≤ ∫⁻ x, ENNReal.ofReal (|g x| / δ) ∂μ := by
     apply lintegral_mono
     intro x
@@ -180,7 +187,8 @@ private theorem tsum_measure_threshold_ne_top {δ : ℝ} (hδ : 0 < δ) {g : X �
     rw [hasFiniteIntegral_iff_norm] at hfin
     simp only [Real.norm_eq_abs] at hfin
     exact hfin.ne
-  have heq : ∀ x, ENNReal.ofReal (|g x| / δ) = ENNReal.ofReal δ⁻¹ * ENNReal.ofReal (|g x|) := by
+  have heq : ∀ x,
+      ENNReal.ofReal (|g x| / δ) = ENNReal.ofReal δ⁻¹ * ENNReal.ofReal (|g x|) := by
     intro x
     rw [div_eq_inv_mul, ENNReal.ofReal_mul (by positivity)]
   simp_rw [heq]
@@ -248,7 +256,8 @@ theorem ae_tendsto_orbit_div_atTop_zero
     have hb : |g (T^[n] x)| < ((n : ℝ) + 1) * ((k : ℝ) + 1)⁻¹ := hbound'
     rw [div_eq_mul_inv]
     -- `(n+1)/(k+1) ≤ n · 2 / (k+1)` because `n+1 ≤ 2n`.
-    have hstep : ((n : ℝ) + 1) * ((k : ℝ) + 1)⁻¹ ≤ (n : ℝ) * (2 * ((k : ℝ) + 1)⁻¹) := by
+    have hstep :
+        ((n : ℝ) + 1) * ((k : ℝ) + 1)⁻¹ ≤ (n : ℝ) * (2 * ((k : ℝ) + 1)⁻¹) := by
       have hinv : (0 : ℝ) < ((k : ℝ) + 1)⁻¹ := by positivity
       nlinarith [hn1', hinv]
     linarith [hb, hstep]
@@ -290,7 +299,8 @@ invariant) sets, by `setIntegral_comp_of_invariants`, so uniqueness of `condExp`
 private theorem condExp_comp_invariants_eq [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) :
     μ[g ∘ T | MeasurableSpace.invariants T] =ᵐ[μ] μ[g | MeasurableSpace.invariants T] := by
-  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› := MeasurableSpace.invariants_le T
+  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› :=
+    MeasurableSpace.invariants_le T
   symm
   refine ae_eq_condExp_of_forall_setIntegral_eq (f := g ∘ T)
     (g := μ[g | MeasurableSpace.invariants T]) hI
@@ -336,8 +346,9 @@ private theorem birkhoffSum_sub_const_pos_iff (c : ℝ) {g : X → ℝ} (n : ℕ
   · intro h; nlinarith [h]
 
 /-- The maximal-set form of the maximal ergodic inequality: for integrable `g` and
-`c : ℝ`, `c · μ B ≤ ∫_B g` over the maximal set `B = {x | ∃ n, c < birkhoffAverage ℝ T g (n+1) x}`.
-Apply `setIntegral_birkhoffSum_pos_nonneg` to `g - c` and rewrite the set and integrand. -/
+`c : ℝ`, `c · μ B ≤ ∫_B g` over the maximal set
+`B = {x | ∃ n, c < birkhoffAverage ℝ T g (n+1) x}`. Apply
+`setIntegral_birkhoffSum_pos_nonneg` to `g - c` and rewrite the set and integrand. -/
 private theorem mul_measure_le_setIntegral_maximal [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) (c : ℝ) :
     c * (μ {x | ∃ n : ℕ, c < birkhoffAverage ℝ T g (n + 1) x}).toReal
@@ -379,7 +390,8 @@ is `≤ ∫|g| / k → 0`. -/
 theorem ae_bddAbove_birkhoffAverage [IsFiniteMeasure μ]
     (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) :
     ∀ᵐ x ∂μ, BddAbove (Set.range (fun n : ℕ => birkhoffAverage ℝ T g (n + 1) x)) := by
-  set B : ℕ → Set X := fun k => {x | ∃ n : ℕ, (k : ℝ) < birkhoffAverage ℝ T g (n + 1) x} with hBdef
+  set B : ℕ → Set X := fun k => {x | ∃ n : ℕ, (k : ℝ) < birkhoffAverage ℝ T g (n + 1) x}
+    with hBdef
   set C : ℝ := ∫ x, |g x| ∂μ with hCdef
   have hCnn : 0 ≤ C := integral_nonneg (fun x => abs_nonneg _)
   -- `(μ Bₖ).toReal ≤ C / k`.
@@ -539,16 +551,20 @@ The set `E = {x | L x + ε < Ls x}` (with `L = μ[g|I]`, `Ls = limsup A_·(g)`) 
 `T`-invariant, so a.e. equal to a genuinely invariant `I`-measurable set `E'`
 (`exists_preimage_eq_of_preimage_ae`). Applying the maximal ergodic inequality to
 `φ = E'.indicator (g - L - ε)` and showing the maximal set equals `E'`, one gets
-`0 ≤ ∫_{E'} (g - L - ε) = -ε · μ E'` (using `∫_{E'} g = ∫_{E'} L`), forcing `μ E' = 0`. -/
+`0 ≤ ∫_{E'} (g - L - ε) = -ε · μ E'` (using `∫_{E'} g = ∫_{E'} L`), forcing
+`μ E' = 0`. -/
 theorem measure_setOf_lt_limsup_eq_zero [IsFiniteMeasure μ]
-    (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) {ε : ℝ} (hε : 0 < ε) :
+    (hT : MeasurePreserving T μ μ) {g : X → ℝ} (hg : Integrable g μ) {ε : ℝ}
+    (hε : 0 < ε) :
     μ {x | (μ[g | MeasurableSpace.invariants T]) x + ε
       < Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop} = 0 := by
   classical
   have hTm : Measurable T := hT.measurable
-  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› := MeasurableSpace.invariants_le T
+  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› :=
+    MeasurableSpace.invariants_le T
   set L : X → ℝ := μ[g | MeasurableSpace.invariants T] with hLdef
-  set Ls : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop with hLsdef
+  set Ls : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop
+    with hLsdef
   set E : Set X := {x | L x + ε < Ls x} with hEdef
   -- Invariance facts.
   have hLinv : L ∘ T =ᵐ[μ] L := condExp_invariants_comp_self hT hTm hg
@@ -559,7 +575,8 @@ theorem measure_setOf_lt_limsup_eq_zero [IsFiniteMeasure μ]
   set g₀ : X → ℝ := hg.1.mk with hg₀def
   have hg₀m : Measurable g₀ := hg.1.measurable_mk
   have hgg₀ : g =ᵐ[μ] g₀ := hg.1.ae_eq_mk
-  set Ls₀ : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g₀ n x) atTop with hLs₀def
+  set Ls₀ : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g₀ n x) atTop
+    with hLs₀def
   have hLs₀m : Measurable Ls₀ := by
     have hfm : ∀ n : ℕ, Measurable (fun x => birkhoffAverage ℝ T g₀ n x) := by
       intro n
@@ -709,7 +726,8 @@ private theorem limsup_le_condExp_ae [IsFiniteMeasure μ]
     ∀ᵐ x ∂μ, Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop
       ≤ (μ[g | MeasurableSpace.invariants T]) x := by
   set L : X → ℝ := μ[g | MeasurableSpace.invariants T] with hLdef
-  set Ls : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop with hLsdef
+  set Ls : X → ℝ := fun x => Filter.limsup (fun n => birkhoffAverage ℝ T g n x) atTop
+    with hLsdef
   -- Each superlevel set `{L + 1/(k+1) < Ls}` is null.
   have hnull : ∀ k : ℕ, μ {x | L x + (1 / (k + 1) : ℝ) < Ls x} = 0 := fun k =>
     measure_setOf_lt_limsup_eq_zero hT hg (by positivity)
@@ -814,9 +832,11 @@ theorem tendsto_birkhoffAverage_ae [IsFiniteMeasure μ]
 measure, the Birkhoff averages converge `μ`-a.e. to the space average `∫ g dμ`. -/
 theorem tendsto_birkhoffAverage_ae_integral
     [IsProbabilityMeasure μ] (hT : Ergodic T μ) {g : X → ℝ} (hg : Integrable g μ) :
-    ∀ᵐ x ∂μ, Tendsto (fun n => birkhoffAverage ℝ T g n x) atTop (𝓝 (∫ y, g y ∂μ)) := by
+    ∀ᵐ x ∂μ, Tendsto (fun n => birkhoffAverage ℝ T g n x) atTop
+      (𝓝 (∫ y, g y ∂μ)) := by
   have hmp : MeasurePreserving T μ μ := hT.toMeasurePreserving
-  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› := MeasurableSpace.invariants_le T
+  have hI : MeasurableSpace.invariants T ≤ ‹MeasurableSpace X› :=
+    MeasurableSpace.invariants_le T
   -- The a.e. limit is `μ[g | I]`.
   have hbirk := tendsto_birkhoffAverage_ae hmp hg
   -- `μ[g | I]` is a.e. `T`-invariant, hence (ergodicity) a.e. constant.

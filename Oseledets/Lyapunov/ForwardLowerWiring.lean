@@ -13,22 +13,23 @@ import Oseledets.Cocycle.FurstenbergKesten
 
 For an ergodic cocycle `A⁽ⁿ⁾ = cocycle A T n` of invertible matrices over `(X, μ, T)`, this
 file controls the normalized log-growth sequence `n ↦ (1/n) log‖A⁽ⁿ⁾ v‖` of a vector `v`
-lying on a stratum of the Oseledets flag (`v ∈ Vflag A T x i.castSucc`, `v ∉ Vflag A T x i.succ`).
+lying on a stratum of the Oseledets flag (`v ∈ Vflag A T x i.castSucc`,
+`v ∉ Vflag A T x i.succ`).
 Together with the per-vector limsup upper bound, the results here are the inputs of
 `Oseledets.hgrowth_of_upper_lower` (in `Oseledets.Lyapunov.FiltrationAssemblyBridge`), which
 upgrades them to the exact growth limit `specList A T x i` on each stratum.
 
 ## Main results
 
-* `Oseledets.isBoundedUnder_log_norm_cocycle_apply`: almost everywhere, for every `v ≠ 0`, the
-  sequence `(1/n) log‖A⁽ⁿ⁾ v‖` is bounded above and below, squeezed between the two convergent
-  Furstenberg–Kesten envelopes `(1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖` and
+* `Oseledets.isBoundedUnder_log_norm_cocycle_apply`: almost everywhere, for every `v ≠ 0`,
+  the sequence `(1/n) log‖A⁽ⁿ⁾ v‖` is bounded above and below, squeezed between the two
+  convergent Furstenberg–Kesten envelopes `(1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖` and
   `-(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.
 * `Oseledets.hbdd_of_fk`: the same two-sided boundedness for every stratum vector of the
   Oseledets flag (such a vector is automatically nonzero).
 * `Oseledets.hlb_of_bandProjector`: the per-vector liminf lower bound
-  `specList A T x i ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`, derived from a band-projector convergence
-  hypothesis via `Oseledets.log_le_liminf_log_cocycle_apply`.
+  `specList A T x i ≤ liminf (1/n) log‖A⁽ⁿ⁾ v‖`, derived from a band-projector
+  convergence hypothesis via `Oseledets.log_le_liminf_log_cocycle_apply`.
 * `Oseledets.hgrowth_of_fk_and_band`: the exact per-vector growth limit, combining the limsup
   upper bound, the two-sided boundedness, and the liminf lower bound.
 -/
@@ -42,7 +43,8 @@ variable {X : Type*} {d : ℕ}
 
 /-! ## Helper norm bounds (apply-norm sandwiched by operator norm) -/
 
-/-- `‖A⁽ⁿ⁾ v‖ ≤ ‖A⁽ⁿ⁾‖ * ‖v‖` (apply-norm bounded above by the operator norm). -/
+/-- `‖A⁽ⁿ⁾ v‖ ≤ ‖A⁽ⁿ⁾‖ * ‖v‖` (apply-norm bounded above by the operator
+norm). -/
 theorem norm_toEuclideanLin_cocycle_le {T : X → X} (A : X → Matrix (Fin d) (Fin d) ℝ)
     (n : ℕ) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
     ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ ≤ ‖cocycle A T n x‖ * ‖v‖ := by
@@ -59,7 +61,8 @@ theorem toEuclideanLin_inv_cocycle_apply {T : X → X} (A : X → Matrix (Fin d)
     Matrix.mulVec_mulVec, Matrix.nonsing_inv_mul _ (Ne.isUnit (det_cocycle_ne_zero hA n x)),
     Matrix.one_mulVec]
 
-/-- `‖v‖ ≤ ‖(A⁽ⁿ⁾)⁻¹‖ * ‖A⁽ⁿ⁾ v‖` (apply-norm bounded below via the inverse operator norm). -/
+/-- `‖v‖ ≤ ‖(A⁽ⁿ⁾)⁻¹‖ * ‖A⁽ⁿ⁾ v‖` (apply-norm bounded below via the
+inverse operator norm). -/
 theorem norm_le_norm_inv_cocycle_mul {T : X → X} (A : X → Matrix (Fin d) (Fin d) ℝ)
     (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
     ‖v‖ ≤ ‖(cocycle A T n x)⁻¹‖ * ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
@@ -77,8 +80,8 @@ variable [MeasurableSpace X]
 
 /-- The normalized log-norm of `v` along the cocycle is eventually `≤` the convergent envelope
 `(1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖` and eventually `≥` the convergent envelope
-`-(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.  Both envelopes converge (Furstenberg–Kesten), so the middle
-sequence is bounded on both sides. -/
+`-(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.  Both envelopes converge
+(Furstenberg–Kesten), so the middle sequence is bounded on both sides. -/
 theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
     {μ : Measure X} [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     (A : X → Matrix (Fin d) (Fin d) ℝ) (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -103,7 +106,8 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
       have := (tendsto_natCast_atTop_atTop (R := ℝ)).inv_tendsto_atTop
       simpa using this.mul_const (Real.log ‖v‖)
     constructor
-    · -- Upper envelope: `(1/n) log‖A⁽ⁿ⁾ v‖ ≤ (1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖`.
+    · -- Upper envelope:
+      -- `(1/n) log‖A⁽ⁿ⁾ v‖ ≤ (1/n) log‖A⁽ⁿ⁾‖ + (1/n) log‖v‖`.
       have henv : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖
           + (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 (lamT + 0)) := hxT.add hcorr
       refine (henv.isBoundedUnder_le).mono_le ?_
@@ -124,8 +128,10 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
       calc (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖
           ≤ (n : ℝ)⁻¹ * (Real.log ‖cocycle A T n x‖ + Real.log ‖v‖) :=
             mul_le_mul_of_nonneg_left hle hninv
-        _ = (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖ + (n : ℝ)⁻¹ * Real.log ‖v‖ := by ring
-    · -- Lower envelope: `(1/n) log‖A⁽ⁿ⁾ v‖ ≥ -(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.
+        _ = (n : ℝ)⁻¹ * Real.log ‖cocycle A T n x‖
+              + (n : ℝ)⁻¹ * Real.log ‖v‖ := by ring
+    · -- Lower envelope:
+      -- `(1/n) log‖A⁽ⁿ⁾ v‖ ≥ -(1/n) log‖(A⁽ⁿ⁾)⁻¹‖ + (1/n) log‖v‖`.
       have henv : Tendsto (fun n : ℕ => -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖)
           + (n : ℝ)⁻¹ * Real.log ‖v‖) atTop (𝓝 (-lamB + 0)) := hxB.neg.add hcorr
       refine (henv.isBoundedUnder_ge).mono_ge ?_
@@ -138,7 +144,8 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
           have := congrArg (Matrix.toEuclideanLin (cocycle A T n x)⁻¹) hzero
           rwa [toEuclideanLin_inv_cocycle_apply A hA n x v, map_zero] at this
         exact hv this
-      -- `log‖v‖ ≤ log‖(A⁽ⁿ⁾)⁻¹‖ + log‖A⁽ⁿ⁾ v‖`, i.e. `-log‖(A⁽ⁿ⁾)⁻¹‖ + log‖v‖ ≤ log‖A⁽ⁿ⁾ v‖`.
+      -- `log‖v‖ ≤ log‖(A⁽ⁿ⁾)⁻¹‖ + log‖A⁽ⁿ⁾ v‖`,
+      -- i.e. `-log‖(A⁽ⁿ⁾)⁻¹‖ + log‖v‖ ≤ log‖A⁽ⁿ⁾ v‖`.
       have hge : -Real.log ‖(cocycle A T n x)⁻¹‖ + Real.log ‖v‖
           ≤ Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ := by
         have hlogle : Real.log ‖v‖ ≤ Real.log ‖(cocycle A T n x)⁻¹‖
@@ -147,7 +154,8 @@ theorem isBoundedUnder_log_norm_cocycle_apply {T : X → X}
           exact Real.log_le_log hvpos (norm_le_norm_inv_cocycle_mul A hA n x v)
         linarith
       have hninv : (0 : ℝ) ≤ (n : ℝ)⁻¹ := by positivity
-      calc -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖) + (n : ℝ)⁻¹ * Real.log ‖v‖
+      calc -((n : ℝ)⁻¹ * Real.log ‖(cocycle A T n x)⁻¹‖)
+            + (n : ℝ)⁻¹ * Real.log ‖v‖
           = (n : ℝ)⁻¹ * (-Real.log ‖(cocycle A T n x)⁻¹‖ + Real.log ‖v‖) := by ring
         _ ≤ (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ :=
             mul_le_mul_of_nonneg_left hge hninv
@@ -179,8 +187,9 @@ theorem hbdd_of_fk {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
 /-! ## The per-vector liminf lower bound
 
 The per-vector liminf lower bound rests on the analytic core
-`log_le_liminf_log_cocycle_apply`: at threshold `c = e^{specList i} > 0`, if the band projectors
-for `(c, ∞)` converge to a limit `P` with `P v ≠ 0`, then `specList i = log c ≤ liminf …`.  The
+`log_le_liminf_log_cocycle_apply`: at threshold `c = e^{specList i} > 0`, if the band
+projectors for `(c, ∞)` converge to a limit `P` with `P v ≠ 0`, then
+`specList i = log c ≤ liminf …`.  The
 remaining `IsCoboundedUnder (· ≥ ·)` side-condition is exactly the lower boundedness already
 furnished by `hbdd_of_fk` (a bounded-below sequence is cobounded-below).
 

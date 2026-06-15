@@ -44,12 +44,14 @@ variable {X : Type*} [MeasurableSpace X] {d : ℕ}
 /-! ## The per-vector growth interface from the upper and lower bounds
 
 The `hgrowth` interface of `oseledets_filtration_of_interfaces` asks, a.e., for a genuine limit
-`(1/n) log‖A⁽ⁿ⁾ v‖ → specList A T x i` on each stratum `Vflag castSucc \ Vflag succ`.  The
-analytic core supplies the two one-sided bounds:
+`(1/n) log‖A⁽ⁿ⁾ v‖ → specList A T x i` on each stratum `Vflag castSucc \ Vflag succ`.
+The analytic core supplies the two one-sided bounds:
 
-* the per-vector lower bound `specList A T x i ≤ liminf …` (from `log_le_liminf_log_cocycle_apply`
-  at threshold `c = e^{specList i}`, packaged here as the hypothesis `hlb`); and
-* the spectral upper bound `limsup … ≤ specList A T x i` (packaged here as the hypothesis `hub`).
+* the per-vector lower bound `specList A T x i ≤ liminf …` (from
+  `log_le_liminf_log_cocycle_apply` at threshold `c = e^{specList i}`, packaged here as the
+  hypothesis `hlb`); and
+* the spectral upper bound `limsup … ≤ specList A T x i` (packaged here as the hypothesis
+  `hub`).
 
 The squeeze `tendsto_inv_mul_log_norm_cocycle_apply` turns the two bounds into the limit, modulo
 the two `IsBoundedUnder` side-conditions; we take those as the minimal a.e. hypothesis `hbdd`. -/
@@ -272,7 +274,8 @@ theorem oseledets_filtration_of_interfaces'
         V 0 x = ⊤ ∧ V (Fin.last k) x = ⊥ ∧
         (∀ i : Fin k, V i.succ x < V i.castSucc x) ∧
         (∀ i : Fin (k + 1),
-          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x) = V i (T x)) ∧
+          Submodule.map (Matrix.toEuclideanCLM (𝕜 := ℝ) (A x)).toLinearMap (V i x)
+            = V i (T x)) ∧
         (∀ i : Fin k, ∀ v ∈ (V i.castSucc x : Set (EuclideanSpace ℝ (Fin d))),
             v ∉ V i.succ x →
             Tendsto

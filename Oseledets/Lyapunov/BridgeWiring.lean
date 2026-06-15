@@ -60,12 +60,14 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
     (b' : X → OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
     (hslowperp : ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, ∀ e : Fin d,
       t < lam0 (e : ℕ) → inner ℝ (b' x e) v = 0)
-    (hfwdN : ∀ᵐ x ∂μ, ∀ δ : ℝ, 0 < δ → ∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in Filter.atTop,
+    (hfwdN : ∀ᵐ x ∂μ, ∀ δ : ℝ, 0 < δ →
+      ∃ c : ℝ, 1 ≤ c ∧ ∀ᶠ n : ℕ in Filter.atTop,
       ∀ a e : Fin d,
         |(inner ℝ (b' x e) (sortedGramEigenbasis A T n x
             ⟨(a : ℕ), lt_of_lt_of_eq a.isLt (Fintype.card_fin d).symm⟩) : ℝ)|
           ≤ c * Real.exp (-(n : ℝ) * (max (lam0 (e : ℕ) - lam0 (a : ℕ)) 0 - δ)))
-    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 → ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
+    (hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
+      ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
       (∀ a b : Fin d, |S a b| ≤ c * Real.exp (-(max (g b - g a) 0))) →
       ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j))) :
     ∀ᵐ x ∂μ, ∀ t : ℝ, ∀ v ∈ Vslow A T (Real.exp t) x, v ≠ 0 →
@@ -204,7 +206,8 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
           have : (n : ℝ) * lam0 (e : ℕ) ≤ (n : ℝ) * t :=
             mul_le_mul_of_nonneg_left hle hnpos
           linarith
-        have hCnn : (0 : ℝ) ≤ (d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1) := by
+        have hCnn :
+            (0 : ℝ) ≤ (d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1) := by
           have : (0 : ℝ) ≤ c := le_of_lt (lt_of_lt_of_le zero_lt_one hc)
           positivity
         calc |(inner ℝ v (b' x e) : ℝ)|
@@ -225,7 +228,8 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
         ≤ ∑ e : Fin d, |(inner ℝ v (b' x e) : ℝ)
             * (inner ℝ (b' x e) (sortedGramEigenbasis A T n x j) : ℝ)| :=
           Finset.abs_sum_le_sum_abs _ _
-      _ ≤ ∑ _e : Fin d, ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
+      _ ≤ ∑ _e : Fin d,
+            ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
               * Real.exp (-((n : ℝ) * lam0 (j : ℕ) - (n : ℝ) * t)) :=
           Finset.sum_le_sum (fun e _ => hterm e)
       _ = (d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
@@ -273,7 +277,8 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
     rw [specTerm]
     -- Bound `⟪v,u_j⟫² ≤ (RHS of hov)²`.
     set σ := (Matrix.toEuclideanLin (cocycle A T n x)).singularValues j with hσdef
-    set Bn : ℝ := (d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
+    set Bn : ℝ :=
+      (d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
         * Real.exp (-((n : ℝ) * lam0 (j : ℕ) - (n : ℝ) * t)) with hBn
     have hBnn : 0 ≤ Bn := by
       have hcnn : (0 : ℝ) ≤ c := le_of_lt (lt_of_lt_of_le zero_lt_one hc)
@@ -299,13 +304,15 @@ theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZer
         = c ^ (d - 1) * Real.exp ((n : ℝ) * δ * ((d : ℝ) - 1)) := by
       rw [mul_pow, ← Real.exp_nat_mul]
       congr 1
-      have hd1 : (1 : ℝ) ≤ (d : ℝ) := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (NeZero.ne d)
+      have hd1 : (1 : ℝ) ≤ (d : ℝ) := by
+        exact_mod_cast Nat.one_le_iff_ne_zero.mpr (NeZero.ne d)
       have : ((d - 1 : ℕ) : ℝ) = (d : ℝ) - 1 := by
         have : (1 : ℕ) ≤ d := Nat.one_le_iff_ne_zero.mpr (NeZero.ne d)
         push_cast [this]; ring
       rw [this]; ring_nf
     -- Rewrite the squared envelope as `D² · exp(...)`.
-    have hsq : ((d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
+    have hsq :
+        ((d : ℝ) * ‖v‖ * ((d - 1).factorial * (c * Real.exp ((n : ℝ) * δ)) ^ (d - 1))
             * Real.exp (-((n : ℝ) * lam0 (j : ℕ) - (n : ℝ) * t))) ^ 2
         = D ^ 2 * Real.exp ((n : ℝ) * δ * ((d : ℝ) - 1) * 2
             + -((n : ℝ) * lam0 (j : ℕ) - (n : ℝ) * t) * 2) := by

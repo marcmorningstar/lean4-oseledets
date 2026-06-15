@@ -47,11 +47,12 @@ noncomputable def limitEigenbasis [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
 
 /-! ### The everywhere eigenpair -/
 
+omit [MeasurableSpace X] in
 /-- **The everywhere eigenpair.**  `limitEigenbasis A T x e` is an eigenvector of
 `toEuclideanLin (lambdaHat A T x)` with eigenvalue the sorted eigenvalue
 `eigenvalues₀ ⟨e, …⟩`.  Mimics `sortedGramEigenbasis_eigenpair`. -/
-theorem limitEigenbasis_eigenpair [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X)
-    (e : Fin d) :
+theorem limitEigenbasis_eigenpair [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+    (x : X) (e : Fin d) :
     Matrix.toEuclideanLin (lambdaHat A T x) (limitEigenbasis A T x e)
       = ((lambdaHat_isSelfAdjoint A T x).isHermitian.eigenvalues₀
           ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩) •
@@ -73,7 +74,7 @@ theorem limitEigenbasis_eigenpair [NeZero d] (A : X → Matrix (Fin d) (Fin d) �
   have hval : hM.eigenvalues (e₁.symm idx) = hM.eigenvalues₀ idx := by
     rw [Matrix.IsHermitian.eigenvalues, he₁]
     congr 1
-    show (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm
+    change (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm
       ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))) idx) = idx
     simp [Equiv.symm_apply_apply]
   rw [hidx] at hval
@@ -115,7 +116,8 @@ theorem limitEigenbasis_eigenpair_exp [MeasureTheory.IsProbabilityMeasure μ] [N
 
 /-- **The trivial inner-product bound between two orthonormal bases.**  `|⟪b₁ i, b₂ j⟫| ≤ 1`
 by Cauchy–Schwarz and the unit norms of orthonormal-basis vectors. -/
-theorem abs_inner_le_one_bases (b₁ b₂ : OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
+theorem abs_inner_le_one_bases
+    (b₁ b₂ : OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
     (i j : Fin d) : |(inner ℝ (b₁ i) (b₂ j) : ℝ)| ≤ 1 := by
   have hcs : ‖(inner ℝ (b₁ i) (b₂ j) : ℝ)‖ ≤ ‖b₁ i‖ * ‖b₂ j‖ :=
     norm_inner_le_norm (𝕜 := ℝ) (b₁ i) (b₂ j)
@@ -152,7 +154,8 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
     exact hv
   set b := limitEigenbasis A T x e with hb
   -- Move the self-adjoint projector from `v` onto the eigenvector `b`.
-  have hsa : IsSelfAdjoint (Matrix.toEuclideanCLM (𝕜 := ℝ) (slowProjector A T (Real.exp t) x)) := by
+  have hsa : IsSelfAdjoint
+      (Matrix.toEuclideanCLM (𝕜 := ℝ) (slowProjector A T (Real.exp t) x)) := by
     have hstar : star (Matrix.toEuclideanCLM (𝕜 := ℝ) (slowProjector A T (Real.exp t) x))
         = Matrix.toEuclideanCLM (𝕜 := ℝ) (star (slowProjector A T (Real.exp t) x)) :=
       (map_star (Matrix.toEuclideanCLM (𝕜 := ℝ)) (slowProjector A T (Real.exp t) x)).symm
@@ -196,13 +199,14 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
       have h1 : hM.eigenvalues (e₁.symm idx) = hM.eigenvalues₀ idx := by
         rw [Matrix.IsHermitian.eigenvalues, he₁]
         congr 1
-        show (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm
+        change (Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))).symm
           ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))) idx) = idx
         simp [Equiv.symm_apply_apply]
       rw [h1, hidx]
       -- compare with `limitEigenbasis_eigenpair` and `hpair`.
-      have heq2 : (hM.eigenvalues₀ ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩) • b
-          = Real.exp (lamSing A T x (e : ℕ)) • b := by
+      have heq2 :
+          (hM.eigenvalues₀ ⟨(e : ℕ), lt_of_lt_of_eq e.isLt (Fintype.card_fin d).symm⟩) • b
+            = Real.exp (lamSing A T x (e : ℕ)) • b := by
         rw [← limitEigenbasis_eigenpair A T x e, ← hb, hev]
       -- `b ≠ 0` (orthonormal basis vector), so cancel.
       have hbne : b ≠ 0 := by
@@ -213,7 +217,8 @@ theorem inner_limitEigenbasis_eq_zero_of_slow [MeasureTheory.IsProbabilityMeasur
     rw [hvaleq, hind, zero_smul]
   -- Assemble: `⟪b, v⟫ = ⟪b, P v⟫ = ⟪P b, v⟫ = ⟪0, v⟫ = 0`.
   have hmove : (inner ℝ b v : ℝ)
-      = inner ℝ ((Matrix.toEuclideanCLM (𝕜 := ℝ) (slowProjector A T (Real.exp t) x)) b) v := by
+      = inner ℝ
+          ((Matrix.toEuclideanCLM (𝕜 := ℝ) (slowProjector A T (Real.exp t) x)) b) v := by
     conv_lhs => rw [← hPv, hcoe]
     exact (hsa.isSymmetric.apply_clm b v).symm
   rw [hmove, ← hcoe, hPb, inner_zero_left]
