@@ -36,8 +36,9 @@ the ambient exponent multiset** (with multiplicities bounded by `finrank` monoto
 ## What is scoped out (Stage (ii), deferred)
 
 The *full restricted* `IsOseledetsFiltration` on `W` (via the flag `x ↦ Vflag A T x i ⊓ W x`)
-is **not** delivered. The intersections are equivariant (`restricted_inf_lambdaSublevel_equivariant`,
-proved here) but establishing that `x ↦ Vflag A T x i ⊓ W x` is a `MeasurableSubspace`
+is **not** delivered. The intersections are equivariant
+(`restricted_inf_lambdaSublevel_equivariant`, proved here) but establishing that
+`x ↦ Vflag A T x i ⊓ W x` is a `MeasurableSubspace`
 requires a closure-under-`⊓` lemma `MeasurableSubspace.inf` that is **absent** from the
 current infrastructure (`Oseledets/Lyapunov/Measurable.lean` provides only `measurable_finrank`
 and span/selection plumbing — no `⊓`/intersection measurability). Consequently the a.e.
