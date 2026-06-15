@@ -18,6 +18,7 @@ import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
 import Oseledets.TwoSided.MeasurableInf
 import Oseledets.TwoSided.StrongExport
+import Oseledets.TwoSided.KingmanMeans
 
 /-!
 # Axiom audit
@@ -221,3 +222,9 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.oseledets_filtration_dims' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.oseledets_filtration_dims
+
+-- Two-sided splitting, P3 (Kingman means identification — load-bearing new analytic lemma).
+
+/-- info: 'Oseledets.tendsto_kingman_ergodic_means' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_kingman_ergodic_means
