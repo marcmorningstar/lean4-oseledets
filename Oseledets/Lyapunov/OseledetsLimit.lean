@@ -132,10 +132,11 @@ private theorem toEuclideanLin_mul (M N : Matrix (Fin d) (Fin d) ℝ) :
     Matrix.toEuclideanLin (M * N)
       = (Matrix.toEuclideanLin M) ∘ₗ (Matrix.toEuclideanLin N) := by
   ext v i
-  simp only [Matrix.toEuclideanLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
+  simp only [Matrix.toLpLin_apply, LinearMap.comp_apply, Matrix.mulVec_mulVec]
 
 /-! ## L1: subadditivity of `log Sprod` -/
 
+set_option linter.unusedSectionVars false in
 /-- **L1 — submultiplicativity of `Sprod`.** `∏σ(A⁽ᵐ⁺ⁿ⁾) ≤ ∏σ(A⁽ᵐ⁾∘Tⁿ) · ∏σ(A⁽ⁿ⁾)`. -/
 theorem Sprod_submul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (k m n : ℕ) (x : X) :
     Sprod A T k (m + n) x ≤ Sprod A T k m (T^[n] x) * Sprod A T k n x := by
@@ -157,6 +158,7 @@ theorem logSprod_subadditive (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X
     _ = Real.log (Sprod A T k m (T^[n] x)) + Real.log (Sprod A T k n x) :=
         Real.log_mul (ne_of_gt (hpos m (T^[n] x))) (ne_of_gt (hpos n x))
 
+set_option linter.unusedSectionVars false in
 /-- **L1 — Kingman index convention.** `log Sprod` is a subadditive cocycle in Kingman's sense
 `g(m+n,x) ≤ g(m,x) + g(n,T^[m]x)`, obtained from the symmetric cocycle split. -/
 theorem isSubadditiveCocycle_logSprod {T : X → X} (A : X → Matrix (Fin d) (Fin d) ℝ) (k : ℕ)
@@ -231,10 +233,11 @@ theorem injective_toEuclideanLin {M : Matrix (Fin d) (Fin d) ℝ} (hM : M.det �
   have hid : (Matrix.toEuclideanLin M⁻¹) ∘ₗ (Matrix.toEuclideanLin M) = LinearMap.id := by
     rw [← toEuclideanLin_mul, hinv]
     ext v i
-    simp [Matrix.toEuclideanLin_apply, Matrix.one_mulVec]
+    simp
   exact Function.LeftInverse.injective (g := Matrix.toEuclideanLin M⁻¹)
     (fun a => by rw [← LinearMap.comp_apply, hid, LinearMap.id_apply])
 
+set_option linter.unusedSectionVars false in
 /-- Each of the top-`d` singular values of an invertible cocycle iterate is strictly positive. -/
 theorem singularValues_cocycle_pos {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X}
     (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) {i : ℕ} (hi : i < d) :
@@ -251,7 +254,7 @@ theorem singularValues_cocycle_pos {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X
 theorem Sprod_pos {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X}
     (hA : ∀ x, (A x).det ≠ 0) {k : ℕ} (hk : k ≤ d) (n : ℕ) (x : X) :
     0 < Sprod A T k n x :=
-  Finset.prod_pos fun i hi =>
+  Finset.prod_pos fun _i hi =>
     singularValues_cocycle_pos hA n x (lt_of_lt_of_le (Finset.mem_range.mp hi) hk)
 
 /-! ## L3: integrability and bounded-below of `log Sprod`
@@ -262,6 +265,7 @@ integrability plumbing. -/
 
 variable [NeZero d]
 
+set_option linter.unusedSectionVars false in
 /-- **Upper Fekete bound.** `log Sprod_k ≤ k · log‖A⁽ⁿ⁾‖`. -/
 theorem logSprod_le {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X}
     (hA : ∀ x, (A x).det ≠ 0) {k : ℕ} (hk : k ≤ d) (n : ℕ) (x : X) :
@@ -319,6 +323,7 @@ theorem measurable_det_comp {k : ℕ} {N : X → Matrix (Fin k) (Fin k) ℝ}
   refine Measurable.const_smul ?_ _
   exact Finset.measurable_prod _ fun i _ => hentry _ _
 
+set_option linter.unusedSectionVars false in
 /-- Measurability of `x ↦ Sprod A T k n x`. By the **compound-matrix bridge**
 `ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound`, the product of the top-`k` singular
 values equals the L2 operator norm of the `k`-th **compound matrix** `C_k(A⁽ⁿ⁾ x)`, whose entries
@@ -397,6 +402,7 @@ theorem bddBelow_logSprod (hT : MeasurePreserving T μ μ) [IsFiniteMeasure μ]
 
 /-! ## L6: squared singular values are the Gram eigenvalues -/
 
+set_option linter.unusedSectionVars false in
 /-- The adjoint of `toEuclideanLin M` composed with `toEuclideanLin M` equals `toEuclideanLin`
 of the Gram matrix `Mᵀ M` (over `ℝ`). -/
 theorem adjoint_comp_self_eq_gram (M : Matrix (Fin d) (Fin d) ℝ) :
@@ -405,8 +411,9 @@ theorem adjoint_comp_self_eq_gram (M : Matrix (Fin d) (Fin d) ℝ) :
   rw [← Matrix.toEuclideanLin_conjTranspose_eq_adjoint,
     show (Mᵀ * M) = Mᴴ * M by rw [Matrix.conjTranspose_eq_transpose_of_trivial]]
   ext v i
-  simp only [LinearMap.comp_apply, Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+  simp only [LinearMap.comp_apply, Matrix.toLpLin_apply, Matrix.mulVec_mulVec]
 
+set_option linter.unusedSectionVars false in
 /-- **L6 — the eigenvalue bridge.** The squared singular values of `toEuclideanLin M` are the
 eigenvalues of the symmetric operator `adjoint ∘ self = toEuclideanLin (Mᵀ M)`, i.e. the
 eigenvalues of the Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾`. This delivers the eigenvalues of the
@@ -419,6 +426,7 @@ theorem sq_singularValues_eq_gram_eigenvalue {n : ℕ} (M : Matrix (Fin d) (Fin 
 
 /-! ## L4: the genuine ergodic `Γ_k` limit -/
 
+set_option linter.unusedSectionVars false in
 /-- **L4 — the genuine ergodic `Γ_k` limit** (spike form). Under ergodicity, with the
 Furstenberg–Kesten-style integrability (`hint`) and bounded-below (`hbdd`) provisos and the
 positivity proviso (`hpos`, valid for `k ≤ d` on an invertible cocycle), the normalized
@@ -452,6 +460,7 @@ theorem tendsto_GammaK_of_integrableLogNorm [IsProbabilityMeasure μ] (hT : Ergo
 
 /-! ## L5: the per-singular-value exponents -/
 
+set_option linter.unusedSectionVars false in
 /-- **L5 — per-`σ` exponent.** Differencing the `Γ_k` limits: if `(1/n) log Sprod_{i+1} → a` and
 `(1/n) log Sprod_i → b` for `μ`-a.e. `x` and the singular values are positive (`k ≤ d`), then the
 normalized log of the `i`-th singular value converges to `a − b` (the `i`-th Lyapunov exponent
@@ -481,6 +490,7 @@ theorem tendsto_log_singularValue {A : X → Matrix (Fin d) (Fin d) ℝ}
     ring
   refine (ha.sub hb).congr (fun n => (hsplit n).symm)
 
+set_option linter.unusedSectionVars false in
 /-- **L5 — antitonicity of the per-`σ` exponents.** For each fixed `n` and `x`, the normalized
 logs of the singular values are antitone in the index (since the singular values themselves are
 antitone). -/
@@ -498,6 +508,7 @@ noncomputable def lamSing (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (
   limUnder atTop (fun n : ℕ => (n : ℝ)⁻¹ *
     Real.log ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues i))
 
+set_option linter.unusedSectionVars false in
 /-- If, at `x`, the normalized log of the `i`-th singular value converges to `lam` (true `μ`-a.e. by
 `tendsto_log_singularValue`), then `lamSing A T x i = lam`. -/
 theorem lamSing_eq_of_tendsto {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X} {x : X} {i : ℕ}
@@ -515,6 +526,7 @@ continuous functional calculus applies to it. The candidate Oseledets limit at l
 matrix `(Qₙ)^{1/(2n)} = cfc (·^{1/(2n)}) Qₙ`, whose eigenvalues are the `1/n`-th powers of the
 singular values of `A⁽ⁿ⁾`. -/
 
+set_option linter.unusedSectionVars false in
 /-- **L7a.** The Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` is positive semidefinite. -/
 theorem gram_posSemidef (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
     (gram A T n x).PosSemidef := by
@@ -539,6 +551,7 @@ def qpow (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) 
     Matrix (Fin d) (Fin d) ℝ :=
   cfc (fun t : ℝ => t ^ ((2 * (n : ℝ))⁻¹)) (gram A T n x)
 
+set_option linter.unusedSectionVars false in
 /-- `qpow A T n x` is self-adjoint (a CFC of a real-valued function is always self-adjoint). -/
 theorem qpow_isSelfAdjoint (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
     IsSelfAdjoint (qpow A T n x) :=
@@ -743,12 +756,14 @@ def bandProjector (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (χ : ℝ
     Matrix (Fin d) (Fin d) ℝ :=
   cfc χ (qpow A T n x)
 
+set_option linter.unusedSectionVars false in
 /-- **L7c.0.** The band spectral projector is self-adjoint (a CFC of a real-valued function is
 always self-adjoint). -/
 theorem bandProjector_isSelfAdjoint (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (χ : ℝ → ℝ)
     (n : ℕ) (x : X) : IsSelfAdjoint (bandProjector A T χ n x) :=
   cfc_predicate _ _
 
+set_option linter.unusedSectionVars false in
 /-- **L7c.0.** If the cutoff `χ` is idempotent on the spectrum of `qpow` (i.e. `χ = χ²` there — true
 for a `0/1` indicator separated from the spectrum by a gap), the band projector is idempotent: a
 genuine orthogonal projector. Conditional; the gap hypothesis that supplies `hidem` is discharged in
@@ -769,6 +784,7 @@ triple-product formula `cfc χ A = U · diag(χ ∘ eigenvalues) · Uᴴ` (compi
 `scratch_l7c3bc_eigproj.lean`) makes the projector concrete; the rank is the count of nonzero
 diagonal entries, and a `{0,1}`-valued `χ` selects exactly the eigenvalues above the cut. -/
 
+set_option linter.unusedSectionVars false in
 /-- **L7c.1.** When `χ` equals the `0/1` indicator of `(c, ∞)` on the spectrum of `qpow`, the band
 projector is idempotent (a genuine orthogonal projector). Specialization of `bandProjector_mul_self`
 to the indicator cutoff, whose continuity hypothesis is discharged because the spectrum is finite
@@ -842,6 +858,7 @@ the eigenvectors of `qpow` with eigenvalue `> c`; through the explicit Hermitian
 `U_top · U_topᵀ`, where `U_top` is the column-submatrix of the eigenvector unitary selecting the
 columns above the cut. The selected columns are orthonormal (`U_topᵀ U_top = 1`). -/
 
+set_option linter.unusedSectionVars false in
 /-- **Diag-selection.** For a real matrix `U` and the `0/1` indicator of `(c, ∞)` precomposed with a
 scalar `e : Fin d → ℝ`, conjugating the indicator diagonal by `U` selects the columns of `U` whose
 `e`-value exceeds `c`: `U · diag(𝟙_{(c,∞)} ∘ e) · Uᵀ = U_S · U_Sᵀ`, where `U_S` is the
@@ -865,6 +882,7 @@ theorem diag_indicator_conj_eq_submatrix (U : Matrix (Fin d) (Fin d) ℝ) (c : �
   · rw [Set.indicator_of_mem (Set.mem_Ioi.mpr hi), Pi.one_apply, if_pos hi, one_mul]
   · rw [Set.indicator_of_notMem (by simpa using hi), if_neg hi, zero_mul, mul_zero]
 
+set_option linter.unusedSectionVars false in
 /-- **Orthonormal columns of the selected submatrix.** If `U` has orthonormal columns
 (`Uᵀ U = 1`, e.g. an eigenvector unitary), then any column-subselection of `U` still has orthonormal
 columns: `U_Sᵀ U_S = 1`. (`U_S = U.submatrix id Subtype.val` over a subtype of column indices.) -/
@@ -937,6 +955,7 @@ two by showing the band projector equals `W Wᵀ`, where `W` is the `d×k` matri
 subspace; the reconciliation is via the elementary "self-adjoint idempotent of trace `k` and range
 fixing `W` is `W Wᵀ`" device (trace-zero symmetric idempotent vanishes). -/
 
+set_option linter.unusedSectionVars false in
 /-- **CFC acts diagonally on the matrix eigenbasis.** For a Hermitian real matrix `M` with
 eigenvector basis `eigenvectorBasis` and eigenvalues `eigenvalues`, `cfc g M` sends the `j`-th
 eigenvector to `g (eigenvalues j)` times itself: `cfc g M *ᵥ (eigenvectorBasis j) =
@@ -967,7 +986,7 @@ theorem toEuclideanLin_cfc_eigenvectorBasis (M : Matrix (Fin d) (Fin d) ℝ) (hM
     (g : ℝ → ℝ) (j : Fin d) :
     Matrix.toEuclideanLin (cfc g M) (hM.eigenvectorBasis j)
       = g (hM.eigenvalues j) • (hM.eigenvectorBasis j) := by
-  rw [Matrix.toEuclideanLin_apply, cfc_mulVec_eigenvectorBasis M hM g j]; rfl
+  rw [Matrix.toLpLin_apply, cfc_mulVec_eigenvectorBasis M hM g j]; rfl
 
 /-- **DELIVERABLE 1 — the spectral operator-norm bound.** For a Hermitian matrix `M` and a function
 `g`, if `|g (eigenvalue i)| ≤ c` for every eigenvalue (and `0 ≤ c`), then the L2 operator norm of
@@ -986,7 +1005,7 @@ theorem norm_cfc_le_of_forall_eigenvalue_abs_le (M : Matrix (Fin d) (Fin d) ℝ)
   rw [Matrix.l2_opNorm_def]
   apply ContinuousLinearMap.opNorm_le_bound _ hc
   intro v
-  show ‖Matrix.toEuclideanLin (cfc g M) v‖ ≤ c * ‖v‖
+  change ‖Matrix.toEuclideanLin (cfc g M) v‖ ≤ c * ‖v‖
   set w := Matrix.toEuclideanLin (cfc g M) v with hw
   have hsa : (Matrix.toEuclideanLin (cfc g M)).IsSymmetric := by
     rw [Matrix.isSymmetric_toEuclideanLin_iff]
@@ -1011,6 +1030,7 @@ theorem norm_cfc_le_of_forall_eigenvalue_abs_le (M : Matrix (Fin d) (Fin d) ℝ)
     nlinarith [hbound i, abs_nonneg (g (hM.eigenvalues i)), sq_abs (g (hM.eigenvalues i)), hc]
   nlinarith [norm_nonneg w, norm_nonneg v, hsqbound, mul_nonneg hc (norm_nonneg v)]
 
+set_option linter.unusedSectionVars false in
 /-- **Trace of the indicator band projector = number of eigenvalues above the cut.** For a Hermitian
 real matrix `M`, the trace of `cfc (𝟙_{(c,∞)}) M` is the count of eigenvalues `> c`. The `0/1`-valued
 cutoff makes the conjugated-diagonal trace a count. (For a self-adjoint idempotent this is its rank.) -/
@@ -1086,10 +1106,10 @@ theorem sortedGramEigenbasis_eigenpair (A : X → Matrix (Fin d) (Fin d) ℝ) (T
   have hval : hM.eigenvalues (e.symm i) = hM.eigenvalues₀ i := by
     rw [Matrix.IsHermitian.eigenvalues]
     congr 1
-    show (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
+    change (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
       ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d)))) i) = i
     simp [Equiv.symm_apply_apply]
-  rw [← hval, Matrix.toEuclideanLin_apply, hM.mulVec_eigenvectorBasis (e.symm i)]; rfl
+  rw [← hval, Matrix.toLpLin_apply, hM.mulVec_eigenvectorBasis (e.symm i)]; rfl
 
 /-- The `1/(2n)`-power of the sorted Gram eigenvalue is the sorted `qpow` eigenvalue:
 `(eigenvalues₀(gram) i)^{1/(2n)} = eigenvalues₀(qpow) i`. The monotone-CFC bridge identifying the
@@ -1174,7 +1194,7 @@ theorem bandProjector_mul_sortedTopFrame (A : X → Matrix (Fin d) (Fin d) ℝ) 
   have hcolvec : (fun b => sortedTopFrame A T n x hk b j)
       = ⇑(hM.eigenvectorBasis (e.symm ⟨j, lt_of_lt_of_le j.2 hk⟩)) := by
     funext b
-    show sortedGramEigenbasis A T n x ⟨j, lt_of_lt_of_le j.2 hk⟩ b
+    change sortedGramEigenbasis A T n x ⟨j, lt_of_lt_of_le j.2 hk⟩ b
       = (hM.eigenvectorBasis (e.symm ⟨j, lt_of_lt_of_le j.2 hk⟩)) b
     rw [sortedGramEigenbasis, OrthonormalBasis.reindex_apply, he, hMdef, Equiv.symm_symm]
   rw [hcolvec, cfc_mulVec_eigenvectorBasis (gram A T n x) hM g (e.symm ⟨j, lt_of_lt_of_le j.2 hk⟩)]
@@ -1182,7 +1202,7 @@ theorem bandProjector_mul_sortedTopFrame (A : X → Matrix (Fin d) (Fin d) ℝ) 
       = hM.eigenvalues₀ ⟨j, lt_of_lt_of_le j.2 hk⟩ := by
     rw [Matrix.IsHermitian.eigenvalues]
     congr 1
-    show (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
+    change (Fintype.equivOfCardEq (Fintype.card_fin _)).symm
       ((Fintype.equivOfCardEq (Fintype.card_fin (Fintype.card (Fin d))))
         ⟨j, lt_of_lt_of_le j.2 hk⟩) = ⟨j, lt_of_lt_of_le j.2 hk⟩
     simp [Equiv.symm_apply_apply]
@@ -1375,6 +1395,7 @@ theorem tendsto_logNorm_inv_orbit_div_atTop_zero {A : X → Matrix (Fin d) (Fin 
     (integrable_logNorm_inv_cocycle hT hA hAmeas hTmeas hint hint' 1)] with x hx
   simpa using hx
 
+set_option linter.unusedSectionVars false in
 /-- **Compound operator-norm upper bound** `‖compound k B‖ ≤ ‖B‖^k`. From the singular-value
 product `∏_{i<k} σᵢ = ‖compound k B‖` (`prod_singularValues_eq_l2_opNorm_compound`) and the per-index
 ceiling `σᵢ ≤ ‖B‖` (`sigma_le_opNorm`). -/
@@ -1388,6 +1409,7 @@ theorem norm_compound_le (k : ℕ) (B : Matrix (Fin d) (Fin d) ℝ) :
         · intro i _; exact sigma_le_opNorm B i
     _ = ‖B‖ ^ k := by rw [Finset.prod_const, Finset.card_range]
 
+set_option linter.unusedSectionVars false in
 /-- **Compound operator-norm lower bound** `(‖B⁻¹‖⁻¹)^k ≤ ‖compound k B‖`, for invertible `B` and
 `k ≤ d`. From the singular-value product and the per-index floor `‖B⁻¹‖⁻¹ ≤ σᵢ`
 (`inv_opNorm_inv_le_sigma`). -/
@@ -1652,6 +1674,7 @@ theorem norm_sub_proj_sq_eq_one_sub_inner_sq {E : Type*} [NormedAddCommGroup E]
   rw [hexp, hvtvt, hv₀v₀, ← hp]; ring
 
 open scoped RealInnerProductSpace in
+set_option linter.unusedSectionVars false in
 /-- **L7c.3c (abstract assembly, steps 1–4).** Combines the Frobenius back-transport, the Plücker
 det-Gram identity, the Pythagoras gap, and the refined off-diagonal sin-Θ core into a single
 per-step projector-increment bound. Given orthonormal frames `U`, `V` (`UᵀU = VᵀV = 1`), an
@@ -1704,10 +1727,10 @@ the off-diagonal numerator is `cM·√μ₁·cB²` with `μ₁ = cM²·r²` (so 
 `numerator / (μ̃₀ − ν) ≤ κ²·r / (1 − κ²r²)`. This is the constant whose `(1/n)·log` limit is
 `λₖ − λₖ₋₁ < 0`. -/
 theorem numerator_div_gap_le {cM cB cBi r denom : ℝ}
-    (hcM : 0 ≤ cM) (hcB : 0 ≤ cB) (hcBi : 0 ≤ cBi) (hr : 0 ≤ r)
+    (hcM : 0 ≤ cM) (_hcB : 0 ≤ cB) (_hcBi : 0 ≤ cBi) (hr : 0 ≤ r)
     (hκr : (cB * cBi) ^ 2 * r ^ 2 < 1)
     (hdenom : cM ^ 2 / cBi ^ 2 * (1 - (cB * cBi) ^ 2 * r ^ 2) ≤ denom)
-    (hdenompos : 0 < denom) (hcBipos : 0 < cBi) :
+    (_hdenompos : 0 < denom) (hcBipos : 0 < cBi) :
     cM * (cM * r) * cB ^ 2 / denom
       ≤ (cB * cBi) ^ 2 * r / (1 - (cB * cBi) ^ 2 * r ^ 2) := by
   set κ2 : ℝ := (cB * cBi) ^ 2 with hκ2
@@ -1735,7 +1758,7 @@ theorem numerator_div_gap_le {cM cB cBi r denom : ℝ}
     have hlbne : lb ≠ 0 := ne_of_gt hlbpos
     have hstep2 : cM * (cM * r) * cB ^ 2 / lb = κ2 * r / (1 - κ2 * r ^ 2) := by
       rw [div_eq_div_iff hlbne hgapne, hlb, hκ2]
-      field_simp <;> ring
+      field_simp
     rw [hstep2] at hstep1
     rw [hκ2]; exact hstep1
 
@@ -1777,6 +1800,7 @@ yet committed, and the `⋀^k`-type instantiation times out the elaborator at th
 **EVENTUAL caveat (§J.8.1).** The denominator positivity `μ̃₀ − ν > 0` holds only for `r < 1/κ`,
 which is a tail property along the orbit (since `r → 0` geometrically while `κ` is tempered); hence
 the bound is stated under the explicit regime hypotheses `hgap`/`hκr`. -/
+set_option linter.unusedSectionVars false in
 open scoped RealInnerProductSpace in
 theorem norm_bandProjector_succ_sub_le {c : ℝ} (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {k : ℕ} (n : ℕ) (x : X)
@@ -1842,6 +1866,8 @@ Plücker top eigenvectors `v₀ = ⋀{u₀…u_{k-1}}(gram n)`, `vt = ⋀{u'₀�
   `κ²r² < 1` regime — discharged a.e. by the root-test layer in DELIVERABLE 3). -/
 
 set_option maxHeartbeats 1600000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
+set_option linter.unusedSectionVars false in
 /-- **The compound Gram operator of the cocycle is `toEuclideanLin (compoundMatrix k (gram))`.**
 `adjoint Gₙ ∘ₗ Gₙ = toEuclideanLin (compoundMatrix k (gram A T n x))`, where
 `Gₙ = toEuclideanLin (compoundMatrix k (cocycle A T n x))`. Via `compoundMatrix_gram` and the matrix
@@ -1855,9 +1881,10 @@ theorem compound_gram_op_eq (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     ← Matrix.toEuclideanLin_conjTranspose_eq_adjoint,
     Matrix.conjTranspose_eq_transpose_of_trivial]
   ext v i
-  simp only [LinearMap.comp_apply, Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+  simp only [LinearMap.comp_apply, Matrix.toLpLin_apply, Matrix.mulVec_mulVec]
 
 set_option maxHeartbeats 1600000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
 /-- **The Plücker top eigenvector achieves the compound operator norm.** If `v₀` is a unit Plücker
 top eigenvector of `Cₙ = adjoint Gₙ ∘ₗ Gₙ` (eigenvalue `∏_{i<k} σᵢ²`), then `‖Gₙ v₀‖ = ‖compound Mₙ‖`
 (`= ∏_{i<k} σᵢ = √μ₀`). This `htop` hypothesis of `ExteriorNorm.norm_offdiag_residual_compound_le`. -/
@@ -1896,12 +1923,14 @@ noncomputable def lamCocycle (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X
     ℕ → ℝ :=
   fun i => (Matrix.toEuclideanLin (cocycle A T n x)).singularValues i ^ 2
 
+set_option linter.unusedSectionVars false in
 theorem lamCocycle_antitone (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) :
     Antitone (lamCocycle A T n x) := by
   intro i j hij
   exact pow_le_pow_left₀ ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues_nonneg j)
     ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues_antitone hij) 2
 
+set_option linter.unusedSectionVars false in
 theorem lamCocycle_nonneg (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X) (i : ℕ) :
     0 ≤ lamCocycle A T n x i := by rw [lamCocycle]; positivity
 
@@ -1923,6 +1952,7 @@ noncomputable def pluckerTopVec (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X �
       (fun j : Fin k => sortedGramEigenbasis A T n x ⟨j, lt_of_lt_of_le j.2 hkd⟩))
 
 set_option maxHeartbeats 3200000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
 /-- **The Plücker eigenpair/ceiling data for the cocycle compound Gram operator.** Specialization of
 `ExteriorNorm.plucker_eigenpair_ceiling_standard'` to `gram A T n x` with the sorted eigenbasis and
 `lam = σ²`: the top eigenvector `pluckerTopVec` is a unit vector, an eigenvector of
@@ -1930,7 +1960,7 @@ set_option maxHeartbeats 3200000 in
 `∏_{i<k-1}σᵢ²·σₖ² < ∏_{i<k}σᵢ²` holds, and the second-eigenvalue ceiling on its orthocomplement. -/
 theorem plucker_cocycle_data (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (n : ℕ) (x : X)
     {k : ℕ} (hk1 : 1 ≤ k) (hkd : k ≤ Fintype.card (Fin d))
-    (hgap : lamCocycle A T n x k < lamCocycle A T n x (k-1)) :
+    (hgap : lamCocycle A T n x k < lamCocycle A T n x (k - 1)) :
     ‖pluckerTopVec A T n x hkd‖ = 1
     ∧ Matrix.toEuclideanLin (ExteriorNorm.compoundMatrix k (gram A T n x))
           (pluckerTopVec A T n x hkd)
@@ -1945,6 +1975,7 @@ theorem plucker_cocycle_data (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X
     (lamCocycle_eigenpair A T n x) hk1 hkd hgap
 
 set_option maxHeartbeats 3200000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
 /-- **DELIVERABLE 2 — the cocycle per-step band-projector increment bound.** Instantiating the
 abstract `norm_bandProjector_succ_sub_le` with the SORTED Gram eigenframes of DELIVERABLE 1, the
 Plücker eigenpairs of `gram n`/`gram (n+1)`, and the committed off-diagonal numerator / `ν`-ceiling /
@@ -2117,6 +2148,7 @@ theorem summable_norm_of_logLimit_neg_of_le {E : Type*} [NormedAddCommGroup E]
   rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
   exact hn
 
+set_option linter.unusedSectionVars false in
 /-- **L7c.4 — a.e. summability of the band-projector increments.** For `μ`-a.e. `x`, the
 consecutive band-projector increments `‖Pₙ₊₁ − Pₙ‖` are summable. The per-step dominating sequence
 `b x n` (the RHS of `norm_bandProjector_succ_sub_le`, eventually `√(2k)·κ²rₙ/(1−κ²rₙ²)`), its
@@ -2424,6 +2456,7 @@ theorem tendsto_log_bCocycle_point {A : X → Matrix (Fin d) (Fin d) ℝ}
       Real.log_div (ne_of_gt (mul_pos (hκ2pos n) (hrpos n))) (ne_of_gt hvn)]
   ring
 
+set_option linter.unusedSectionVars false in
 /-- The count of unsorted eigenvalues `> c` equals the count of sorted eigenvalues `> c`. -/
 theorem card_eigenvalues_gt_eq_card_eigenvalues₀_gt
     {M : Matrix (Fin d) (Fin d) ℝ} (hM : M.IsHermitian) (c : ℝ) :
@@ -2477,6 +2510,7 @@ theorem card_antitone_gt_eq {N : ℕ} (f : Fin N → ℝ) (hf : Antitone f) (c :
   rw [hcardeq, Finset.card_range]
 
 set_option maxHeartbeats 800000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
 /-- The two scalar inequalities `hμ₀lb`/`hgapμ` of `stepHypCocycle`, from the compound lower bound
 `μ̃₀ ≥ cM²/cBi²` (`norm_sq_compound_mul_ge`) and the regime `κ²r² < 1`. -/
 theorem step_inequalities {A : X → Matrix (Fin d) (Fin d) ℝ}
@@ -2485,7 +2519,7 @@ theorem step_inequalities {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hκr : (‖ExteriorNorm.compoundMatrix k (A (T^[n] x))‖
           * ‖ExteriorNorm.compoundMatrix k (A (T^[n] x))⁻¹‖) ^ 2
         * ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues k
-          / (Matrix.toEuclideanLin (cocycle A T n x)).singularValues (k-1)) ^ 2 < 1) :
+          / (Matrix.toEuclideanLin (cocycle A T n x)).singularValues (k - 1)) ^ 2 < 1) :
     (‖ExteriorNorm.compoundMatrix k (cocycle A T n x)‖ ^ 2
           / ‖ExteriorNorm.compoundMatrix k (A (T^[n] x))⁻¹‖ ^ 2
         * (1 - (‖ExteriorNorm.compoundMatrix k (A (T^[n] x))‖
@@ -2578,7 +2612,7 @@ theorem bCocycle_pos_of_regime {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hκr : (‖ExteriorNorm.compoundMatrix k (A (T^[n] x))‖
           * ‖ExteriorNorm.compoundMatrix k (A (T^[n] x))⁻¹‖) ^ 2
         * ((Matrix.toEuclideanLin (cocycle A T n x)).singularValues k
-          / (Matrix.toEuclideanLin (cocycle A T n x)).singularValues (k-1)) ^ 2 < 1) :
+          / (Matrix.toEuclideanLin (cocycle A T n x)).singularValues (k - 1)) ^ 2 < 1) :
     0 < bCocycle A T x k n := by
   have hd : 0 < d := lt_of_le_of_lt (Nat.zero_le _) hkd
   rw [bCocycle]
@@ -2611,6 +2645,7 @@ theorem bCocycle_pos_of_regime {A : X → Matrix (Fin d) (Fin d) ℝ}
   exact mul_pos hsqrtpos (div_pos hnumpos hdenpos)
 
 set_option maxHeartbeats 1600000 in
+-- raised: the `⋀^k`-indexed compound/Plücker Euclidean elaboration is heartbeat-heavy.
 /-- **DELIVERABLE — unconditional band-projector a.e. convergence at a distinct-exponent gap.**
 For an ergodic, integrable, invertible cocycle and a threshold `c` strictly between the
 exponentials of two consecutive distinct Lyapunov exponents at the cut index `k`
@@ -3210,7 +3245,7 @@ theorem tendsto_qpow [IsProbabilityMeasure μ] (hT : Ergodic T μ)
               bandProjector A T
                 (Set.indicator (Set.Ioi (Real.exp ((lam k.1 + lam (k.1 - 1)) / 2))) 1) n x)
         from by funext n; rw [← Finset.sum_attach]]
-    refine tendsto_finset_sum _ (fun k _ => ?_)
+    refine tendsto_finsetSum _ (fun k _ => ?_)
     exact (hxblock k.1 k.2).choose_spec
   -- the block approximant equals cfc (stepVal lam d) (qpow)
   have hLn_eq : ∀ n, Real.exp (lam (d - 1)) • (1 : Matrix (Fin d) (Fin d) ℝ)
@@ -3304,7 +3339,7 @@ theorem tendsto_qpow [IsProbabilityMeasure μ] (hT : Ergodic T μ)
           |(qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ j
             - stepVal lam d ((qpow_isSelfAdjoint A T n x).isHermitian.eigenvalues₀ j)|)
           atTop (𝓝 (∑ _j : Fin (Fintype.card (Fin d)), (0 : ℝ))) := by
-        refine tendsto_finset_sum _ (fun j _ => ?_)
+        refine tendsto_finsetSum _ (fun j _ => ?_)
         have := (hdevj j).abs
         simpa using this
       simpa using hcomp
@@ -3329,6 +3364,7 @@ discharges `L7_statement` while being genuinely (not merely a.e.) measurable. -/
 
 variable [NeZero d]
 
+set_option linter.unusedSectionVars false in
 /-- **L8.** The Gram matrix `x ↦ gram A T n x = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` is measurable. -/
 theorem measurable_gram {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hAmeas : Measurable A) (hTmeas : Measurable T) (n : ℕ) :
@@ -3340,6 +3376,7 @@ theorem measurable_gram {A : X → Matrix (Fin d) (Fin d) ℝ}
     exact ((measurable_pi_apply i).comp ((measurable_pi_apply j).comp hcoc))
   exact htrans.mul hcoc
 
+set_option linter.unusedSectionVars false in
 /-- **L8.** The matrix root `x ↦ qpow A T n x = (Qₙ)^{1/(2n)} = cfc (·^{1/(2n)}) (gram A T n x)` is
 measurable. The function `t ↦ t^{1/(2n)}` is continuous (nonnegative exponent), the Gram matrix is
 measurable (`measurable_gram`) and self-adjoint (`gram_isSelfAdjoint`), so the continuous-functional
@@ -3359,6 +3396,7 @@ noncomputable def oseledetsLimit (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X �
     Matrix (Fin d) (Fin d) ℝ :=
   Matrix.of fun i j => limUnder atTop (fun n : ℕ => qpow A T n x i j)
 
+set_option linter.unusedSectionVars false in
 /-- **L8.** The named Oseledets limit `oseledetsLimit A T` is measurable: each entry is a real
 `limUnder` of measurable functions (`measurable_qpow`), and a `limUnder` over `atTop` valued in the
 completely metrizable space `ℝ` of measurable functions is measurable
@@ -3372,6 +3410,7 @@ theorem measurable_oseledetsLimit {A : X → Matrix (Fin d) (Fin d) ℝ}
   exact (StronglyMeasurable.limUnder
     (fun n => (hentry n).stronglyMeasurable)).measurable
 
+set_option linter.unusedSectionVars false in
 /-- **L8 — `oseledetsLimit` is the a.e. limit of `qpow`.** For `μ`-a.e. `x`,
 `qpow A T n x → oseledetsLimit A T x` in the matrix metric. (On the a.e.-full convergence set the
 entrywise `limUnder` recovers the matrix limit; matrix convergence reduces to entrywise
@@ -3400,6 +3439,7 @@ entrywise / via the continuity of the quadratic form). The eigenvalue equality
 `eigenvalues₀ (Λ x) i = e^{λᵢ}` additionally requires continuity of the sorted eigenvalues in the
 Hermitian matrix, which is **absent from Mathlib** (see the blocker flag in the module summary). -/
 
+set_option linter.unusedSectionVars false in
 /-- **L9.** For `μ`-a.e. `x`, the Oseledets limit `oseledetsLimit A T x` is self-adjoint, as the
 matrix-metric limit of the self-adjoint approximants `qpow A T n x` (self-adjointness `Mᴴ = M` is
 an entrywise closed condition). -/
@@ -3425,6 +3465,7 @@ theorem oseledetsLimit_isSelfAdjoint [IsProbabilityMeasure μ] (hT : Ergodic T �
     tendsto_nhds_unique hcji (hcij.congr heq)
   simpa using hval
 
+set_option linter.unusedSectionVars false in
 /-- **L9.** For `μ`-a.e. `x`, the Oseledets limit `oseledetsLimit A T x` is positive semidefinite,
 as the matrix-metric limit of the PSD approximants `qpow A T n x`: it is self-adjoint, and the
 quadratic form `xᵀ Λ x = lim_n xᵀ (qpow A T n x) x ≥ 0` is a limit of nonnegatives (the quadratic
@@ -3451,6 +3492,7 @@ theorem oseledetsLimit_posSemidef [IsProbabilityMeasure μ] (hT : Ergodic T μ)
   refine ge_of_tendsto' htq fun n => ?_
   exact (qpow_posSemidef A T n x).dotProduct_mulVec_nonneg v
 
+set_option linter.unusedSectionVars false in
 /-- **L9 — antitonicity of the per-point Lyapunov exponents.** For `μ`-a.e. `x`, the per-point
 exponents `lamSing A T x ·` are antitone on `[0, d)`. (A.e. each index has a genuine
 singular-value limit `lamSing = λᵢ` by `tendsto_log_singularValue`, and the deterministic exponents
@@ -3472,6 +3514,7 @@ theorem lamSing_antitone [IsProbabilityMeasure μ] (hT : Ergodic T μ)
   rw [hx a (lt_of_le_of_lt hab hbd), hx b hbd]
   exact hanti a b hab hbd
 
+set_option linter.unusedSectionVars false in
 /-- **L9 — the eigenvalues of `qpow` converge to `e^{lamSing}`.** For `μ`-a.e. `x` and every sorted
 index `i`, the `i`-th sorted eigenvalue of the approximant `qpow A T n x` converges to
 `e^{lamSing A T x i}`. This is the eigenvalue half of L9 at the level of the *approximants*; the full
@@ -3493,6 +3536,7 @@ theorem eigenvalues₀_qpow_tendsto_exp_lamSing [IsProbabilityMeasure μ] (hT : 
   rw [hlam]
   exact eigenvalues_qpow_tendsto hA i (by simpa using hx)
 
+set_option linter.unusedSectionVars false in
 /-- **L9 — the eigenvalue equality `eigenvalues₀ (Λ x) i = e^{lamSing A T x i}`.** For `μ`-a.e. `x`
 and every sorted index `i`, the `i`-th sorted eigenvalue of the Oseledets limit `Λ x` is exactly
 `e^{lamSing A T x i}`.
@@ -3542,6 +3586,7 @@ The fully general per-vector limit (with the top *active* Oseledets exponent dep
 the eigencomponent of `v` at the dominant exponent; that assembly is flagged in the module summary
 and left for a follow-up. -/
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (foundation).** The squared norm of the cocycle image is the Gram quadratic form:
 `‖A⁽ⁿ⁾(x) v‖² = ⟪gram_n v, v⟫`. (`‖f v‖² = ⟪f v, f v⟫ = ⟪(adjoint f ∘ f) v, v⟫`, and
 `adjoint(toEuclideanLin M) ∘ toEuclideanLin M = toEuclideanLin (Mᵀ M) = toEuclideanLin (gram)`.) -/
@@ -3557,12 +3602,14 @@ theorem norm_sq_cocycle_apply_eq_inner_gram (A : X → Matrix (Fin d) (Fin d) �
   rw [hadj, adjoint_comp_self_eq_gram]
   rw [gram]
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (upper bound).** `‖A⁽ⁿ⁾(x) v‖ ≤ ‖A⁽ⁿ⁾(x)‖ ‖v‖` — the per-vector L² operator-norm bound. -/
 theorem norm_cocycle_apply_le (A : X → Matrix (Fin d) (Fin d) ℝ)
     (n : ℕ) (x : X) (v : EuclideanSpace ℝ (Fin d)) :
     ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ ≤ ‖cocycle A T n x‖ * ‖v‖ :=
   ExteriorNorm.norm_toEuclideanLin_apply_le (cocycle A T n x) v
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (lower bound).** `‖v‖ ≤ ‖A⁽ⁿ⁾(x)⁻¹‖ · ‖A⁽ⁿ⁾(x) v‖` for an invertible cocycle, i.e.
 `‖A⁽ⁿ⁾⁻¹‖⁻¹ ‖v‖ ≤ ‖A⁽ⁿ⁾ v‖`. (`v = A⁽ⁿ⁾⁻¹ (A⁽ⁿ⁾ v)`, then the op-norm bound.) -/
 theorem norm_le_norm_inv_mul_norm_cocycle_apply {A : X → Matrix (Fin d) (Fin d) ℝ}
@@ -3578,7 +3625,7 @@ theorem norm_le_norm_inv_mul_norm_cocycle_apply {A : X → Matrix (Fin d) (Fin d
           ∘ₗ Matrix.toEuclideanLin (cocycle A T n x)
         = Matrix.toEuclideanLin ((cocycle A T n x)⁻¹ * cocycle A T n x) := by
       ext w i
-      simp only [LinearMap.comp_apply, Matrix.toEuclideanLin_apply, Matrix.mulVec_mulVec]
+      simp only [LinearMap.comp_apply, Matrix.toLpLin_apply, Matrix.mulVec_mulVec]
     rw [hcomp, hinv]
     ext i; simp
   calc ‖v‖ = ‖Matrix.toEuclideanLin ((cocycle A T n x)⁻¹)
@@ -3586,6 +3633,7 @@ theorem norm_le_norm_inv_mul_norm_cocycle_apply {A : X → Matrix (Fin d) (Fin d
     _ ≤ ‖(cocycle A T n x)⁻¹‖ * ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ :=
         ExteriorNorm.norm_toEuclideanLin_apply_le _ _
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (nonvanishing).** `A⁽ⁿ⁾(x) v ≠ 0` for `v ≠ 0` (invertibility ⟹ injectivity). -/
 theorem cocycle_apply_ne_zero {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (n : ℕ) (x : X) {v : EuclideanSpace ℝ (Fin d)} (hv : v ≠ 0) :
@@ -3593,6 +3641,7 @@ theorem cocycle_apply_ne_zero {A : X → Matrix (Fin d) (Fin d) ℝ}
   intro h
   exact hv (injective_toEuclideanLin (det_cocycle_ne_zero hA n x) (by rw [h, map_zero]))
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (equal-exponents two-sided limit).** If the top and (negated) bottom Furstenberg–Kesten
 exponents coincide at `x` — i.e. `(1/n)log‖A⁽ⁿ⁾‖ → ℓ` and `(1/n)log‖(A⁽ⁿ⁾)⁻¹‖ → -ℓ` — then for
 **every** nonzero `v` the normalized log-growth of `A⁽ⁿ⁾ v` converges to `ℓ`. This is the genuine
@@ -3639,6 +3688,7 @@ theorem tendsto_log_cocycle_apply_of_eq_exponents {A : X → Matrix (Fin d) (Fin
       exact Real.log_le_log (happly_pos n) hle
     nlinarith [mul_le_mul_of_nonneg_left hlog hninv]
 
+set_option linter.unusedSectionVars false in
 /-- **L12 (a.e. equal-exponents two-sided limit).** For an ergodic, integrable, invertible cocycle
 whose top Furstenberg–Kesten exponent `ℓ_top` and bottom exponent `ℓ_bot` satisfy `ℓ_bot = -ℓ_top`
 (all Lyapunov exponents equal — the conformal/isotropic regime), there is a single exponent `ℓ` such
