@@ -1,5 +1,17 @@
 # Stage A — phase 2 plan (serial, riskier refactors)
 
+> **STATUS 2026-06-15.** DONE: fossil deletion (`3145e11`); OseledetsLimit warnings cleared
+> (`2696175`); long-line wrap + longFile overrides on the 3 giants (`da7de20`) → **library
+> fully linter-clean under mathlibStandardSet (0 warnings, all 45 files)**; guarded axiom
+> audit `Oseledets/AxiomAudit.lean` + doc refresh (`e72ae8f`).
+> DEFERRED as documented Mathlib-polish follow-ups (cosmetic, medium-risk, lowest value;
+> pivoting to the higher-priority request_prompt.md math): **(2b) namespace re-homing**
+> (Ruelle13→Oseledets.Ruelle, SVDData→Oseledets.SVDChainData, ChainCore→Oseledets.*),
+> **(2c) the ~22 hypothesis-slot theorem renames + ~8 def renames** (list in §Step 4 below /
+> style-review §naming), and **(2d) splitting OseledetsLimit/Kingman** (ExteriorNorm-style
+> longFile overrides are in place; reviewer may still want directory splits). These are real
+> findings but were deprioritized once the user added request_prompt.md as the priority.
+
 Resumed 2026-06-15, worker model = Opus. Phase 1 (per-file mechanical cleanup) is
 done file-by-file; phase 2 is the cross-file refactoring a Mathlib reviewer requires.
 Execute SERIALLY, each step its own full `lake build` + axiom audit + commit. Verifier:
