@@ -1,7 +1,15 @@
 # Oseledets MET formalization — living state
 
-> Single source of truth for this project. **Status: COMPLETE — there is no active
-> phase.** Fresh agent: read the COMPLETE section, the pinned Conventions, and the
+> **2026-06-15 update:** the core theorem remains complete; active work is now (a) a
+> Mathlib-candidate cleanup pass (copyright headers, linter-clean under `mathlibStandardSet`,
+> fossil deletion, guarded `Oseledets/AxiomAudit.lean`) and (b) the additive extensions in
+> `request_prompt.md` (Lyapunov-exponent sums, exterior/k-volume growth, regularity in the
+> generator, restriction to invariant subbundles, inverse/time-reversal, …). Two-sided
+> splitting is demoted to lower priority. See `docs/plan/RESUME-2026-06-15.md` and
+> `docs/plan/stageA-phase2-plan.md`.
+
+> Single source of truth for this project. **Status: core MET COMPLETE; additive extensions
+> in progress (see the 2026-06-15 update above).** Fresh agent: read the COMPLETE section, the pinned Conventions, and the
 > Resumption notes just below; everything after the HISTORICAL RECORD marker is kept
 > for the record only. Background reading: `docs/research/understanding.md` (the math
 > + the L0–L7 lemma ladder), `docs/research/target-and-milestones.md` (target +

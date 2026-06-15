@@ -6,18 +6,23 @@ multiplicative ergodic theorem (MET)**. It is a single-purpose Lean project
 
 ## Status
 
-**COMPLETE.** The target theorem `Oseledets.oseledets_filtration`
-(`Oseledets/MultiplicativeErgodic.lean`) is fully proved: the library builds
-sorry-free and the axiom audit prints exactly
-`[propext, Classical.choice, Quot.sound]`. See `docs/progress/STATE.md` for
-the final composition and the development history.
+**Core theorem COMPLETE.** The target theorem `Oseledets.oseledets_filtration`
+(`Oseledets/MultiplicativeErgodic.lean`) is fully proved sorry-free, together with
+companion corollaries (`Oseledets/Lyapunov/Corollaries.lean`: spectrum uniqueness,
+top-exponent = norm growth, a.e.-constant multiplicities, …). A guarded audit module
+(`Oseledets/AxiomAudit.lean`) checks on every build — via `#guard_msgs in #print axioms`
+— that the target theorem and each companion result depend on exactly
+`[propext, Classical.choice, Quot.sound]` (the build fails if this ever changes; it is
+not printed). The library is Mathlib-style linter-clean under
+`linter.mathlibStandardSet`. See `docs/progress/STATE.md` for the final composition and
+history; further additive extensions are tracked in `request_prompt.md`.
 
 ## Layout
 
 | Path | Purpose |
 |---|---|
 | `Oseledets.lean` | Library root; imports every module of the formalization. |
-| `Oseledets/` | Library modules (~49): `Cocycle/`, `Ergodic/`, `Lyapunov/`, and `MultiplicativeErgodic.lean` (the proved target theorem). |
+| `Oseledets/` | Library modules (~45): `Cocycle/`, `Ergodic/`, `Lyapunov/` (incl. `Corollaries.lean`), `MultiplicativeErgodic.lean` (the proved target theorem), and `AxiomAudit.lean` (guarded axiom check). |
 | `lakefile.toml` | Package config: one `Oseledets` lib, depends on Mathlib. |
 | `lean-toolchain` | Pinned Lean version (`leanprover/lean4:v4.30.0-rc2`). |
 | `lake-manifest.json` | Pinned dependency revisions. |
