@@ -430,7 +430,7 @@ theorem chain_leakage_exp (a : ℕ → ℝ) (γ γ' R : ℝ) (hR : 0 ≤ R)
   refine hmain.trans (le_of_eq ?_)
   congr 1
   · -- q^k = exp(-k γ)
-    rw [← Real.exp_nat_mul]; congr 1; ring
+    rw [← Real.exp_nat_mul]; congr 1; ring_nf
   · -- M^{k-1} = exp(-(k-1)·min γ γ'), where M = max(exp(-γ), exp(-γ')) = exp(-min γ γ')
     have hmax : max (Real.exp (-γ)) (Real.exp (-γ')) = Real.exp (-min γ γ') := by
       rw [← Real.exp_monotone.map_max]; congr 1; rw [max_neg_neg]
@@ -438,7 +438,7 @@ theorem chain_leakage_exp (a : ℕ → ℝ) (γ γ' R : ℝ) (hR : 0 ≤ R)
     rcases Nat.eq_zero_or_pos k with hk | hk
     · subst hk; simp
     · rw [← Real.exp_nat_mul]; congr 1
-      rw [Nat.cast_sub hk]; push_cast; ring
+      rw [Nat.cast_sub hk]; push_cast; ring_nf
 
 /-! ## The reverse side (orthogonal block-norm symmetry)
 
