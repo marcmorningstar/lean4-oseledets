@@ -46,7 +46,9 @@ earlier bespoke warm-REPL that was a parade of edge cases (cold-start cutoff, st
   `PreToolUse` git block).
 - **Subagents** (`lean-worker`): hooks in the agent **frontmatter** — settings.json hooks do not run
   inside subagent tool calls.
-- The daemon socket is keyed by `LEANCHECK_KEY` (default `oseledets`) so all callers share one server.
+- The daemon socket is keyed **per project root** (a hash of the realpath'd `CLAUDE_PROJECT_DIR`), so
+  each worktree/checkout gets its OWN `lake serve` bound to its own root, while all callers within one
+  tree share that server. **Worktree-safe.**
 
 ## Cross-file behavior (honest)
 `lake serve` resolves `import`s from compiled `.olean` — **not** from other files' live buffers. This
@@ -57,6 +59,15 @@ This is a Lean fundamental (imports are compiled artifacts), true of the LSP, th
 alike — there is no Python-style source-level hot reload of imports in Lean. The cold `lake build` +
 guarded `AxiomAudit` are the source of truth and catch any cross-file staleness.
 
+## Mathlib-rebuild guard
+If Mathlib's oleans are absent — a fresh checkout, or (more insidiously) a worktree created without
+the prebuilt `.lake` cache or its symlink — any `lake build`/`lake serve` recompiles Mathlib from
+source (HOURS). Every leancheck entry point (`<file>`, `--warm`, `--cold`, daemon start) first checks
+for Mathlib's oleans and, if missing, **aborts with a loud warning** instead of silently starting the
+rebuild; `leancheck --check-mathlib` reports the status explicitly. Opt into the rebuild only by
+choice: `LEANCHECK_ALLOW_MATHLIB_REBUILD=1`. (A *direct* `lake build` is not guarded — run
+`leancheck --check-mathlib` first if unsure whether the cache is in place.)
+
 ## Dependency
 `leanclient` (pip): installed by `.devcontainer/post-create.sh`
 (`pip install --user --break-system-packages leanclient`). The project must be **built** (oleans
@@ -64,8 +75,10 @@ present — true in this devcontainer) since imports resolve from oleans; the da
 client with `prevent_cache_get=True` (the cache fetch is DNS-blocked here and would otherwise stall).
 
 ## Env knobs
-`LEANCHECK_ROOT` [cwd], `LEANCHECK_KEY` [oseledets], `LEANCHECK_MAXFILES` [8] (max files held open in
-the server before idle ones are closed), `LEANCHECK_HOOK_LOG` [/tmp/leancheck-hook.log].
+`LEANCHECK_ROOT` [cwd], `LEANCHECK_KEY` [derived per project root], `LEANCHECK_MAXFILES` [8] (max
+files held open in the server before idle ones are closed), `LEANCHECK_HOOK_LOG`
+[/tmp/leancheck-hook.log], `LEANCHECK_ALLOW_MATHLIB_REBUILD` [unset] (set to `1` to opt past the
+Mathlib-rebuild guard and accept a from-scratch compile).
 
 ## Tests
 `bash .claude/leancheck/run-tests.sh` → all three `--selftest` suites (pure formatting / decision

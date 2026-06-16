@@ -45,6 +45,14 @@ DNS-blocked here and the command stalls indefinitely (verified 2026-06-10).
 The Mathlib cache is already present (fetched by `.devcontainer/post-create.sh`
 at container creation); incremental `lake build` is all that is ever needed.
 
+**Mathlib-rebuild guard.** If Mathlib's oleans are ever absent (a fresh checkout, or — more
+insidiously — a git worktree created without the prebuilt `.lake` cache or its symlink), any
+`lake build`/`lake serve` recompiles Mathlib *from source* (hours). The `leancheck` harness
+(`docs/leancheck-README.md`) detects this and **aborts with a loud warning** rather than start the
+rebuild silently; override only by choice with `LEANCHECK_ALLOW_MATHLIB_REBUILD=1`. A direct
+`lake build` is *not* guarded — run `leancheck --check-mathlib` first if unsure whether the cache
+is in place.
+
 ## Conventions
 
 - `autoImplicit` is **off** (set in `lakefile.toml`) — declare implicit
