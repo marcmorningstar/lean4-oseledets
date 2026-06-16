@@ -23,6 +23,7 @@ import Oseledets.TwoSided.Reflection
 import Oseledets.TwoSided.RestrictedCocycle
 import Oseledets.TwoSided.RestrictedExponent
 import Oseledets.TwoSided.Transversality
+import Oseledets.TwoSided.SplittingAssembly
 
 /-!
 # Axiom audit
@@ -284,3 +285,9 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.inf_eq_bot_of_neg_sum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.inf_eq_bot_of_neg_sum
+
+-- Two-sided splitting, P8 (the headline theorem: invariant direct-sum decomposition).
+
+/-- info: 'Oseledets.oseledets_splitting' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.oseledets_splitting

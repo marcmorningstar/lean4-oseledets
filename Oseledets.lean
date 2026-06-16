@@ -60,6 +60,7 @@ import Oseledets.TwoSided.Reflection
 import Oseledets.TwoSided.RestrictedCocycle
 import Oseledets.TwoSided.RestrictedExponent
 import Oseledets.TwoSided.Transversality
+import Oseledets.TwoSided.SplittingAssembly
 import Oseledets.AxiomAudit
 
 /-!
