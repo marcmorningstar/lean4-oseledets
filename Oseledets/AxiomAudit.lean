@@ -20,6 +20,7 @@ import Oseledets.TwoSided.MeasurableInf
 import Oseledets.TwoSided.StrongExport
 import Oseledets.TwoSided.KingmanMeans
 import Oseledets.TwoSided.Reflection
+import Oseledets.TwoSided.RestrictedCocycle
 
 /-!
 # Axiom audit
@@ -243,3 +244,17 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.expEnum_eq_neg_rev_of_counting' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.expEnum_eq_neg_rev_of_counting
+
+-- Two-sided splitting, P4a (backward-orbit restricted envelope; analytic heart).
+
+/-- info: 'Oseledets.isSubadditiveCocycle_restLog' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.isSubadditiveCocycle_restLog
+
+/-- info: 'Oseledets.restLog_eq_on_good' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.restLog_eq_on_good
+
+/-- info: 'Oseledets.restLog_backward_kingman' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.restLog_backward_kingman
