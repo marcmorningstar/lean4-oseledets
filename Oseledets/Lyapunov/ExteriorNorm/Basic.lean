@@ -41,7 +41,7 @@ that build on this layer live in `Oseledets.Lyapunov.ExteriorNorm.Plucker` and
   `Oseledets.ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound` — Cauchy–Binet multiplicativity
   and the operator-norm identity of the compound matrix.
 
-## Implementation notes — the diamond trap
+## Implementation notes
 
 The type `⋀[ℝ]^k E` is definitionally `↥(Submodule …)` and already carries an `AddCommGroup`
 instance coming from the ambient submodule. Asserting or installing a *fresh*

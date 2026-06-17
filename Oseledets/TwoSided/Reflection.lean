@@ -9,10 +9,9 @@ import Oseledets.Lyapunov.DetIdentity
 import Oseledets.Ergodic.Birkhoff
 
 /-!
-# Exponent reflection for the two-sided Oseledets theorem (Phase P6)
+# Exponent reflection for the two-sided Oseledets theorem
 
-This module is the purely *additive* Phase-P6 step of the two-sided Oseledets splitting
-(phase P6).  It establishes the **exponent
+This module establishes the **exponent
 reflection** principle: the backward singular spectrum is the reflected negation of the
 forward one.
 
@@ -33,8 +32,8 @@ core:
   (`reflect_of_counting_and_sum`): two antitone tuples `p, q : ℕ → ℝ` on `[0,d)` with a
   *counting bound* (`∀ a b, a + b < 0 → #{p ≤ a} + #{q ≤ b} ≤ d`) and equal-opposite sums
   (`∑ q = − ∑ p`) satisfy `q j = − p (d−1−j)` pointwise.  The counting bound is supplied
-  later by Phase P5 (`ae_counting`); here every reflection corollary takes it as a
-  hypothesis, so this module does **not** depend on P5.
+  by `ae_counting`; here every reflection corollary takes it as a
+  hypothesis, so this module does **not** depend on `ae_counting`.
 
 ## Main results
 

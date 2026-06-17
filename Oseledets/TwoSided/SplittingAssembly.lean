@@ -16,10 +16,9 @@ import Mathlib.Algebra.DirectSum.Module
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
-# The two-sided Oseledets splitting (Phase P8)
+# The two-sided Oseledets splitting
 
-This is the final phase P8 of the two-sided Oseledets multiplicative ergodic theorem (phases 1,
-2.5 and P8).  It assembles the
+This is the two-sided Oseledets multiplicative ergodic theorem.  It assembles the
 forward and backward one-sided Oseledets filtrations into a single measurable,
 `A`-equivariant **splitting** `ℝᵈ = E₁(x) ⊕ ⋯ ⊕ E_k(x)` with two-sided growth: for a
 nonzero `v ∈ Eᵢ(x)` the forward cocycle grows at rate `λᵢ` and the backward cocycle at
@@ -27,17 +26,17 @@ rate `−λᵢ`.
 
 The pieces consumed are:
 
-* P2 `oseledets_filtration_dims`, instantiated for the forward system `(T, A)` and (via
-  P0's `backwardData_of`) for the backward system `(T.symm, backwardGen A T)`, giving the
+* `oseledets_filtration_dims`, instantiated for the forward system `(T, A)` and (via
+  `backwardData_of`) for the backward system `(T.symm, backwardGen A T)`, giving the
   forward data `lam0`, `V` and the backward data `mu0`, `W`, each with its dimension
   formula;
-* P5 `ae_crux` and `ae_counting` (the transversality crux and the resulting counting
+* `ae_crux` and `ae_counting` (the transversality crux and the resulting counting
   bound);
-* P6 `sum_mu0_eq_neg_sum_lam0`, `reflect_of_counting_and_sum` and the reflection
+* `sum_mu0_eq_neg_sum_lam0`, `reflect_of_counting_and_sum` and the reflection
   corollaries (`numExp_eq_of_counting`, `expEnum_eq_neg_rev_of_counting`,
   `backward_count_eq_of_counting`), which align the backward index to the forward one
   (`l = k`, `μ_{sᵢ} = −λᵢ`);
-* P7 `MeasurableSubspace.inf` for the measurability of the intersection bundle.
+* `MeasurableSubspace.inf` for the measurability of the intersection bundle.
 
 The internal-direct-sum structure is obtained from a pure telescoping-flag lattice lemma
 (`flag_iSupIndep_and_iSup`): the split subspaces `Eᵢ = V i.castSucc ⊓ W (sidx i).castSucc`
@@ -405,8 +404,8 @@ section Pos
 
 variable [NeZero d] {μ : Measure X} [IsProbabilityMeasure μ] {T : X ≃ᵐ X}
 
-/-- **The two-sided Oseledets splitting (positive dimension).** The headline statement of
-Phase P8, established for `d > 0`; the public `oseledets_splitting` adds the trivial
+/-- **The two-sided Oseledets splitting (positive dimension).** The headline statement,
+established for `d > 0`; the public `oseledets_splitting` adds the trivial
 `d = 0` branch. -/
 theorem oseledets_splitting_pos
     (hT : Ergodic T μ)
@@ -590,7 +589,7 @@ theorem oseledets_splitting_pos
     refine ⟨hVgrow i v hvV hvVnot, ?_⟩
     have hbw := hWgrow (sidx hrefl i) v hvW hvWnot
     rw [sidx_exp hrefl i] at hbw
-    -- rewrite the backward cocycle through the Phase-0 identity
+    -- rewrite the backward cocycle through the identity `cocycle_backwardGen`
     simp only [cocycle_backwardGen] at hbw
     exact hbw
 

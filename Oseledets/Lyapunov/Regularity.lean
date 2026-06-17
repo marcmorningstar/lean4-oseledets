@@ -17,7 +17,7 @@ the spectrum object `Oseledets.exponents : Fin d → ℝ`, the telescoping growt
 `Oseledets.sumAllExp_eq_integral_log_abs_det` (`Oseledets/Lyapunov/DetIdentity.lean`).
 
 * **The Fekete infimum representation** `Γ_k = ⨅ n, (∫ log sprod_k(n+1))/(n+1)`
-  (`GammaK_eq_iInf`). The normalized integral sequence is the average of a *subadditive*
+  (`gammaK_eq_iInf`). The normalized integral sequence is the average of a *subadditive*
   cocycle (`isSubadditiveCocycle_logSprod` integrated over the measure-preserving base), so by
   Fekete's lemma it converges to the **infimum** of its values. The ergodic a.e.-constant limit
   `gammaK` coincides with this infimum; the non-trivial direction of that coincidence is a
@@ -31,11 +31,11 @@ the spectrum object `Oseledets.exponents : Fin d → ℝ`, the telescoping growt
   integrable envelope, which is exactly what the uniform `L¹`-log hypothesis supplies.
 
 * **Upper semicontinuity of the partial sums and the top exponent**
-  (`GammaK_upperSemicontinuous`, `topExponent_upperSemicontinuous`). An infimum of functions each
+  (`gammaK_upperSemicontinuous`, `topExponent_upperSemicontinuous`). An infimum of functions each
   *continuous* in the generator is **upper semicontinuous**; hence each `Γ_k` (the sum of the
   top-`k` exponents) and the top exponent `λ₁ = Γ_1` are USC: `limsup_m Γ_k(Aₘ) ≤ Γ_k(A)`. The
   positive-exponent sum `max_k Γ_k` is then USC as a finite maximum of USC functions (a finite
-  `max` of `limsup`s), assembled by the consumer from `GammaK_upperSemicontinuous`.
+  `max` of `limsup`s), assembled by the consumer from `gammaK_upperSemicontinuous`.
 
 * **Lower semicontinuity of the bottom exponent** (`botExp_lowerSemicontinuous`). Because
   `Γ_d = ∫ log|det|` is *continuous* (in fact linear in `log|det|`, see the determinant
@@ -52,11 +52,11 @@ the spectrum object `Oseledets.exponents : Fin d → ℝ`, the telescoping growt
 * `Oseledets.integral_logSprod_subadditive` — the integral sequence is subadditive.
 * `Oseledets.tendsto_integral_logSprod` — Fekete: the normalized integral sequence converges to
   `gammaKInf`.
-* `Oseledets.gammaK_eq_gammaKInf`, `Oseledets.GammaK_eq_iInf` — the ergodic constant is the
+* `Oseledets.gammaK_eq_gammaKInf`, `Oseledets.gammaK_eq_iInf` — the ergodic constant is the
   Fekete infimum.
 * `Oseledets.tendsto_integral_logSprod_of_dominated` — per-`n` integral continuity under a fixed
   log-integrable envelope (regime 1).
-* `Oseledets.GammaK_upperSemicontinuous` — USC of the top-`k` partial-sum growth rate `Γ_k`.
+* `Oseledets.gammaK_upperSemicontinuous` — USC of the top-`k` partial-sum growth rate `Γ_k`.
 * `Oseledets.topExponent_upperSemicontinuous` — USC of the top exponent `λ₁ = Γ_1`.
 * `Oseledets.botExp_eq_exponents_last`, `Oseledets.botExp_lowerSemicontinuous` — the bottom
   exponent equals the smallest spectral value, and is lower semicontinuous.
@@ -428,7 +428,7 @@ theorem gammaK_eq_gammaKInf {k : ℕ} (hk : k ≤ d) :
 rate equals the infimum, over `n`, of the normalized integrals:
 `Γ_k = ⨅ n, (∫ log sprod_k(n+1))/(n+1)`. This is the representation that makes `Γ_k` an
 infimum of functions *continuous* in the generator, hence upper semicontinuous. -/
-theorem GammaK_eq_iInf {k : ℕ} (hk : k ≤ d) :
+theorem gammaK_eq_iInf {k : ℕ} (hk : k ≤ d) :
     gammaK hT hA hAmeas hint hint' hk
       = ⨅ n : ℕ, (∫ x, Real.log (sprod A T k (n + 1) x) ∂μ) / (n + 1) :=
   gammaK_eq_gammaKInf hT hA hAmeas hint hint' hk
@@ -483,12 +483,12 @@ such that for *every fixed* `n` the per-`n` integral is continuous along the fil
 growth rate `Γ_k` is **upper semicontinuous**: `limsup_i Γ_k(B i) ≤ Γ_k(A)`.
 
 This is *upper* semicontinuity, **not continuity**. `Γ_k` is an infimum of the
-per-`n` continuous normalized integrals (`GammaK_eq_iInf`); an infimum of continuous functions is
+per-`n` continuous normalized integrals (`gammaK_eq_iInf`); an infimum of continuous functions is
 USC, and the inequality can be strict — full continuity of the partial sums (and a fortiori of
 individual exponents) fails in general when a spectral gap closes. The per-`n` continuity
 hypothesis is the dominated-convergence conclusion and itself requires a fixed integrable
 envelope (pointwise generator convergence alone does not suffice). -/
-theorem GammaK_upperSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenerated] [l.NeBot] {k : ℕ}
+theorem gammaK_upperSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenerated] [l.NeBot] {k : ℕ}
     (hk : k ≤ d)
     (hcobdd : IsCoboundedUnder (· ≤ ·) l
       (fun i => gammaK hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 hk))
@@ -499,13 +499,13 @@ theorem GammaK_upperSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenerated] 
   have hmp : MeasurePreserving T μ μ := hT.toMeasurePreserving
   have hTmeas : Measurable T := hmp.measurable
   -- `Γ_k(A) = ⨅ n, a_n(A)`; for each `n`, `limsup_i Γ_k(B i) ≤ a_n(A)`.
-  rw [GammaK_eq_iInf hT hA hAmeas hint hint' hk]
+  rw [gammaK_eq_iInf hT hA hAmeas hint hint' hk]
   refine le_ciInf (fun n => ?_)
   -- `Γ_k(B i) ≤ a_n(B i)` for each `i` (infimum lower bound), then take `limsup`.
   set a : ι → ℝ := fun i => (∫ x, Real.log (sprod (B i) T k (n + 1) x) ∂μ) / (n + 1) with hadef
   have hle : ∀ i, gammaK hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 hk ≤ a i := by
     intro i
-    rw [GammaK_eq_iInf hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 hk]
+    rw [gammaK_eq_iInf hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 hk]
     exact ciInf_le (bddBelow_logSprod hmp (hB i).1 (hB i).2.1 hTmeas
       (hB i).2.2.1 (hB i).2.2.2 hk) n
   -- `a i → a_n(A)`, so `limsup a = a_n(A)`.
@@ -527,7 +527,7 @@ private theorem gammaK_one_eq_topExponent (hT : Ergodic T μ) :
   rfl
 
 /-- **Upper semicontinuity of the top Lyapunov exponent.** Specializing
-`GammaK_upperSemicontinuous` to `k = 1` (`λ₁ = Γ_1`): the top exponent is USC in the generator,
+`gammaK_upperSemicontinuous` to `k = 1` (`λ₁ = Γ_1`): the top exponent is USC in the generator,
 `limsup_i λ₁(B i) ≤ λ₁(A)`. As for the partial sums, this is USC, **not** continuity. -/
 theorem topExponent_upperSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenerated] [l.NeBot]
     (hcobdd : IsCoboundedUnder (· ≤ ·) l
@@ -547,7 +547,7 @@ theorem topExponent_upperSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenera
       funext hgeq
     rw [this]; exact hcobdd
   rw [← gammaK_one_eq_topExponent hA hAmeas hint hint' hT]
-  refine le_trans (le_of_eq ?_) (GammaK_upperSemicontinuous hB hA hAmeas hint hint' hT h1 hco hcont)
+  refine le_trans (le_of_eq ?_) (gammaK_upperSemicontinuous hB hA hAmeas hint hint' hT h1 hco hcont)
   exact (limsup_congr (Filter.Eventually.of_forall (fun i => (hgeq i).symm)))
 
 end USC
@@ -651,14 +651,14 @@ theorem botExp_lowerSemicontinuous (hT : Ergodic T μ) [l.IsCountablyGenerated] 
         ≤ (∫ x, Real.log (sprod (B i) T (d - 1) (0 + 1) x) ∂μ) / ((0 : ℕ) + 1) := by
       intro i
       simp only [hwdef]
-      rw [GammaK_eq_iInf hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 (Nat.sub_le d 1)]
+      rw [gammaK_eq_iInf hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2 (Nat.sub_le d 1)]
       exact ciInf_le (bddBelow_logSprod hmp (hB i).1 (hB i).2.1 hTmeas
         (hB i).2.2.1 (hB i).2.2.2 (Nat.sub_le d 1)) 0
     exact ((hcont 0).div_const ((0 : ℕ) + 1)).isBoundedUnder_le.mono_le
       (Filter.Eventually.of_forall hle0)
   -- USC of `Γ_{d-1}`.
   have hΓdm1_usc : limsup w l ≤ gammaK hT hA hAmeas hint hint' (Nat.sub_le d 1) :=
-    GammaK_upperSemicontinuous hB hA hAmeas hint hint' hT (Nat.sub_le d 1)
+    gammaK_upperSemicontinuous hB hA hAmeas hint hint' hT (Nat.sub_le d 1)
       hwbelow.isCoboundedUnder_le hcont
   -- `botExp(B i) = u i + v i`.
   have hbot : (fun i => botExp hT (hB i).1 (hB i).2.1 (hB i).2.2.1 (hB i).2.2.2) = u + v := by
@@ -864,10 +864,10 @@ theorem tendsto_integral_logSprod_of_unifIntegrable [IsFiniteMeasure μ] {k n : 
 Combines `ae_tendsto_logSprod_of_ae_tendsto_generator` (a.e. generator convergence `B m → A` ⟹
 a.e. integrand convergence) with the Vitali theorem `tendsto_integral_logSprod_of_unifIntegrable`.
 The output is exactly the per-`n` continuity hypothesis `hcont` consumed by
-`GammaK_upperSemicontinuous`, `topExponent_upperSemicontinuous`,
+`gammaK_upperSemicontinuous`, `topExponent_upperSemicontinuous`,
 and `botExp_lowerSemicontinuous` (those take `hcont` over any countably-generated `NeBot` filter,
 and `atTop` on `ℕ` qualifies), so it feeds the regime-2 semicontinuity statement
-`GammaK_upperSemicontinuous_of_ae_unifIntegrable` directly.
+`gammaK_upperSemicontinuous_of_ae_unifIntegrable` directly.
 
 The measure-preserving hypothesis is supplied at the USC call site by `Ergodic.toMeasurePreserving`.
 Uniform integrability remains an explicit hypothesis (the `L¹`-log control), not derived
@@ -883,18 +883,18 @@ theorem tendsto_integral_logSprod_of_ae_unifIntegrable [IsFiniteMeasure μ]
   tendsto_integral_logSprod_of_unifIntegrable hBmeas hAmemLp hui
     (ae_tendsto_logSprod_of_ae_tendsto_generator hA hk hT hconv)
 
-/-- **Regime-2 upper semicontinuity of the partial sums.** Specializing `GammaK_upperSemicontinuous`
+/-- **Regime-2 upper semicontinuity of the partial sums.** Specializing `gammaK_upperSemicontinuous`
 to the filter `atTop` on `ℕ` with the regime-2 per-`n` continuity from
 `tendsto_integral_logSprod_of_ae_unifIntegrable`: under a.e.
 generator convergence `B m → A` (`hconv`) and, for each fixed iterate count, a.e.-strong
 measurability (`hBmeas`), an `L¹` limit (`hAmemLp`), and uniform integrability (`hui`) of the
 integrand family, the partial-sum growth rate `Γ_k` is upper semicontinuous:
 `limsup_m Γ_k(B m) ≤ Γ_k(A)`. Regime 2 thus feeds the same USC statement
-`GammaK_upperSemicontinuous`.
+`gammaK_upperSemicontinuous`.
 
 This is *upper* semicontinuity, not continuity, and uniform integrability is an explicit
 `L¹`-log hypothesis, not a consequence of pure `L¹`-log generator convergence. -/
-theorem GammaK_upperSemicontinuous_of_ae_unifIntegrable [IsProbabilityMeasure μ]
+theorem gammaK_upperSemicontinuous_of_ae_unifIntegrable [IsProbabilityMeasure μ]
     (hB : ∀ m, (∀ x, (B m x).det ≠ 0) ∧ Measurable (B m) ∧ IntegrableLogNorm (B m) μ
       ∧ IntegrableLogNorm (fun x => (B m x)⁻¹) μ)
     (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A) (hint : IntegrableLogNorm A μ)
@@ -907,7 +907,7 @@ theorem GammaK_upperSemicontinuous_of_ae_unifIntegrable [IsProbabilityMeasure μ
     (hui : ∀ n, UnifIntegrable (fun m x => Real.log (sprod (B m) T k (n + 1) x)) 1 μ) :
     limsup (fun m => gammaK hT (hB m).1 (hB m).2.1 (hB m).2.2.1 (hB m).2.2.2 hk) atTop
       ≤ gammaK hT hA hAmeas hint hint' hk :=
-  GammaK_upperSemicontinuous hB hA hAmeas hint hint' hT hk hcobdd
+  gammaK_upperSemicontinuous hB hA hAmeas hint hint' hT hk hcobdd
     (fun n => tendsto_integral_logSprod_of_ae_unifIntegrable hA hk hT.toMeasurePreserving hconv
       (hBmeas n) (hAmemLp n) (hui n))
 

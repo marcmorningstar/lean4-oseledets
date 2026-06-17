@@ -34,7 +34,7 @@ gap removes that obstruction.
   `toEuclideanLin_bandProjector_eq_fastProj`), and the `a₀ = 0` initialization
   (`bandMass_init_zero`).
 
-## Why the induction is unavoidable
+## Implementation notes
 
 With the top-gap cut `c₀ = exp(λ_e − g/2)` (`g` the top gap), the direct bottom-stratum leakage
 rate is `log c₀ − λ_a = λ_e − g/2 − λ_a`, which misses the target rate `λ_e − λ_a − δ`

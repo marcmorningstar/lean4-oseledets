@@ -10,7 +10,7 @@ import Oseledets.Lyapunov.Spectrum
 # The non-ergodic Lyapunov spectrum (exponents as invariant functions)
 
 This module is the **non-ergodic relaxation** of the singular-value layer. In the ergodic
-theory (`Oseledets.tendsto_GammaK`, `Oseledets.exists_lam_tendsto_singularValue`,
+theory (`Oseledets.tendsto_gammaK`, `Oseledets.exists_lam_tendsto_singularValue`,
 `Oseledets.exponents`) the partial-sum limits `Γ_k` and the per-`σ` Lyapunov exponents
 `λᵢ = Γ_{i+1} − Γ_i` are almost-everywhere **constants**. Without ergodicity these limits
 still exist almost everywhere, but they are now `T`-**invariant measurable functions**
@@ -29,12 +29,12 @@ dropped in favour of bare `MeasurePreserving`. The pointwise telescoping that tu
 
 The ergodic results are recovered as the special case where the σ-algebra of `T`-invariants
 is trivial (so each invariant function is a.e. constant): see
-`Oseledets.tendsto_GammaK_of_integrableLogNorm` and
+`Oseledets.tendsto_gammaK_of_integrableLogNorm` and
 `Oseledets.exists_lam_tendsto_singularValue`.
 
 ## Main results
 
-* `Oseledets.tendsto_GammaK_nonergodic` — the partial-sum limit `Γ_k` as a `T`-invariant
+* `Oseledets.tendsto_gammaK_nonergodic` — the partial-sum limit `Γ_k` as a `T`-invariant
   integrable function `G : X → ℝ`, with `(1/n) log sprod_k → G` almost everywhere.
 * `Oseledets.exists_exponents_nonergodic` — the full Lyapunov spectrum as a family of
   `T`-invariant integrable functions `lam : ℕ → X → ℝ`, each the a.e. limit of
@@ -58,9 +58,9 @@ variable [IsFiniteMeasure μ] [NeZero d]
 everywhere-invertible measurable cocycle generator with `log⁺‖A‖, log⁺‖A⁻¹‖ ∈ L¹`, and
 `k ≤ d`, the normalized `log sprod_k` converges `μ`-a.e. to a `T`-invariant integrable
 function `G` (no ergodicity assumed). This is the
-non-ergodic analogue of `tendsto_GammaK_of_integrableLogNorm`: the constant `Γ_k` is
+non-ergodic analogue of `tendsto_gammaK_of_integrableLogNorm`: the constant `Γ_k` is
 replaced by the invariant function `G`. -/
-theorem tendsto_GammaK_nonergodic (hmp : MeasurePreserving T μ μ)
+theorem tendsto_gammaK_nonergodic (hmp : MeasurePreserving T μ μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
     {k : ℕ} (hk : k ≤ d) :
@@ -85,7 +85,7 @@ value of `A⁽ⁿ⁾` converges to `lam i x`. Without ergodicity the exponents a
 measurable functions instead of the constants of `exists_lam_tendsto_singularValue`.
 
 The functions are built as σ-differences `lam i = G_{i+1} − G_i` of the partial-sum limits
-of `tendsto_GammaK_nonergodic`; the per-`σ` telescoping (`tendsto_log_singularValue`) is the
+of `tendsto_gammaK_nonergodic`; the per-`σ` telescoping (`tendsto_log_singularValue`) is the
 same pointwise argument used in the ergodic case. -/
 theorem exists_exponents_nonergodic (hmp : MeasurePreserving T μ μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -103,7 +103,7 @@ theorem exists_exponents_nonergodic (hmp : MeasurePreserving T μ μ)
         atTop (𝓝 (G x))) ∧ (d < k → G = 0) := by
     intro k
     by_cases hk : k ≤ d
-    · obtain ⟨G, hG⟩ := tendsto_GammaK_nonergodic hmp hA hAmeas hint hint' hk
+    · obtain ⟨G, hG⟩ := tendsto_gammaK_nonergodic hmp hA hAmeas hint hint' hk
       exact ⟨G, fun _ => hG, fun hkd => absurd hkd (by omega)⟩
     · exact ⟨0, fun hkd => absurd hkd (by omega), fun _ => rfl⟩
   choose G hG using hG

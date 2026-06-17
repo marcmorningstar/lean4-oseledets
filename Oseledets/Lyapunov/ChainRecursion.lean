@@ -41,7 +41,7 @@ corrected envelope.
   the overlap with any unit vector fixed by the limit projector (the obstruction lemma for
   the arbitrary-cut envelope).
 
-## The argument (following Ruelle)
+## Implementation notes
 
 Fix `x` in the a.e.-good set.  Write
 `σ_j(t) = (toEuclideanLin (cocycle A T t x)).singularValues j` (antitone in `j`),

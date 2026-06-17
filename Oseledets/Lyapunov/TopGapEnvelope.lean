@@ -28,7 +28,7 @@ The proof is organized in three layers.
 * PART C performs band stabilization, transfers the per-stratum bound to all
   gap-interior cuts, and wraps the result into the almost-everywhere statement.
 
-## The single localization budget (the heart of the proof)
+## Implementation notes
 
 Fix the pair `(λ_a, v)`, the canonical slack `δ* = canonSlack = min(δ/4, G/2, (v−λ_a)/4)`,
 the canonical cut `log c_v = v − δ*`, and `δ' = δ/4` for the induction hypothesis.  A single

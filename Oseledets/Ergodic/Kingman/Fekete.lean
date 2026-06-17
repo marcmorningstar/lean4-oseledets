@@ -42,6 +42,43 @@ follows from submultiplicativity of the operator norm and the cocycle identity.)
 structure IsSubadditiveCocycle (T : X → X) (g : ℕ → X → ℝ) : Prop where
   apply_add_le : ∀ m n x, g (m + n) x ≤ g m x + g n (T^[m] x)
 
+omit [MeasurableSpace X] in
+/-- **Singleton partition subadditivity.** For `n ≥ 1`, a subadditive cocycle is
+dominated by the Birkhoff sum of its first level: `g (n+1) x ≤ birkhoffSum T (g 1) (n+1) x`.
+(The statement fails at `n = 0`: subadditivity only forces `0 ≤ g 0 x`, not `g 0 x ≤ 0`.) -/
+theorem IsSubadditiveCocycle.le_birkhoffSum_one {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
+    g (n + 1) x ≤ birkhoffSum T (g 1) (n + 1) x := by
+  induction n with
+  | zero => simp only [Nat.zero_add, birkhoffSum_one]; exact le_refl _
+  | succ n ih =>
+      rw [birkhoffSum_succ]
+      calc g (n + 1 + 1) x ≤ g (n + 1) x + g 1 (T^[n + 1] x) := hsub.apply_add_le (n + 1) 1 x
+        _ ≤ birkhoffSum T (g 1) (n + 1) x + g 1 (T^[n + 1] x) := by linarith [ih]
+
+omit [MeasurableSpace X] in
+/-- **Block subadditivity.** For a subadditive cocycle and any consecutive block
+decomposition of `[0, n)` into `k+1` blocks of lengths `ℓ 0, …, ℓ k` (with
+`n = ∑_{i ≤ k} ℓ i`), the cocycle is dominated by the sum of the block cocycle values along
+the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used by the
+`Tᴹ`-subsequence cocycle algebra; stated for `k+1` blocks since the empty decomposition
+would force the false `g 0 x ≤ 0`.) -/
+theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
+    (hsub : IsSubadditiveCocycle T g) (ℓ : ℕ → ℕ) (k : ℕ) (x : X) :
+    g (∑ i ∈ Finset.range (k + 1), ℓ i) x
+      ≤ ∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x) := by
+  induction k with
+  | zero =>
+      rw [Finset.range_one, Finset.sum_singleton, Finset.sum_singleton, Finset.range_zero,
+        Finset.sum_empty, Function.iterate_zero, id_eq]
+  | succ k ih =>
+      rw [Finset.sum_range_succ (n := k + 1), Finset.sum_range_succ (n := k + 1)]
+      set s : ℕ := ∑ j ∈ Finset.range (k + 1), ℓ j with hs
+      calc g (s + ℓ (k + 1)) x
+          ≤ g s x + g (ℓ (k + 1)) (T^[s] x) := hsub.apply_add_le s (ℓ (k + 1)) x
+        _ ≤ (∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x))
+              + g (ℓ (k + 1)) (T^[s] x) := by linarith [ih]
+
 end Oseledets
 
 namespace Oseledets.Kingman
@@ -61,22 +98,6 @@ theorem tendsto_kingman_reindex {g : ℕ → X → ℝ} {x : X} {L : ℝ} :
   refine tendsto_congr (fun n => ?_)
   push_cast
   rw [div_eq_inv_mul]
-
-/-! ### Singleton (Birkhoff-sum) subadditivity -/
-
-omit [MeasurableSpace X] in
-/-- **Singleton partition subadditivity.** For `n ≥ 1`, a subadditive cocycle is
-dominated by the Birkhoff sum of its first level: `g (n+1) x ≤ birkhoffSum T (g 1) (n+1) x`.
-(The statement fails at `n = 0`: subadditivity only forces `0 ≤ g 0 x`, not `g 0 x ≤ 0`.) -/
-theorem IsSubadditiveCocycle.le_birkhoffSum_one {g : ℕ → X → ℝ}
-    (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
-    g (n + 1) x ≤ birkhoffSum T (g 1) (n + 1) x := by
-  induction n with
-  | zero => simp only [Nat.zero_add, birkhoffSum_one]; exact le_refl _
-  | succ n ih =>
-      rw [birkhoffSum_succ]
-      calc g (n + 1 + 1) x ≤ g (n + 1) x + g 1 (T^[n + 1] x) := hsub.apply_add_le (n + 1) 1 x
-        _ ≤ birkhoffSum T (g 1) (n + 1) x + g 1 (T^[n + 1] x) := by linarith [ih]
 
 /-! ### Integral of a measure-preserving composition -/
 
@@ -214,7 +235,7 @@ omit [MeasurableSpace X] in
 `le_birkhoffSum_one`. -/
 theorem cdiv_le_birkhoffAverage {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g)
     (n : ℕ) (x : X) : cdiv g n x ≤ birkhoffAverage ℝ T (g 1) (n + 1) x := by
-  have h := IsSubadditiveCocycle.le_birkhoffSum_one hsub n x
+  have h := hsub.le_birkhoffSum_one n x
   rw [cdiv, birkhoffAverage, smul_eq_mul]
   rw [div_eq_inv_mul]
   have hpos : (0 : ℝ) < (n : ℝ) + 1 := by positivity

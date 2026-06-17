@@ -37,7 +37,7 @@ The proof is the standard composition:
 4. **Telescoping at `k = d`.** The same normalized quantity also converges to `Γ_d = ∑ i,
    exponents i` (`gammaK_eq_sum_top_exponents`). Uniqueness of limits gives the identity.
 
-## Main definitions / results
+## Main results
 
 * `Oseledets.sprod_d_eq_abs_det` — product of all singular values = `|det|`.
 * `Oseledets.integrable_log_abs_det` — `log|det A| ∈ L¹(μ)`.

@@ -251,7 +251,7 @@ theorem bandProjector_indicator_eq_frame (A : X → Matrix (Fin d) (Fin d) ℝ) 
 The Plücker eigenpair `ExteriorNorm.plucker_eigenpair_ceiling_standard'` and the det-Gram bridge
 `ExteriorNorm.det_transpose_mul_eq_inner_onbTriv` both speak of the **sorted** gram eigenbasis: the
 top eigenvector wedge is `onbTriv basisFun (⋀ {u₀, …, u_{k-1}})` of the orthonormal eigenframe `u`
-with **antitone** eigenvalues `lam = σ²`. The committed `bandProjector_indicator_eq_frame` expresses
+with **antitone** eigenvalues `lam = σ²`. The `bandProjector_indicator_eq_frame` expresses
 the band projector through `qpow`'s **unsorted** eigenvector unitary; this subsection reconciles the
 two by showing the band projector equals `W Wᵀ`, where `W` is the `d×k` matrix whose columns are the
 **sorted** top-`k` gram eigenvectors. Both are the orthogonal projector onto the same eigenvalue-`>
@@ -767,7 +767,7 @@ theorem norm_compound_pos (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ}
 /-- **The tempered compound factor.** The normalized log compound operator norm along the
 orbit vanishes a.e.: `(1/n)·log‖compound k (A(Tⁿx))‖ → 0`. Squeezed between
 `-k·(1/n)log‖A(Tⁿx)⁻¹‖ → 0` and `k·(1/n)log‖A(Tⁿx)‖ → 0` via the compound-norm sandwich
-(`norm_compound_le`, `norm_inv_pow_le_norm_compound`) and the committed tempered one-step factors
+(`norm_compound_le`, `norm_inv_pow_le_norm_compound`) and the tempered one-step factors
 (`tendsto_logNorm_orbit_div_atTop_zero` and its inverse). This makes `κ(⋀ᵏB) = ‖compound k B‖·
 ‖compound k B⁻¹‖` subexponential, so it contributes `0` to the root-test log-limit. -/
 theorem tendsto_logNorm_compound_orbit_div_atTop_zero {A : X → Matrix (Fin d) (Fin d) ℝ}

@@ -8,10 +8,9 @@ import Oseledets.Lyapunov.TopGapEnvelope
 import Oseledets.TwoSided.SpectralRank
 
 /-!
-# Strong export of the forward Oseledets filtration (two-sided MET, Phase P2)
+# Strong export of the forward Oseledets filtration (two-sided MET)
 
-This module is the purely additive orchestration step P2 of the two-sided Oseledets
-splitting (phase P2).  It records the
+This module records the
 one-sided Oseledets filtration theorem in a **strong form**: the deterministic spectral
 data `lam0` and the everywhere-measurable filtration `V` are *exposed* by the
 existential (rather than buried), the Lyapunov exponents are the concrete descending
@@ -20,12 +19,12 @@ filtration level is given by the forward dimension formula
 
 `finrank (V i.castSucc x) = #{j < d | lam0 j ≤ expEnum lam0 d i}`.
 
-The proof is a re-run of the committed one-sided composition with the concrete witness
+The proof reuses the one-sided composition with the concrete witness
 `V := vprime A T lam0`: it discharges the top-gap fast-band-mass envelope, builds the
 spectral, slow-flag and growth interfaces exactly as `oseledets_filtration_of_topgap`
 and `oseledets_filtration_of_upper'` do, and reads the structural block off
 `vassembled_structure_ae` transported through `vprime_eq_vassembled_of_slowflag`.  The dimension
-clause is supplied by `ae_finrank_vslow` (Phase P1), using that on the interior `vprime A T lam0`
+clause is supplied by `ae_finrank_vslow`, using that on the interior `vprime A T lam0`
 reduces definitionally to `vslow` at the deterministic cutoff `expEnum lam0 d i`.
 
 ## Main results
@@ -184,7 +183,7 @@ theorem oseledets_filtration_dims
   have hstruct := vassembled_structure_ae hT A hA hAmeas hint hint' lam0 hspec hgrowth
   have hae := vprime_eq_vassembled_of_slowflag A lam0 hspec hslowflag
   have haeT := hT.toMeasurePreserving.quasiMeasurePreserving.ae hae
-  -- The a.e. forward dimension formula (Phase P1).
+  -- The a.e. forward dimension formula (`ae_finrank_vslow`).
   have hdims := ae_finrank_vslow hT hA hAmeas hint hint' lam0 hlam0
   -- Assemble the strong export with the concrete witness `V := vprime A T lam0`.
   refine ⟨lam0, hmono, hlam0, vprime A T lam0,

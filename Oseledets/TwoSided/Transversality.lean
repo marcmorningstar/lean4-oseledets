@@ -8,27 +8,26 @@ import Oseledets.TwoSided.StrongExport
 import Oseledets.TwoSided.RestrictedExponent
 
 /-!
-# The transversality crux of the two-sided Oseledets theorem (Phase P5)
+# The transversality crux of the two-sided Oseledets theorem
 
-This module establishes the **transversality crux** `χ⁺ + χ⁻ ≥ 0` in the form needed by the
-two-sided Oseledets splitting (phase P5): if a
+This module establishes the **transversality crux** `χ⁺ + χ⁻ ≥ 0`: if a
 nonzero vector has forward (restricted) growth rate `≤ a` along the backward orbit and backward
 decay rate `≤ b` with `a + b < 0`, then it cannot exist.  Concretely the opposite-sign
 sublevels of the forward and backward Oseledets filtrations are transverse, and the resulting
-dimension count is the combinatorial input consumed by Phase P6.
+dimension count is the combinatorial input consumed by `reflect_of_counting_and_sum`.
 
 The architecture:
 
 * `inf_eq_bot_of_neg_sum` — the **per-point** crux.  For a forward level family `Vfam` whose
   backward-orbit envelope has limsup `≤ a` and a backward level `Ux` along which a nonzero
   vector decays with limsup `≤ b`, if `a + b < 0` then `Vfam x ⊓ Ux = ⊥`.  The argument writes
-  `v = A⁽ⁿ⁾(Sⁿx) · (B⁽ⁿ⁾(x) v)` via the Phase-P0 cocycle identity, uses forward equivariance to
+  `v = A⁽ⁿ⁾(Sⁿx) · (B⁽ⁿ⁾(x) v)` via the cocycle identity `cocycle_succ'`, uses forward equivariance to
   place `B⁽ⁿ⁾(x) v ∈ Vfam(Sⁿx)`, and bounds `log‖v‖ ≤ log‖A⁽ⁿ⁾(Sⁿx)·P‖ + log‖B⁽ⁿ⁾(x) v‖`, whose
   normalized limit is `≤ a + b < 0`, forcing `‖v‖ = 0`.
 
 * `ae_crux` — assembles the per-point crux a.e., for all forward level / backward level pairs
   `(i, s)` with `λᵢ + μₛ < 0`: `V i.castSucc x ⊓ W s.castSucc x = ⊥`.  The envelope comes from
-  Phase P4b (`ae_limsup_restricted_backward_le`), the backward decay from the backward strong
+  `ae_limsup_restricted_backward_le`, the backward decay from the backward strong
   export (`oseledets_filtration_dims` applied to `(T.symm, backwardGen A T)`), and all the a.e.
   facts are bundled onto a single biinvariant conull good set (`exists_conull_biinvariant`); the
   level quantifiers range over finite `Fin k × Fin l`.
@@ -36,11 +35,10 @@ The architecture:
 * `ae_counting` — the **counting bound**, holding a.e. and hence (being a deterministic
   inequality on the spectra) outright:
   `∀ a b, a + b < 0 → #{j<d | lam0 j ≤ a} + #{j<d | mu0 j ≤ b} ≤ d`.  Thresholds are converted to
-  levels via the largest enumerated exponent `≤ a` (resp. `≤ b`), the P2 dimension formula
-  identifies the filtration finranks with the counts, and the Grassmann identity
+  levels via the largest enumerated exponent `≤ a` (resp. `≤ b`), the dimension formula
+  `oseledets_filtration_dims` identifies the filtration finranks with the counts, and the Grassmann identity
   `Submodule.finrank_sup_add_finrank_inf_eq` with `V ⊓ W = ⊥` from `ae_crux` closes the count.
 
-All results are purely additive (no upstream file is edited) and `sorry`-free.
 -/
 
 open MeasureTheory Filter Topology
@@ -71,7 +69,7 @@ backward generator `B = backwardGen A T` running over `S = T.symm`.  Suppose:
 * `hsum` : `a + b < 0`.
 
 Then `Vfam x ⊓ Ux = ⊥`.  Indeed for a nonzero `v` in the intersection,
-`v = A⁽ⁿ⁾(Sⁿx) · (B⁽ⁿ⁾(x) v)` (Phase-P0 identity), so
+`v = A⁽ⁿ⁾(Sⁿx) · (B⁽ⁿ⁾(x) v)` (the cocycle identity `cocycle_succ'`), so
 `log‖v‖ ≤ log ‖A⁽ⁿ⁾(Sⁿx) · P‖ + log ‖B⁽ⁿ⁾(x) v‖`; dividing by `n` and letting `n → ∞` the right
 side has limsup `≤ a + b < 0` while the left side tends to `0`, a contradiction. -/
 theorem inf_eq_bot_of_neg_sum
@@ -259,12 +257,12 @@ theorem mem_iterate_backward_of_orbit
 converges to the Lyapunov exponent `λᵢ`:
 `(1/n) log ‖A⁽ⁿ⁾(Sⁿx) · P_{Vᵢ(Sⁿx)}‖ → λᵢ` a.e.
 
-This is the convergent strengthening of Phase P4b's `ae_limsup_restricted_backward_le` (whose
+This is the convergent strengthening of `ae_limsup_restricted_backward_le` (whose
 `limsup ≤ λᵢ` is the consumed direction): it is obtained from the backward Kingman limit
 `restLog_backward_kingman` (shared constant `c`), the identification `c = λᵢ`
 (`restricted_const_eq`), and the floor absorption along the backward orbit
 (`restLog_eq_on_good`).  The convergence supplies the `IsBoundedUnder` proviso that the crux
-needs, while the rate bound itself is taken from P4b. -/
+needs, while the rate bound itself is taken from `ae_limsup_restricted_backward_le`. -/
 theorem ae_tendsto_restricted_backward
     (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0)
@@ -338,8 +336,8 @@ backward system `(T.symm, backwardGen A T)`, at a.e. `x` the opposite-sign inter
 are transverse: for every forward level `i` and backward level `s` with
 `λᵢ + μₛ < 0`, `V i.castSucc x ⊓ W s.castSucc x = ⊥`.
 
-The proof bundles, on a single conull set, the backward-orbit envelope (Phase P4b's
-`ae_limsup_restricted_backward_le`, with the `IsBoundedUnder` proviso from the convergent
+The proof bundles, on a single conull set, the backward-orbit envelope
+(`ae_limsup_restricted_backward_le`, with the `IsBoundedUnder` proviso from the convergent
 strengthening `ae_tendsto_restricted_backward`), the forward equivariance along the backward
 orbit (`ae_forall_iterate_of_ae` over `T.symm` + `mem_iterate_backward_of_orbit`), and the
 backward growth limits (the backward strong-export growth clause + flag descent
@@ -525,9 +523,9 @@ variable [MeasurableSpace X] {μ : Measure X} [IsProbabilityMeasure μ]
 spectra) outright — for all thresholds `a, b` with `a + b < 0`,
 `#{j < d | lam0 j ≤ a} + #{j < d | mu0 j ≤ b} ≤ d`.
 
-The bound is the combinatorial input consumed by Phase P6 (`reflect_of_counting_and_sum`).
+The bound is the combinatorial input consumed by `reflect_of_counting_and_sum`.
 Each positive count is realized by a forward (resp. backward) interior level via
-`exists_level_eq_countLe`, the P2 dimension formula identifies the filtration finrank with the
+`exists_level_eq_countLe`, the dimension formula `oseledets_filtration_dims` identifies the filtration finrank with the
 count, and the Grassmann identity `Submodule.finrank_sup_add_finrank_inf_eq` with the crux
 `V i.castSucc x ⊓ W s.castSucc x = ⊥` (from `ae_crux`) bounds the sum by
 `finrank (V ⊔ W) ≤ d`. -/

@@ -189,9 +189,9 @@ informational dump (it produces no output on success).
 
 -- Non-ergodic version (item 9A).
 
-/-- info: 'Oseledets.tendsto_GammaK_nonergodic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.tendsto_gammaK_nonergodic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.tendsto_GammaK_nonergodic
+#print axioms Oseledets.tendsto_gammaK_nonergodic
 
 /-- info: 'Oseledets.exists_exponents_nonergodic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -203,13 +203,13 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.gammaK_eq_gammaKInf
 
-/-- info: 'Oseledets.GammaK_eq_iInf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.gammaK_eq_iInf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.GammaK_eq_iInf
+#print axioms Oseledets.gammaK_eq_iInf
 
-/-- info: 'Oseledets.GammaK_upperSemicontinuous' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.gammaK_upperSemicontinuous' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.GammaK_upperSemicontinuous
+#print axioms Oseledets.gammaK_upperSemicontinuous
 
 /-- info: 'Oseledets.topExponent_upperSemicontinuous' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -233,9 +233,9 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.tendsto_integral_logSprod_of_ae_unifIntegrable
 
-/-- info: 'Oseledets.GammaK_upperSemicontinuous_of_ae_unifIntegrable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.gammaK_upperSemicontinuous_of_ae_unifIntegrable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.GammaK_upperSemicontinuous_of_ae_unifIntegrable
+#print axioms Oseledets.gammaK_upperSemicontinuous_of_ae_unifIntegrable
 
 -- Singular / one-sided upper bounds without invertibility (item 9B).
 

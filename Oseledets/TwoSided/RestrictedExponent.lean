@@ -8,21 +8,21 @@ import Oseledets.TwoSided.StrongExport
 import Oseledets.Lyapunov.Forward
 
 /-!
-# The restricted Lyapunov exponent (two-sided MET, Phase P4b)
+# The restricted Lyapunov exponent (two-sided MET)
 
 This module identifies the **restricted Kingman constant** of the restricted cocycle
 `restGen A V x = A x · P_{V x}` on the forward Oseledets level `V := Vᵢ` with the
 Lyapunov exponent `λᵢ = expEnum lam0 d i`, and derives the **backward-orbit envelope**
 `limsup (1/n) log ‖A⁽ⁿ⁾(T⁻ⁿx) · P_{Vᵢ(T⁻ⁿx)}‖ ≤ λᵢ` (the `≤` direction is the only one
-consumed downstream by the transversality crux of Phase P5).
+consumed downstream by the transversality crux `ae_crux`).
 
-The architecture (phase P4b):
+The architecture:
 
 * `limsup_log_sum_le_max` — for finitely many eventually-positive sequences `aⱼ`,
   `limsup (1/n) log (Σⱼ aⱼ n) ≤ maxⱼ limsup (1/n) log aⱼ n`.  Built from the
   one-sided helper `limsup_inv_mul_log_sum_le`.
 * `exists_stratum` — every nonzero `v ∈ Vᵢ(x)` lies in a stratum `j ≥ i` of the flag
-  (pure order logic on the P2 flag), so its growth rate `≤ λᵢ`.
+  (pure order logic on the `oseledets_filtration_dims` flag), so its growth rate `≤ λᵢ`.
 * `restricted_const_eq` — the Kingman constant `c` of `restLog A V T` (`restLog_kingman`)
   equals `λᵢ`.  Both bounds are evaluated at the base point through the
   floor-absorbed identity `restLog_eq_on_good`:
@@ -33,7 +33,6 @@ The architecture (phase P4b):
   `restLog_backward_kingman`, the floor absorption along the *backward* orbit
   (`restLog_eq_on_good`), and `restricted_const_eq`.
 
-All four results are purely additive (no upstream file is edited) and `sorry`-free.
 -/
 
 open MeasureTheory Filter Topology
@@ -502,7 +501,7 @@ theorem restricted_const_eq
   exact hkey.exists.choose_spec
 
 /-- **The backward-orbit restricted envelope** (the `≤` direction consumed by the
-transversality crux of Phase P5). For a.e. `x`, the floor-absorbed restricted operator
+transversality crux `ae_crux`). For a.e. `x`, the floor-absorbed restricted operator
 norm along the backward orbit has limsup at most `λᵢ`:
 
 `limsup (1/n) log ‖A⁽ⁿ⁾(T⁻ⁿ x) · P_{Vᵢ(T⁻ⁿ x)}‖ ≤ λᵢ`.

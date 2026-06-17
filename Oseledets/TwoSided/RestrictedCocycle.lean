@@ -10,7 +10,7 @@ import Oseledets.Cocycle.FurstenbergKesten
 import Oseledets.Lyapunov.OseledetsLimit.Limit
 
 /-!
-# The backward-orbit restricted envelope (Phase P4a)
+# The backward-orbit restricted envelope
 
 For a fixed measurable family of subspaces `V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))`
 this module builds the **restricted cocycle** used in the transversality crux of the
@@ -606,7 +606,7 @@ converges to it `μ`-a.e. (over `T`), *and* the backward normalized cocycle
 `(1/n) restLog n (T.symm^[n] x)` converges to it `μ`-a.e. (over `T.symm`). The backward limit
 shares the forward constant precisely because the integral means of the two cocycles coincide
 (`integral_restLog_backward`) and Fekete limits are unique — this is where the means
-identification of Phase P3 is essential. -/
+identification `integral_restLog_backward` is essential. -/
 theorem restLog_backward_kingman [IsProbabilityMeasure μ] {T : X ≃ᵐ X} (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     {V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))} (hA : ∀ x, (A x).det ≠ 0) [NeZero d]

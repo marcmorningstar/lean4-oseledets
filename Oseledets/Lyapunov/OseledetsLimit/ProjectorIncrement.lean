@@ -52,8 +52,8 @@ point of the refined off-diagonal sin-Θ route. It threads:
   `ν`-ceiling `ExteriorNorm.perturbed_compound_gram_ceiling`,
 * the Plücker eigenpair `ExteriorNorm.plucker_eigenpair_ceiling_standard`.
 
-We first record the abstract Pythagoras-to-sin glue and the abstract assembly of steps 1–4
-(`norm_proj_sub_le_residual_div_gap`), then wire in the cocycle data. -/
+The abstract Pythagoras-to-sin bound and the abstract assembly of steps 1–4
+(`norm_proj_sub_le_residual_div_gap`), followed by the cocycle data. -/
 
 open scoped RealInnerProductSpace in
 /-- **Pythagoras gap, unit form.** For unit vectors `vt`, `v₀` in a real inner product space, the
@@ -173,7 +173,7 @@ Mₙ).singularValues`,
 `r = σₖ/σₖ₋₁`, and `κ = ‖compound k B‖·‖compound k B⁻¹‖`, the band projectors at consecutive steps
 satisfy `‖Pₙ₊₁ − Pₙ‖ ≤ √(2k)·κ²r/(1 − κ²r²)` in the EVENTUAL regime `κ²r² < 1`.
 
-The proof composes the committed pieces:
+The proof composes the pieces:
 * `bandProjector_indicator_eq_frame` (n, n+1) → `Pₙ = UUᵀ`, `Pₙ₊₁ = VVᵀ`, `UᵀU = VᵀV = 1`;
 * `ExteriorNorm.norm_offdiag_residual_compound_le` → off-diagonal numerator
   `‖C v₀ − ⟪C v₀,v₀⟫v₀‖ ≤ cM·√μ₁·cB²`;
@@ -216,7 +216,7 @@ theorem norm_bandProjector_succ_sub_le {c : ℝ} (A : X → Matrix (Fin d) (Fin 
     {N : ℕ} {C : EuclideanSpace ℝ (Fin N) →ₗ[ℝ] EuclideanSpace ℝ (Fin N)}
     {v₀ vt : EuclideanSpace ℝ (Fin N)} (hv₀ : ‖v₀‖ = 1) (hvt : ‖vt‖ = 1)
     {μ₀ μ₁ : ℝ} (hev : C vt = μ₀ • vt)
-    -- the off-diagonal numerator and `ν = μ₁·cB²` ceiling (committed cocycle lemmas):
+    -- the off-diagonal numerator and `ν = μ₁·cB²` ceiling (cocycle lemmas):
     {cM cB cBi r : ℝ} (hcM : 0 ≤ cM) (hcB : 0 ≤ cB) (hr : 0 ≤ r)
     (hnum : ‖C v₀ - (⟪C v₀, v₀⟫_ℝ) • v₀‖ ≤ cM * (cM * r) * cB ^ 2)
     (hceil : ∀ z, (inner ℝ z v₀ : ℝ) = 0 → ⟪C z, z⟫_ℝ ≤ (μ₁ * cB ^ 2) * ‖z‖ ^ 2)
@@ -255,8 +255,8 @@ theorem norm_bandProjector_succ_sub_le {c : ℝ} (A : X → Matrix (Fin d) (Fin 
 
 /-! ### The cocycle instantiation of the per-step band-projector bound
 
-We now discharge ALL the abstract hypotheses of `norm_bandProjector_succ_sub_le` from the committed
-cocycle exterior-power machinery, using the SORTED Gram eigenframes
+This instantiation discharges the abstract hypotheses of `norm_bandProjector_succ_sub_le` from the
+cocycle exterior-power machinery, using the sorted Gram eigenframes
 (`bandProjector_indicator_eq_sortedTopFrame`). With
 `Mₙ = cocycle A T n x`, `B = A(T^[n] x)` (so `cocycle A T (n+1) x = B · Mₙ`), the perturbed compound
 Gram operator `Cₙ₊₁ = adjoint Gₙ₊₁ ∘ₗ Gₙ₊₁` (`Gₙ₊₁ = toEuclideanLin (compoundMatrix k (B·Mₙ))`), the
@@ -390,7 +390,7 @@ set_option maxHeartbeats 3200000 in -- heavy elaboration; exceeds the default bu
 /-- **The cocycle per-step band-projector increment bound.** Instantiating the
 abstract `norm_bandProjector_succ_sub_le` with the SORTED Gram eigenframes
 (`bandProjector_indicator_eq_sortedTopFrame`), the
-Plücker eigenpairs of `gram n`/`gram (n+1)`, and the committed off-diagonal numerator / `ν`-ceiling
+Plücker eigenpairs of `gram n`/`gram (n+1)`, and the off-diagonal numerator / `ν`-ceiling
 /
 lower-bound exterior lemmas. With `B = A(T^[n] x)`, `cM = ‖compound k Mₙ‖`, `cB = ‖compound k B‖`,
 `cBi = ‖compound k B⁻¹‖`, `r = σₖ/σₖ₋₁`, in the EVENTUAL regime `(cB·cBi)²r² < 1`, the band
@@ -541,7 +541,7 @@ theorem norm_bandProjector_succ_sub_le_cocycle
 
 The per-step band-projector bound `‖Pₙ₊₁ − Pₙ‖ ≤ bₙ` with `bₙ = √(2k)·κ(⋀ᵏB)²·rₙ/(1 − κ²rₙ²)`
 (`norm_bandProjector_succ_sub_le`) is summable along the orbit by the root test: `(1/n)log bₙ →
-λₖ − λₖ₋₁ < 0`. The committed scalar layer supplies the log-limit (`(1/n)log rₙ → λₖ − λₖ₋₁` via
+λₖ − λₖ₋₁ < 0`. The scalar layer supplies the log-limit (`(1/n)log rₙ → λₖ − λₖ₋₁` via
 `tendsto_log_singularValue` at indices `k`, `k−1`; the `κ²` factor subexponential via
 `tendsto_logNorm_compound_orbit_div_atTop_zero`; the `1/(1−κ²rₙ²)` factor `→ 1` since `κ²rₙ² → 0`).
 We package the comparison + root test abstractly, then state the cocycle conclusion taking the
@@ -571,7 +571,7 @@ consecutive band-projector increments `‖Pₙ₊₁ − Pₙ‖` are summable. 
 `b x n` (the RHS of `norm_bandProjector_succ_sub_le`, eventually `√(2k)·κ²rₙ/(1−κ²rₙ²)`), its
 nonnegativity / eventual positivity, the negative root-test log-limit `L x` (`= λₖ − λₖ₋₁`), and the
 eventual per-step bound are taken as hypotheses — the genuine outputs of the per-step bound and the
-committed scalar layer (`tendsto_log_singularValue`,
+scalar layer (`tendsto_log_singularValue`,
 `tendsto_logNorm_compound_orbit_div_atTop_zero`).
 The conclusion is the summability that feeds the Cauchy packaging
 `cauchySeq_cfc_of_summable`. -/
@@ -593,7 +593,7 @@ theorem summable_norm_bandProjector_succ_sub {c : ℝ} (A : X → Matrix (Fin d)
 
 /-! ## A.e. assembly: the band projectors converge
 
-The committed Cauchy packaging `exists_tendsto_cfc_of_summable` turns the a.e. summability of the
+The Cauchy packaging `exists_tendsto_cfc_of_summable` turns the a.e. summability of the
 band-projector increments (`summable_norm_bandProjector_succ_sub`) into a.e. convergence of
 the band projectors themselves: the candidate Oseledets spectral projector exists `μ`-a.e. The
 `bandProjector A T (indicator (Ioi c) 1) n x = cfc (indicator (Ioi c) 1) (qpow A T n x)` sequence is
@@ -606,7 +606,7 @@ convergence of the Oseledets spectral projector pinned by the growing spectral g
 feeding the a.e. summability of the increments (`summable_norm_bandProjector_succ_sub`) into
 the soft-analysis Cauchy packaging `exists_tendsto_cfc_of_summable`. The summability
 hypotheses are the genuine outputs of the per-step bound `norm_bandProjector_succ_sub_le` and the
-committed scalar root-test layer (`tendsto_log_singularValue`,
+scalar root-test layer (`tendsto_log_singularValue`,
 `tendsto_logNorm_compound_orbit_div_atTop_zero`). -/
 theorem exists_tendsto_bandProjector {c : ℝ} (A : X → Matrix (Fin d) (Fin d) ℝ)
     (b : X → ℕ → ℝ)
@@ -628,11 +628,11 @@ theorem exists_tendsto_bandProjector {c : ℝ} (A : X → Matrix (Fin d) (Fin d)
 
 /-! ### Unconditional band-projector a.e. convergence (cocycle)
 
-Feeding the per-step bound `norm_bandProjector_succ_sub_le_cocycle` through the committed Cauchy
+Feeding the per-step bound `norm_bandProjector_succ_sub_le_cocycle` through the Cauchy
 packaging `exists_tendsto_bandProjector`: for `μ`-a.e. `x`, the band projector
 `bandProjector A T (indicator (Ioi c) 1) n x` converges. The per-step bound
 `bCocycle x n = √(2k)·κ²r/(1 − κ²r²)` is summable along the orbit by the root test (its `(1/n)·log`
-tends to `λₖ − λₖ₋₁ < 0` a.e. via the committed scalar layer `tendsto_log_singularValue` at the two
+tends to `λₖ − λₖ₋₁ < 0` a.e. via the scalar layer `tendsto_log_singularValue` at the two
 cut indices and `tendsto_logNorm_compound_orbit_div_atTop_zero`; the eventual regime `κ²r² < 1`
 holds
 a.e. since `r → 0` geometrically while `κ` is tempered). The a.e. eventual cut/gap/regime conditions
@@ -708,10 +708,10 @@ the convergence of the Oseledets spectral projector pinned by the growing spectr
 discharges the per-step increment bound (via `stepHypCocycle_imp_step`) from the a.e.
 eventual cut/gap/regime conditions `hstepAE`, and feeds the resulting a.e. summability — by the root
 test on `bCocycle` (whose `(1/n)·log` tends to `λₖ − λₖ₋₁ < 0` a.e., supplied as `hblog`/`hLneg` by
-the committed scalar layer) — into the soft-analysis Cauchy packaging
+the scalar layer) — into the soft-analysis Cauchy packaging
 `exists_tendsto_bandProjector`.
 The hypotheses `hstepAE`, `hblog`, `hLneg`, `hbnn`, `hbpos` are the genuine outputs of the ergodic
-Lyapunov-spectrum structure and the committed scalar root-test layer (`tendsto_log_singularValue`,
+Lyapunov-spectrum structure and the scalar root-test layer (`tendsto_log_singularValue`,
 `tendsto_logNorm_compound_orbit_div_atTop_zero`); the conclusion is the UNCONDITIONAL a.e. existence
 of the limiting Oseledets band projector. -/
 theorem exists_tendsto_bandProjector_cocycle

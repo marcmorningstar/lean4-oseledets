@@ -97,7 +97,7 @@ private theorem norm_pos_of_det_ne_zero (M : Matrix (Fin d) (Fin d) ℝ) (hM : M
   rw [hM0, zero_mul] at hle
   linarith
 
-/-! ### Deliverable 1: error sublinearity along the integer orbit -/
+/-! ### Error sublinearity along the integer orbit -/
 
 /-- **Error sublinearity, almost everywhere.** For integrable controls `g, g'`, the combined
 one-step fluctuation `n⁻¹ · (g (φ (n:ℝ) x) + g' (φ (n:ℝ) x))` evaluated along the integer
@@ -114,7 +114,7 @@ theorem ae_tendsto_flowError_zero (φ : MeasurePreservingFlow μ)
   refine hx.congr (fun n => ?_)
   simp only [Pi.add_apply, ← congrFun (φ.natCast_eq_iterate n) x]
 
-/-! ### Deliverable 2: discrete limit implies continuous limit -/
+/-! ### From the discrete limit to the continuous limit -/
 
 set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- The sandwich combines several `calc` blocks over `toEuclideanCLM` norms and a triple

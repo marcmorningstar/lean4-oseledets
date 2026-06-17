@@ -16,7 +16,7 @@ measure-preserving system, encoded as a `MeasurableEquiv` `T : X ≃ᵐ X` (with
 the relevant backward object is the cocycle of the **backward generator**
 `backwardGen A T x = (A (T.symm x))⁻¹` over `T.symm`.
 
-This file collects the mechanical Phase-0 plumbing: the backward generator and its
+This file collects the backward infrastructure: the backward generator and its
 hypothesis transfer (nonzero determinant, measurability, both `L¹`-log-norm
 integrabilities), the companion cocycle recursion `cocycle_succ'` (newest factor on the
 right), the two backward cocycle identities
@@ -213,8 +213,8 @@ theorem exists_conull_biinvariant {μ : Measure X} [IsProbabilityMeasure μ]
 
 /-- The bundled standing hypotheses for the **backward system** `(⇑T.symm, backwardGen A T)`:
 everywhere-nonzero determinant, measurability of the generator, and the two
-`L¹`-log-norm integrabilities. This lets later phases instantiate the one-sided
-theorems for the backward dynamics in a single step. -/
+`L¹`-log-norm integrabilities. This lets the one-sided
+theorems be instantiated for the backward dynamics in a single step. -/
 structure BackwardData (μ : Measure X) (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X ≃ᵐ X) :
     Prop where
   /-- The backward generator is everywhere invertible. -/

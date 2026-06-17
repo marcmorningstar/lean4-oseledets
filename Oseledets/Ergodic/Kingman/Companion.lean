@@ -55,7 +55,7 @@ omit [MeasurableSpace X] in
 theorem vcoc_nonpos {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (n : ℕ) (x : X) :
     vcoc (T := T) g (n + 1) x ≤ 0 := by
   simp only [vcoc, sub_nonpos]
-  exact IsSubadditiveCocycle.le_birkhoffSum_one hsub n x
+  exact hsub.le_birkhoffSum_one n x
 
 /-- Each level of `vcoc g` is integrable (a difference of integrable `g n` and `birkhoffSum`). -/
 theorem vcoc_integrable (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
@@ -117,29 +117,6 @@ theorem ecdiv_eq_ecdiv_vcoc_add {g : ℕ → X → ℝ} (n : ℕ) (x : X) :
   rw [hcast, div_eq_inv_mul]
   ring
 
-omit [MeasurableSpace X] in
-/-- **Block subadditivity.** For a subadditive cocycle and any consecutive block
-decomposition of `[0, n)` into `k+1` blocks of lengths `ℓ 0, …, ℓ k` (with
-`n = ∑_{i ≤ k} ℓ i`), the cocycle is dominated by the sum of the block cocycle values along
-the orbit, evaluated at the partial-sum frontiers `T^[∑_{j < i} ℓ j] x`. (Used by
-the `Tᴹ`-subsequence cocycle algebra below; stated for `k+1` blocks since the empty
-decomposition would force the false `g 0 x ≤ 0`.) -/
-theorem IsSubadditiveCocycle.le_sum_blocks {g : ℕ → X → ℝ}
-    (hsub : IsSubadditiveCocycle T g) (ℓ : ℕ → ℕ) (k : ℕ) (x : X) :
-    g (∑ i ∈ Finset.range (k + 1), ℓ i) x
-      ≤ ∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x) := by
-  induction k with
-  | zero =>
-      rw [Finset.range_one, Finset.sum_singleton, Finset.sum_singleton, Finset.range_zero,
-        Finset.sum_empty, Function.iterate_zero, id_eq]
-  | succ k ih =>
-      rw [Finset.sum_range_succ (n := k + 1), Finset.sum_range_succ (n := k + 1)]
-      set s : ℕ := ∑ j ∈ Finset.range (k + 1), ℓ j with hs
-      calc g (s + ℓ (k + 1)) x
-          ≤ g s x + g (ℓ (k + 1)) (T^[s] x) := hsub.apply_add_le s (ℓ (k + 1)) x
-        _ ≤ (∑ i ∈ Finset.range (k + 1), g (ℓ i) (T^[∑ j ∈ Finset.range i, ℓ j] x))
-              + g (ℓ (k + 1)) (T^[s] x) := by linarith [ih]
-
 /-! ### The `Tᴹ`-subsequence cocycle algebra
 
 For a non-positive subadditive cocycle `g` over `T` and a block length `M`, the
@@ -191,7 +168,7 @@ theorem vM_nonpos {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (M n
   simp only [vM, sub_nonpos]
   obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
   -- `le_sum_blocks` with constant block-length `ℓ = fun _ => M` and `k+1` blocks.
-  have hblk := IsSubadditiveCocycle.le_sum_blocks hsub (fun _ => M) k x
+  have hblk := hsub.le_sum_blocks (fun _ => M) k x
   simp only [Finset.sum_const, Finset.card_range, smul_eq_mul] at hblk
   exact hblk
 

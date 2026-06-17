@@ -33,7 +33,7 @@ forward Oseledets filtration.
 * `exists_spectral_cut`: a spectrum-avoiding cut strictly between two `exp`-levels exists.
 * `forward_graded_overlap`: the a.e. graded-overlap bound stated above.
 
-## Proof outline
+## Implementation notes
 
 Fix `x` in the full-measure set on which all the hypotheses hold. Write `λ_a = lam0 a` and
 `u_a(n) = sortedGramEigenbasis A T n x a`.

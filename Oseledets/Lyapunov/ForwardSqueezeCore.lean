@@ -52,7 +52,7 @@ theorem isCoboundedUnder_le_of_boundedUnder_ge {f : ℕ → ℝ}
 
 `sprod A T d n x = ∏_{i<d} σᵢ(A⁽ⁿ⁾) = |det A⁽ⁿ⁾|`, so the determinant exponent is the top
 `Γ`-limit `Γ_d`. This is the cleanest concrete field: it follows directly from the ergodic
-Kingman limit `tendsto_GammaK_of_integrableLogNorm` at `k = d`, with no frame geometry
+Kingman limit `tendsto_gammaK_of_integrableLogNorm` at `k = d`, with no frame geometry
 involved. It is exposed here as `dExponent` and `exists_dSum_tendsto_dExponent`. -/
 
 variable {μ : MeasureTheory.Measure X}
@@ -69,7 +69,7 @@ theorem exists_dSum_tendsto_dExponent [NeZero d] [IsProbabilityMeasure μ] (hT :
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
     ∃ dSum : ℝ, ∀ᵐ x ∂μ, Tendsto (dExponent A T x) atTop (𝓝 dSum) :=
-  tendsto_GammaK_of_integrableLogNorm hT hA hAmeas hint hint' (le_refl d)
+  tendsto_gammaK_of_integrableLogNorm hT hA hAmeas hint hint' (le_refl d)
 
 omit [MeasurableSpace X] in
 /-- For `v ≠ 0` and an invertible cocycle (`det ≠ 0`), the per-vector growth `‖A⁽ⁿ⁾ v‖` is

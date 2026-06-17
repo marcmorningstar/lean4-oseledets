@@ -181,19 +181,19 @@ over a `T`-invariant set `B`. -/
 def bcoc (g : ℕ → X → ℝ) (i : ℕ) (x : X) : ℝ := g i x - g (i - 1) (T x)
 
 /-- Karlsson's set `Λ_m = {y | inf_{1≤k≤m} (g m y − g (m−k)(T^[k] y)) < 0}`. -/
-def LambdaSet (g : ℕ → X → ℝ) (m : ℕ) : Set X :=
+def lambdaSet (g : ℕ → X → ℝ) (m : ℕ) : Set X :=
   {y | ∃ k, 1 ≤ k ∧ k ≤ m ∧ g m y - g (m - k) (T^[k] y) < 0}
 
 /-- Karlsson's set `A_m = {y | inf_{1≤k≤m} g k y < 0} ⊆ Λ_m`. -/
-def ASet (g : ℕ → X → ℝ) (m : ℕ) : Set X :=
+def aSet (g : ℕ → X → ℝ) (m : ℕ) : Set X :=
   {y | ∃ k, 1 ≤ k ∧ k ≤ m ∧ g k y < 0}
 
 omit [MeasurableSpace X] in
 /-- `A_m ⊆ Λ_m` by subadditivity: `g m y ≤ g (m−k) y + g k (T^[m−k] y)`… actually the
 inclusion uses `g m y ≤ g (m−k) (·)`; we prove it via `g m y − g (m−k)(T^[k] y) ≤ g k y` when
 `k ≤ m`. Indeed `g m y = g (k + (m−k)) y ≤ g k y + g (m−k) (T^[k] y)`. -/
-theorem ASet_subset_LambdaSet {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (m : ℕ) :
-    ASet g m ⊆ LambdaSet (T := T) g m := by
+theorem aSet_subset_lambdaSet {g : ℕ → X → ℝ} (hsub : IsSubadditiveCocycle T g) (m : ℕ) :
+    aSet g m ⊆ lambdaSet (T := T) g m := by
   rintro y ⟨k, hk1, hkm, hk⟩
   refine ⟨k, hk1, hkm, ?_⟩
   have hdecomp : g m y ≤ g k y + g (m - k) (T^[k] y) := by
@@ -205,11 +205,11 @@ omit [MeasurableSpace X] in
 /-- The leader-membership identification (Karlsson, §3.2): an index `k` is a leader of the
 partial sums `S j = g n x − g (n−j)(T^[j] x)` of length `n` exactly when `k < n` and
 `T^[k] x ∈ Λ_{n−k}`. -/
-theorem mem_leaderSet_iff_mem_LambdaSet (g : ℕ → X → ℝ) (n k : ℕ) (x : X) :
+theorem mem_leaderSet_iff_mem_lambdaSet (g : ℕ → X → ℝ) (n k : ℕ) (x : X) :
     k ∈ leaderSet (fun j => g n x - g (n - j) (T^[j] x)) n ↔
-      k < n ∧ T^[k] x ∈ LambdaSet (T := T) g (n - k) := by
+      k < n ∧ T^[k] x ∈ lambdaSet (T := T) g (n - k) := by
   classical
-  simp only [leaderSet, Finset.mem_filter, Finset.mem_range, LambdaSet, Set.mem_setOf_eq]
+  simp only [leaderSet, Finset.mem_filter, Finset.mem_range, lambdaSet, Set.mem_setOf_eq]
   constructor
   · rintro ⟨hkn, j, hkj, hjn, hlt⟩
     refine ⟨hkn, j - k, by omega, by omega, ?_⟩
@@ -245,13 +245,13 @@ omit [MeasurableSpace X] in
 along the orbit over the indices `k < n` with `T^[k] x ∈ Λ_{n−k}` gives a non-positive number.
 (Recast of `sum_leaders_cocycle_nonpos` via the membership identification.) -/
 theorem sum_bcoc_lambda_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
-    ∑ k ∈ (Finset.range n).filter (fun k => T^[k] x ∈ LambdaSet (T := T) g (n - k)),
+    ∑ k ∈ (Finset.range n).filter (fun k => T^[k] x ∈ lambdaSet (T := T) g (n - k)),
         bcoc (T := T) g (n - k) (T^[k] x) ≤ 0 := by
   classical
-  have hset : (Finset.range n).filter (fun k => T^[k] x ∈ LambdaSet (T := T) g (n - k))
+  have hset : (Finset.range n).filter (fun k => T^[k] x ∈ lambdaSet (T := T) g (n - k))
       = leaderSet (fun j => g n x - g (n - j) (T^[j] x)) n := by
     ext k
-    simp only [Finset.mem_filter, Finset.mem_range, mem_leaderSet_iff_mem_LambdaSet]
+    simp only [Finset.mem_filter, Finset.mem_range, mem_leaderSet_iff_mem_lambdaSet]
   rw [hset]
   refine le_of_eq_of_le (Finset.sum_congr rfl (fun k _ => ?_)) (sum_leaders_cocycle_nonpos g n x)
   simp only [bcoc]
@@ -259,7 +259,7 @@ theorem sum_bcoc_lambda_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
 
 /-- Karlsson's localized increment `ψ_i = 1_{Λ_i} · bcoc g i`. -/
 noncomputable def psiCoc (g : ℕ → X → ℝ) (i : ℕ) : X → ℝ :=
-  (LambdaSet (T := T) g i).indicator (bcoc (T := T) g i)
+  (lambdaSet (T := T) g i).indicator (bcoc (T := T) g i)
 
 open Classical in
 omit [MeasurableSpace X] in
@@ -270,7 +270,7 @@ theorem sum_psiCoc_comp_nonpos (g : ℕ → X → ℝ) (n : ℕ) (x : X) :
     ∑ k ∈ Finset.range n, psiCoc (T := T) g (n - k) (T^[k] x) ≤ 0 := by
   classical
   have hrw : ∑ k ∈ Finset.range n, psiCoc (T := T) g (n - k) (T^[k] x)
-      = ∑ k ∈ (Finset.range n).filter (fun k => T^[k] x ∈ LambdaSet (T := T) g (n - k)),
+      = ∑ k ∈ (Finset.range n).filter (fun k => T^[k] x ∈ lambdaSet (T := T) g (n - k)),
           bcoc (T := T) g (n - k) (T^[k] x) := by
     rw [Finset.sum_filter]
     refine Finset.sum_congr rfl (fun k _ => ?_)
@@ -285,16 +285,16 @@ theorem integrable_bcoc (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     hT.integrable_comp_of_integrable (hint (i - 1))
   exact (hint i).sub hcomp
 
-/-- `LambdaSet g m` is null-measurable: a finite union over `1 ≤ k ≤ m` of the null-measurable
+/-- `lambdaSet g m` is null-measurable: a finite union over `1 ≤ k ≤ m` of the null-measurable
 sets `{g m − g (m−k) ∘ T^[k] < 0}`. -/
-theorem nullMeasurableSet_LambdaSet (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
+theorem nullMeasurableSet_lambdaSet (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hint : ∀ n, Integrable (g n) μ) (m : ℕ) :
-    NullMeasurableSet (LambdaSet (T := T) g m) μ := by
+    NullMeasurableSet (lambdaSet (T := T) g m) μ := by
   classical
-  have hrw : LambdaSet (T := T) g m
+  have hrw : lambdaSet (T := T) g m
       = ⋃ k ∈ (Finset.Icc 1 m : Finset ℕ), {y | g m y - g (m - k) (T^[k] y) < 0} := by
     ext y
-    simp only [LambdaSet, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_Icc]
+    simp only [lambdaSet, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_Icc]
     constructor
     · rintro ⟨k, hk1, hkm, hlt⟩; exact ⟨k, ⟨hk1, hkm⟩, hlt⟩
     · rintro ⟨k, ⟨hk1, hkm⟩, hlt⟩; exact ⟨k, hk1, hkm, hlt⟩
@@ -308,7 +308,7 @@ theorem nullMeasurableSet_LambdaSet (hT : MeasurePreserving T μ μ) {g : ℕ �
 /-- `psiCoc g i` is integrable (indicator of a null-measurable set of an integrable function). -/
 theorem integrable_psiCoc (hT : MeasurePreserving T μ μ) {g : ℕ → X → ℝ}
     (hint : ∀ n, Integrable (g n) μ) (i : ℕ) : Integrable (psiCoc (T := T) g i) μ :=
-  (integrable_bcoc hT hint i).indicator₀ (nullMeasurableSet_LambdaSet hT hint i)
+  (integrable_bcoc hT hint i).indicator₀ (nullMeasurableSet_lambdaSet hT hint i)
 
 /-- Set-integral invariance under `T^[k]` for a measurable `T`-invariant set `s`:
 `∫_s (h ∘ T^[k]) = ∫_s h`. -/
@@ -403,18 +403,18 @@ theorem sum_setIntegral_bcoc_eq
         rw [setIntegral_comp_iterate_of_invariants hT (hint 0).aestronglyMeasurable hB hBinv m]
 
 omit [MeasurableSpace X] in
-/-- `ASet g` is monotone in the length. -/
-theorem ASet_mono {g : ℕ → X → ℝ} : Monotone (ASet g) := by
+/-- `aSet g` is monotone in the length. -/
+theorem aSet_mono {g : ℕ → X → ℝ} : Monotone (aSet g) := by
   intro a b hab y hy
   obtain ⟨k, hk1, hka, hk⟩ := hy
   exact ⟨k, hk1, le_trans hka hab, hk⟩
 
-/-- `ASet g m` is null-measurable. -/
-theorem nullMeasurableSet_ASet {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) (m : ℕ) :
-    NullMeasurableSet (ASet g m) μ := by
+/-- `aSet g m` is null-measurable. -/
+theorem nullMeasurableSet_aSet {g : ℕ → X → ℝ} (hint : ∀ n, Integrable (g n) μ) (m : ℕ) :
+    NullMeasurableSet (aSet g m) μ := by
   classical
-  have hrw : ASet g m = ⋃ k ∈ (Finset.Icc 1 m : Finset ℕ), {y | g k y < 0} := by
-    ext y; simp only [ASet, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_Icc]
+  have hrw : aSet g m = ⋃ k ∈ (Finset.Icc 1 m : Finset ℕ), {y | g k y < 0} := by
+    ext y; simp only [aSet, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_Icc]
     constructor
     · rintro ⟨k, hk1, hkm, hlt⟩; exact ⟨k, ⟨hk1, hkm⟩, hlt⟩
     · rintro ⟨k, ⟨hk1, hkm⟩, hlt⟩; exact ⟨k, hk1, hkm, hlt⟩
@@ -462,18 +462,18 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
   have hpint : Integrable p μ := (hint 1).pos_part
   have hpnn : ∀ y, 0 ≤ p y := fun y => le_max_right _ _
   -- The tail integrals `dseq i = ∫_{B \ A_i} p`.
-  set dseq : ℕ → ℝ := fun i => ∫ x in B, ((ASet g i)ᶜ).indicator p x ∂μ with hdseqdef
+  set dseq : ℕ → ℝ := fun i => ∫ x in B, ((aSet g i)ᶜ).indicator p x ∂μ with hdseqdef
   -- (1) `B ⊆ᵐ ⋃ A_i`: on `B`, some level is `< 0`.
-  have hBsub : ∀ᵐ x ∂μ, x ∈ B → x ∈ ⋃ i, ASet g i := by
+  have hBsub : ∀ᵐ x ∂μ, x ∈ B → x ∈ ⋃ i, aSet g i := by
     filter_upwards [hBneg] with x hx hxB
     obtain ⟨k, hk⟩ := hx hxB
     refine Set.mem_iUnion.2 ⟨k + 1, ?_⟩
     exact ⟨k + 1, by omega, le_refl _, hk⟩
   -- (2) `dseq i → 0` by dominated convergence on the antitone indicators.
   have hdseq0 : Tendsto dseq atTop (𝓝 0) := by
-    set F : ℕ → X → ℝ := fun i x => (B ∩ (ASet g i)ᶜ).indicator p x with hFdef
-    have hFnm : ∀ i, NullMeasurableSet (B ∩ (ASet g i)ᶜ) μ := fun i =>
-      hB.nullMeasurableSet.inter (nullMeasurableSet_ASet hint i).compl
+    set F : ℕ → X → ℝ := fun i x => (B ∩ (aSet g i)ᶜ).indicator p x with hFdef
+    have hFnm : ∀ i, NullMeasurableSet (B ∩ (aSet g i)ᶜ) μ := fun i =>
+      hB.nullMeasurableSet.inter (nullMeasurableSet_aSet hint i).compl
     have hFint : ∀ i, ∫ a, F i a ∂μ = dseq i := by
       intro i
       simp only [hFdef, hdseqdef]
@@ -484,7 +484,7 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
       intro i
       filter_upwards with a
       simp only [hFdef, Set.indicator_apply, Real.norm_eq_abs]
-      by_cases h : a ∈ B ∩ (ASet g i)ᶜ
+      by_cases h : a ∈ B ∩ (aSet g i)ᶜ
       · simp only [h, if_true, abs_of_nonneg (hpnn a), le_refl]
       · simp only [h, if_false, abs_zero]; exact hpnn a
     have hlim : ∀ᵐ a ∂μ, Tendsto (fun i => F i a) atTop (𝓝 0) := by
@@ -494,7 +494,7 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
         refine Tendsto.congr' ?_ tendsto_const_nhds
         filter_upwards [eventually_ge_atTop j] with i hij
         simp only [hFdef, Set.indicator_apply]
-        have : a ∈ ASet g i := ASet_mono hij hj
+        have : a ∈ aSet g i := aSet_mono hij hj
         simp only [Set.mem_inter_iff, Set.mem_compl_iff, this, not_true, and_false, if_false]
       · refine Tendsto.congr' ?_ tendsto_const_nhds
         filter_upwards with i
@@ -506,7 +506,7 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
     exact (funext hFint) ▸ hconv
   -- (3) Per-level bound: `∫_B bcoc g i ≤ ∫_B ψ_i + dseq i` for `i ≥ 1`.
   have hpoint : ∀ i, 1 ≤ i → ∀ x,
-      bcoc (T := T) g i x - psiCoc (T := T) g i x ≤ ((ASet g i)ᶜ).indicator p x := by
+      bcoc (T := T) g i x - psiCoc (T := T) g i x ≤ ((aSet g i)ᶜ).indicator p x := by
     intro i hi1 x
     -- `bcoc g i x ≤ p x` by subadditivity (i ≥ 1).
     have hble : bcoc (T := T) g i x ≤ p x := by
@@ -517,12 +517,12 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
       simp only [bcoc, hpdef]
       have : g i x - g (i - 1) (T x) ≤ g 1 x := by linarith
       exact le_trans this (le_max_left _ _)
-    by_cases hΛ : x ∈ LambdaSet (T := T) g i
+    by_cases hΛ : x ∈ lambdaSet (T := T) g i
     · -- on `Λ_i`: `psiCoc = bcoc`, so LHS = 0 ≤ RHS.
       simp only [psiCoc, Set.indicator_of_mem hΛ, sub_self]
       exact Set.indicator_nonneg (fun y _ => hpnn y) x
     · -- off `Λ_i` (⟹ off `A_i`): `psiCoc = 0`, LHS = bcoc ≤ p = RHS.
-      have hA : x ∉ ASet g i := fun h => hΛ (ASet_subset_LambdaSet hsub i h)
+      have hA : x ∉ aSet g i := fun h => hΛ (aSet_subset_lambdaSet hsub i h)
       simp only [psiCoc, Set.indicator_of_notMem hΛ, sub_zero,
         Set.indicator_of_mem (Set.mem_compl hA)]
       exact hble
@@ -542,7 +542,7 @@ theorem limsup_setIntegral_div_nonpos [IsFiniteMeasure μ]
         rw [hdseqdef]
         refine setIntegral_mono_on ?_ ?_ hB (fun x _ => hpoint i hi.1 x)
         · exact ((integrable_bcoc hT hint i).sub (integrable_psiCoc hT hint i)).restrict
-        · exact (hpint.indicator₀ (nullMeasurableSet_ASet hint i).compl).restrict
+        · exact (hpint.indicator₀ (nullMeasurableSet_aSet hint i).compl).restrict
       rw [integral_sub (integrable_bcoc hT hint i).restrict
         (integrable_psiCoc hT hint i).restrict] at hsub_int
       linarith

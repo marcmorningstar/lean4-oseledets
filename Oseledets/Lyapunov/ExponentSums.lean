@@ -29,7 +29,7 @@ It records three things requested as additive extensions:
 * **The telescoping identity** (`gammaK_eq_sum_top_exponents`): the genuine ergodic growth
   rate `Γ_k = lim (1/n) log sprod_k` of the product of the top-`k` singular values equals the
   sum `∑_{i<k} exponents i` of the top-`k` exponents. This is the shared foundation for the
-  exterior characterization (item #2) and the determinant identity (item #7).
+  exterior characterization and the determinant identity.
 
 ## Main definitions
 
@@ -92,7 +92,7 @@ noncomputable def sumAllExp : ℝ := ∑ i, exponents hT hA hAmeas hint hint' i
 
 end Sums
 
-/-! ## Sign and vanishing characterizations (item #3) -/
+/-! ## Sign and vanishing characterizations -/
 
 section Signs
 
@@ -165,7 +165,7 @@ theorem sumNegExp_neg_iff :
 
 end Signs
 
-/-! ## The telescoping identity `Γ_k = ∑_{i<k} exponents i` (foundation for #2 and #7) -/
+/-! ## The telescoping identity `Γ_k = ∑_{i<k} exponents i` -/
 
 section Telescoping
 
@@ -175,15 +175,15 @@ variable [IsProbabilityMeasure μ] (hT : Ergodic T μ)
 
 /-- The genuine ergodic growth rate `Γ_k`, the `μ`-a.e.-constant limit of
 `(1/n) log sprod_k` (the product of the top-`k` singular values), packaged as a plain real
-via `Classical.choose` of `tendsto_GammaK_of_integrableLogNorm`. Defined for `k ≤ d`. -/
+via `Classical.choose` of `tendsto_gammaK_of_integrableLogNorm`. Defined for `k ≤ d`. -/
 noncomputable def gammaK {k : ℕ} (hk : k ≤ d) : ℝ :=
-  Classical.choose (tendsto_GammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk)
+  Classical.choose (tendsto_gammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk)
 
 /-- The defining a.e. limit of `gammaK`: `(1/n) log sprod_k → Γ_k` for `μ`-a.e. `x`. -/
 theorem gammaK_tendsto {k : ℕ} (hk : k ≤ d) :
     ∀ᵐ x ∂μ, Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (sprod A T k n x)) atTop
       (𝓝 (gammaK hT hA hAmeas hint hint' hk)) :=
-  Classical.choose_spec (tendsto_GammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk)
+  Classical.choose_spec (tendsto_gammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk)
 
 /-- **The telescoping identity.** The genuine ergodic growth rate `Γ_k` of the product of the
 top-`k` singular values equals the sum of the top-`k` Lyapunov exponents (with multiplicity):

@@ -230,7 +230,7 @@ theorem exists_lam_tendsto_singularValue [IsProbabilityMeasure μ] (hT : Ergodic
   -- The Γ_k constants for 0 ≤ k ≤ d (and 0 for k > d).
   have hΓ : ∀ k : ℕ, k ≤ d → ∃ Γk : ℝ, ∀ᵐ x ∂μ,
       Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (sprod A T k n x)) atTop (𝓝 Γk) :=
-    fun k hk => tendsto_GammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk
+    fun k hk => tendsto_gammaK_of_integrableLogNorm hT hA hAmeas hint hint' hk
   choose! Γ hΓspec using hΓ
   set lam : ℕ → ℝ := fun i => Γ (i + 1) - Γ i with hlamdef
   -- a.e., the σ-limit holds at every index `i < d`

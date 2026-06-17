@@ -42,7 +42,7 @@ cocycle and fed to Kingman's ergodic theorem (`tendsto_kingman_ergodic`).
 * `Oseledets.sprod_submul`, `Oseledets.logSprod_subadditive`,
   `Oseledets.isSubadditiveCocycle_logSprod` — subadditivity of `log sprod`.
 * `Oseledets.integrable_logSprod`, `Oseledets.bddBelow_logSprod` — integrability/lower bound.
-* `Oseledets.tendsto_GammaK` — the genuine ergodic `Γ_k` limit.
+* `Oseledets.tendsto_gammaK` — the genuine ergodic `Γ_k` limit.
 * `Oseledets.lamSing`, `Oseledets.tendsto_log_singularValue`, `Oseledets.lamSing_antitone`
   — the per-singular-value exponents.
 * `Oseledets.sq_singularValues_eq_gram_eigenvalue` — squared singular values are Gram eigenvalues.
@@ -417,7 +417,7 @@ set_option linter.unusedSectionVars false in
 /-- **The eigenvalue bridge.** The squared singular values of `toEuclideanLin M` are the
 eigenvalues of the symmetric operator `adjoint ∘ self = toEuclideanLin (Mᵀ M)`, i.e. the
 eigenvalues of the Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾`. This delivers the eigenvalues of the
-Oseledets limit `Λ` as genuine ergodic limits (via `tendsto_GammaK`) without constructing `Λ`. -/
+Oseledets limit `Λ` as genuine ergodic limits (via `tendsto_gammaK`) without constructing `Λ`. -/
 theorem sq_singularValues_eq_gram_eigenvalue {n : ℕ} (M : Matrix (Fin d) (Fin d) ℝ)
     (hn : Module.finrank ℝ (EuclideanSpace ℝ (Fin d)) = n) (i : Fin n) :
     (Matrix.toEuclideanLin M).singularValues i ^ 2
@@ -431,7 +431,7 @@ set_option linter.unusedSectionVars false in
 Furstenberg–Kesten-style integrability (`hint`) and bounded-below (`hbdd`) provisos and the
 positivity proviso (`hpos`, valid for `k ≤ d` on an invertible cocycle), the normalized
 `log sprod_k` converges `μ`-a.e. to a constant `Γ_k`. -/
-theorem tendsto_GammaK [IsProbabilityMeasure μ] (hT : Ergodic T μ)
+theorem tendsto_gammaK [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     (A : X → Matrix (Fin d) (Fin d) ℝ) (k : ℕ)
     (hpos : ∀ (j : ℕ) (y : X), 0 < sprod A T k j y)
     (hint : ∀ n, Integrable (fun x => Real.log (sprod A T k n x)) μ)
@@ -447,7 +447,7 @@ For an ergodic
 measure-preserving `T`, an everywhere-invertible measurable cocycle generator with
 `log⁺‖A‖, log⁺‖A⁻¹‖ ∈ L¹`, and `k ≤ d`, the normalized `log sprod_k` converges `μ`-a.e. to a
 constant `Γ_k`. -/
-theorem tendsto_GammaK_of_integrableLogNorm [IsProbabilityMeasure μ] (hT : Ergodic T μ)
+theorem tendsto_gammaK_of_integrableLogNorm [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
     {k : ℕ} (hk : k ≤ d) :
@@ -455,7 +455,7 @@ theorem tendsto_GammaK_of_integrableLogNorm [IsProbabilityMeasure μ] (hT : Ergo
       Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log (sprod A T k n x)) atTop (𝓝 Γk) := by
   have hmp : MeasurePreserving T μ μ := hT.toMeasurePreserving
   have hTmeas : Measurable T := hmp.measurable
-  exact tendsto_GammaK hT A k (fun j y => sprod_pos hA hk j y)
+  exact tendsto_gammaK hT A k (fun j y => sprod_pos hA hk j y)
     (fun n => integrable_logSprod hmp hA hAmeas hTmeas hint hint' hk n)
     (bddBelow_logSprod hmp hA hAmeas hTmeas hint hint' hk)
 
@@ -630,7 +630,7 @@ theorem eigenvalues₀_cfc_of_monotoneOn {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- The sorted eigenvalues `eigenvalues₀` of the Gram matrix `Qₙ = (A⁽ⁿ⁾)ᵀ A⁽ⁿ⁾` are the squared
 singular values of `A⁽ⁿ⁾`: `eigenvalues₀ (Qₙ) i = σᵢ(A⁽ⁿ⁾)²`. This bridges the matrix-eigenvalue
-layer (`Matrix.IsHermitian.eigenvalues₀`) to the committed singular-value layer
+layer (`Matrix.IsHermitian.eigenvalues₀`) to the singular-value layer
 (`sq_singularValues_eq_gram_eigenvalue`). -/
 theorem gram_eigenvalues₀_eq_sq_singularValues (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (n : ℕ) (x : X) (i : Fin (Fintype.card (Fin d))) :
@@ -640,7 +640,7 @@ theorem gram_eigenvalues₀_eq_sq_singularValues (A : X → Matrix (Fin d) (Fin 
   -- `eigenvalues₀` of the Gram matrix = eigenvalues of `toEuclideanLin (gram)` (linear-map layer).
   have hsym₁ : (Matrix.toEuclideanLin (gram A T n x)).IsSymmetric :=
     Matrix.isSymmetric_toEuclideanLin_iff.mpr (gram_posSemidef A T n x).isHermitian
-  -- The committed `adjoint ∘ self` operator equals `toEuclideanLin (gram)`.
+  -- The `adjoint ∘ self` operator equals `toEuclideanLin (gram)`.
   have hop : (Matrix.toEuclideanLin M).adjoint ∘ₗ (Matrix.toEuclideanLin M)
       = Matrix.toEuclideanLin (gram A T n x) := by
     rw [gram, ← hM]; exact adjoint_comp_self_eq_gram M
@@ -655,7 +655,7 @@ theorem gram_eigenvalues₀_eq_sq_singularValues (A : X → Matrix (Fin d) (Fin 
   have hdef : (gram_posSemidef A T n x).isHermitian.eigenvalues₀ i = hsym₁.eigenvalues hfr i := by
     rfl
   rw [hdef, ← heig]
-  -- The committed bridge: `σᵢ² = eigenvalues (adjoint ∘ self)`.
+  -- The bridge: `σᵢ² = eigenvalues (adjoint ∘ self)`.
   exact (sq_singularValues_eq_gram_eigenvalue M hfr i).symm
 
 /-- **The eigenvalues of `qpow` are the `1/n`-th powers of the singular values.** The sorted
