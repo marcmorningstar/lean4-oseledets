@@ -28,6 +28,21 @@ The proof is organized in three layers.
 * PART C performs band stabilization, transfers the per-stratum bound to all
   gap-interior cuts, and wraps the result into the almost-everywhere statement.
 
+## Main definitions
+
+* `Oseledets.Localized`, `Oseledets.Tempered` — the per-orbit localization and temperedness
+  predicates on the singular-value spectrum.
+* `Oseledets.stratumBand` — the spectral band associated with a stratum.
+* `Oseledets.canonSlack`, `Oseledets.canonCut`, `Oseledets.PerStratumEnvelope` — the canonical
+  per-stratum slack and cut, and the inductively-built per-stratum band-mass envelope.
+
+## Main results
+
+* `Oseledets.topGapMassEnvelope_ae` — the almost-everywhere top-gap band-mass envelope (the
+  headline result of the module).
+* `Oseledets.topGapMassEnvelope_of_perStratum`, `Oseledets.perStratumEnvelope_step` — the
+  deterministic per-stratum envelope and the inductive step it is built from.
+
 ## Implementation notes
 
 Fix the pair `(λ_a, v)`, the canonical slack `δ* = canonSlack = min(δ/4, G/2, (v−λ_a)/4)`,

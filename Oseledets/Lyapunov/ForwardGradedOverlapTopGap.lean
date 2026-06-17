@@ -34,6 +34,16 @@ gap removes that obstruction.
   `toEuclideanLin_bandProjector_eq_fastProj`), and the `a₀ = 0` initialization
   (`bandMass_init_zero`).
 
+## Main definitions
+
+* `Oseledets.TopGapMassEnvelope` — the top-gap band-mass envelope predicate along an orbit.
+
+## Main results
+
+* `Oseledets.forward_graded_overlap_of_topGapEnvelope` — the forward graded-overlap bound obtained
+  from the top-gap band-mass envelope (the headline result of the module).
+* `Oseledets.exists_topgap_cut` — existence of a top-gap spectral cut.
+
 ## Implementation notes
 
 With the top-gap cut `c₀ = exp(λ_e − g/2)` (`g` the top gap), the direct bottom-stratum leakage

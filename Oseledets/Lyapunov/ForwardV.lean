@@ -14,23 +14,6 @@ This module constructs the **measurable spectral filtration** of the Oseledets l
 projector/range bridge `measurableSubspace_range_of_measurable`
 (`Oseledets/Lyapunov/ForwardMeasurable.lean`).
 
-## The "everywhere a genuine projector" subtlety
-
-The bridge consumes a measurable family of **self-adjoint idempotent** matrices `P x`, and requires
-those two algebraic facts to hold *globally* (for every `x`), not merely a.e.  Two obstructions are
-resolved here:
-
-1. **`Λ` need not be self-adjoint off the a.e.-full convergence set.**  The named limit
-   `oseledetsLimit A T x` is only known to be Hermitian almost everywhere.  We **sanitize** it to a
-   genuinely-everywhere-self-adjoint matrix `lambdaHat A T x`, equal to `Λ x` on the (measurable)
-   Hermitian set and to the (self-adjoint) identity off it.  Measurability is preserved because the
-   Hermitian set is the equalizer of two measurable matrix-valued maps.
-
-2. **A *continuous* gap function does not give an idempotent CFC.**  For a genuine orthogonal
-   projector we use the `0/1`-valued **indicator** `Set.indicator (Set.Iic t) 1`: being `0/1`-valued
-   it satisfies `g² = g` on *any* finite spectrum, so `cfc g (lambdaHat A T x)` is self-adjoint
-   (`cfc_predicate`) and idempotent (`cfc_mul` + `cfc_congr`) for **every** `x`.
-
 ## Main results
 
 * `lambdaHat` — the sanitized, everywhere-self-adjoint Oseledets limit.
@@ -44,14 +27,34 @@ resolved here:
 * `measurableSubspace_vslow` — measurability of the filtration, given measurability of the
   indicator-CFC family (`measurable_slowProjector`).
 
-## On the indicator-CFC measurability
+## Implementation notes
+
+The projector/range bridge consumes a measurable family of **self-adjoint idempotent** matrices
+`P x`, and requires those two algebraic facts to hold *globally* (for every `x`), not merely
+almost everywhere. Two obstructions are resolved here, and the residual measurability obligation
+is taken as a hypothesis.
+
+### Everywhere a genuine projector
+
+1. **`Λ` need not be self-adjoint off the a.e.-full convergence set.** The named limit
+   `oseledetsLimit A T x` is only known to be Hermitian almost everywhere. It is **sanitized** to a
+   genuinely-everywhere-self-adjoint matrix `lambdaHat A T x`, equal to `Λ x` on the (measurable)
+   Hermitian set and to the (self-adjoint) identity off it. Measurability is preserved because the
+   Hermitian set is the equalizer of two measurable matrix-valued maps.
+
+2. **A *continuous* gap function does not give an idempotent CFC.** For a genuine orthogonal
+   projector the `0/1`-valued **indicator** `Set.indicator (Set.Iic t) 1` is used: being
+   `0/1`-valued it satisfies `g² = g` on *any* finite spectrum, so `cfc g (lambdaHat A T x)` is
+   self-adjoint (`cfc_predicate`) and idempotent (`cfc_mul` + `cfc_congr`) for **every** `x`.
+
+### Indicator-CFC measurability
 
 The remaining genuine obligation is `Measurable (fun x => slowProjector t x)`, i.e. measurability of
-`x ↦ cfc (Set.indicator (Set.Iic t) 1) (lambdaHat A T x)`.  The indicator is **discontinuous**, so
+`x ↦ cfc (Set.indicator (Set.Iic t) 1) (lambdaHat A T x)`. The indicator is **discontinuous**, so
 the continuous-CFC measurability crux `measurable_cfc_continuous` does not apply, and the polynomial
 bypass `measurable_cfc_eqOn_polynomial` would need a *single* polynomial agreeing with the indicator
 on the spectrum of *every* `lambdaHat A T x` — which requires global control of the spectra that is
-not available here.  This module therefore takes that measurability as an explicit hypothesis
+not available here. This module therefore takes that measurability as an explicit hypothesis
 (`measurable_slowProjector`) and discharges everything else: the sanitization and its properties,
 the everywhere self-adjointness and idempotence of the indicator-CFC, and the bridge application
 reduced to exactly that one measurability goal.

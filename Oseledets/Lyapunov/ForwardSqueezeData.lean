@@ -13,7 +13,17 @@ This file wires the concrete cocycle facts into the abstract determinant-squeeze
 
     limsup_n (1/n)·log ‖A⁽ⁿ⁾ v‖  ≤  λᵢ,    for v in the limit slow subspace S(x).
 
-## Outline
+## Main results
+
+* `Oseledets.SqueezeData`: the bundle of concrete cocycle facts along an orbit.
+* `Oseledets.limsup_slowNorm_le_of_squeezeData`: from a `SqueezeData`, the determinant squeeze
+  bounds the top-slow restricted-norm exponent, `limsup (1/n) log ‖A⁽ⁿ⁾|_S‖ ≤ λᵢ`.
+* `Oseledets.spectral_upper_bound_of_squeezeData`: from a `SqueezeData`, the per-vector
+  spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`.
+
+## Implementation notes
+
+### The abstract squeeze chain
 
 The abstract chain provided by `ForwardDetSqueeze` is:
 
@@ -31,7 +41,7 @@ the per-vector spectral upper bound. Boundedness side-conditions are derived whe
 from the convergence inputs (a convergent real sequence is bounded above and below, cobounded,
 etc.), so they are not carried as separate fields.
 
-## The concrete inputs (the fields of `SqueezeData`)
+### The fields of `SqueezeData`
 
 Listed with the lemma that discharges each (see the field docstrings):
 
@@ -46,14 +56,6 @@ Listed with the lemma that discharges each (see the field docstrings):
   monotonicity).
 * `hMvpos`  — strict positivity of the per-vector growth (`norm_cocycle_pos` applied to
   `v ≠ 0`).
-
-## Main results
-
-* `Oseledets.SqueezeData`: the bundle of concrete cocycle facts along an orbit.
-* `Oseledets.limsup_slowNorm_le_of_squeezeData`: from a `SqueezeData`, the determinant squeeze
-  bounds the top-slow restricted-norm exponent, `limsup (1/n) log ‖A⁽ⁿ⁾|_S‖ ≤ λᵢ`.
-* `Oseledets.spectral_upper_bound_of_squeezeData`: from a `SqueezeData`, the per-vector
-  spectral upper bound `limsup (1/n) log ‖A⁽ⁿ⁾ v‖ ≤ λᵢ`.
 
 ## References
 
