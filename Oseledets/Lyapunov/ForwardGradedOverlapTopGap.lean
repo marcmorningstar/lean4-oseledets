@@ -13,7 +13,7 @@ import Oseledets.Lyapunov.ChainRecursion
 import Oseledets.Lyapunov.ForwardGradedOverlap
 
 /-!
-# `forward_graded_overlap'` — forward graded overlap via the top-gap envelope (Ruelle Lemma 1.4)
+# `forward_graded_overlap_of_topGapEnvelope` — forward graded overlap via the top-gap envelope (Ruelle Lemma 1.4)
 
 This module proves the forward graded overlap estimate using the envelope `TopGapMassEnvelope`,
 in which the cut `c₀` is restricted to the **top gap** below `λ_e`: no stratum value of `lam0`
@@ -23,7 +23,7 @@ directions belonging to intermediate strata can oscillate in and out of the band
 singular-value fluctuations, so the band mass need not decay. Restricting the cut to the top
 gap removes that obstruction.
 
-* `forward_graded_overlap'` carries the single isolated analytic hypothesis
+* `forward_graded_overlap_of_topGapEnvelope` carries the single isolated analytic hypothesis
   `htopgap : ∀ᵐ x ∂μ, TopGapMassEnvelope A T lam0 x`. The gap-pair cut selection goes through
   `exists_topgap_cut` (a top-gap, spectrum-avoiding cut).
 * The remainder of the module is the Step-A engine for discharging `htopgap` via Ruelle's
@@ -248,11 +248,11 @@ theorem exists_topgap_cut (lam0 : ℕ → ℝ) {a e : Fin d}
 
 /-! ## Step B — the almost-everywhere wrapper
 
-This is the theorem `forward_graded_overlap'`. It carries the single isolated analytic
+This is the theorem `forward_graded_overlap_of_topGapEnvelope`. It carries the single isolated analytic
 hypothesis `htopgap` (the top-gap envelope `TopGapMassEnvelope`). The gap-cut is selected by
 `exists_topgap_cut` (the top-gap selection). -/
 
-theorem forward_graded_overlap' [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
+theorem forward_graded_overlap_of_topGapEnvelope [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
     (_hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (_hA : ∀ x, (A x).det ≠ 0) (_hAmeas : Measurable A)
     (_hint : IntegrableLogNorm A μ) (_hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)

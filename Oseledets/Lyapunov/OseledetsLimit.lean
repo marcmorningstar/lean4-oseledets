@@ -3744,7 +3744,7 @@ set_option linter.unusedSectionVars false in
 whose top Furstenberg–Kesten exponent `ℓ_top` and bottom exponent `ℓ_bot` satisfy `ℓ_bot = -ℓ_top`
 (all Lyapunov exponents equal — the conformal/isotropic regime), there is a single exponent `ℓ` such
 that for `μ`-a.e. `x` and **every** nonzero `v`, `(1/n)log‖A⁽ⁿ⁾(x) v‖ → ℓ`. The two FK exponents are
-produced internally by `furstenbergKesten_top`/`_bot`; the hypothesis `heq` ties them together. -/
+produced internally by `furstenbergKesten_norm`/`_bot`; the hypothesis `heq` ties them together. -/
 theorem ae_tendsto_log_cocycle_apply_of_eq_exponents [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
@@ -3755,8 +3755,8 @@ theorem ae_tendsto_log_cocycle_apply_of_eq_exponents [IsProbabilityMeasure μ] (
     ∃ ℓ : ℝ, ∀ᵐ x ∂μ, ∀ v : EuclideanSpace ℝ (Fin d), v ≠ 0 →
       Tendsto (fun n : ℕ => (n : ℝ)⁻¹ *
           Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖) atTop (𝓝 ℓ) := by
-  obtain ⟨ℓtop, htopval⟩ := furstenbergKesten_top hT hA hAmeas hint hint'
-  obtain ⟨ℓbot, hbotval⟩ := furstenbergKesten_bot hT hA hAmeas hint hint'
+  obtain ⟨ℓtop, htopval⟩ := furstenbergKesten_norm hT hA hAmeas hint hint'
+  obtain ⟨ℓbot, hbotval⟩ := furstenbergKesten_norm_inv hT hA hAmeas hint hint'
   have hℓ : ℓbot = -ℓtop := heq ℓtop ℓbot htopval hbotval
   refine ⟨ℓtop, ?_⟩
   filter_upwards [htopval, hbotval] with x htop hbot

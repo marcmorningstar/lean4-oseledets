@@ -166,7 +166,7 @@ structure SqueezeData (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : 
   htopS_ub : IsBoundedUnder (· ≤ ·) atTop topS
   /-- The top-slow restricted-norm exponent is bounded below (Furstenberg–Kesten on the inverse
       cocycle: `r n = ‖A⁽ⁿ⁾|_S‖ ≥ 1/‖(A⁽ⁿ⁾)⁻¹‖`, whose log-exponent converges by
-      `furstenbergKesten_bot`).
+      `furstenbergKesten_norm_inv`).
       Note: a `liminf` lower bound alone does NOT give this in a conditionally-complete order, so it
       is carried explicitly. -/
   htopS_lb : IsBoundedUnder (· ≥ ·) atTop topS

@@ -12,7 +12,7 @@ import Oseledets.Lyapunov.ForwardAngle
 This file provides three independent reduction steps feeding the final assembly of
 `Oseledets.oseledets_filtration`:
 
-1. `hgrowth_of_upper_lower` — the per-vector exact growth interface (`hgrowth`) from the
+1. `tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower` — the per-vector exact growth interface (`hgrowth`) from the
    per-vector upper bound (`limsup ≤ specList`) and lower bound (`specList ≤ liminf`), squeezed
    to a genuine `Tendsto` via `tendsto_inv_mul_log_norm_cocycle_apply`.
 
@@ -26,7 +26,7 @@ This file provides three independent reduction steps feeding the final assembly 
 
 ## Main results
 
-* `Oseledets.hgrowth_of_upper_lower`: the per-vector growth limit from the two one-sided bounds.
+* `Oseledets.tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower`: the per-vector growth limit from the two one-sided bounds.
 * `Oseledets.vassembled_structure_ae`: the a.e. structural block of the assembled flag
   `Vassembled`, stated without any measurability conclusion.
 * `Oseledets.oseledets_filtration_of_interfaces'`: the Oseledets filtration target with the
@@ -63,7 +63,7 @@ side-conditions, the per-vector growth interface of `oseledets_filtration_of_int
 The conclusion is stated with `Matrix.toEuclideanCLM` (the form consumed by the assembly); the
 hypotheses use `Matrix.toEuclideanLin`, and the two coincide
 (`Matrix.coe_toEuclideanCLM_eq_toEuclideanLin`). -/
-theorem hgrowth_of_upper_lower
+theorem tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower
     {μ : Measure X} {T : X → X} (A : X → Matrix (Fin d) (Fin d) ℝ)
     (hub : ∀ᵐ x ∂μ, ∀ i : Fin (specCard A T x),
       ∀ v ∈ (Vflag A T x i.castSucc : Set (EuclideanSpace ℝ (Fin d))),

@@ -527,7 +527,7 @@ theorem IsOseledetsFiltration.tendsto_log_opNorm_cocycle
 
 /-- **The top Oseledets exponent is the Furstenberg–Kesten constant**: any constant to
 which the normalized log operator norm of the cocycle converges a.e. — such as the one
-produced by `furstenbergKesten_top` — equals `lam 0`. -/
+produced by `furstenbergKesten_norm` — equals `lam 0`. -/
 theorem oseledets_top_exponent_eq_furstenbergKesten
     [IsProbabilityMeasure μ] (hA : ∀ x, (A x).det ≠ 0)
     (hV : IsOseledetsFiltration μ T A k lam V) (hk : 0 < k) {c : ℝ}

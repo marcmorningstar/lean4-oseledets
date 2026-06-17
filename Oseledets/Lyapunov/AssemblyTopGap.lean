@@ -107,7 +107,7 @@ theorem oseledets_filtration_of_topgap
           Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
       ae_tendsto_bandProjector_cfc_indicator hT hA hAmeas hint hint'
     -- the forward graded overlap bound, consuming the top-gap envelope.
-    have hfwdN := forward_graded_overlap' hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident
+    have hfwdN := forward_graded_overlap_of_topGapEnvelope hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident
       (htopgap lam0 hlam0)
     -- the reverse cofactor bound for orthogonal matrices, after Ruelle.
     have hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
@@ -116,7 +116,7 @@ theorem oseledets_filtration_of_topgap
         ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)) :=
       fun S hS g c hc hf => Ruelle13.entry_reverse_bound_of_orthogonal S hS g c hc hf
     -- the band-limit bridge.
-    have hbridge := hbridge_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
+    have hbridge := vslow_bridge_bound_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
     -- the grading `g x e := lam0 e`.
     set g : X → Fin d → ℝ := fun _ e => lam0 (e : ℕ) with hgdef
     -- the trivial discharge of the forward graded-overlap hypothesis (no analytic content):
@@ -164,7 +164,7 @@ theorem oseledets_filtration_of_topgap
     have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
       ae_lambdaSublevel_le_Vslow hT hA hAmeas hint hint'
     have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ, Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
-      hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
+      vslow_eq_lambdaSublevel_of_upper hT hA hAmeas hint hint' hupper hslowrev
     have hub_spec : ∀ lam0' : ℕ → ℝ,
         (∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Tendsto
           (fun n : ℕ => (n : ℝ)⁻¹ *

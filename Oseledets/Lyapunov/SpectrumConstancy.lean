@@ -85,7 +85,7 @@ theorem hspecconst_of_subsets
 /-- **The `hspec` interface, discharged from the two a.e. per-vector inclusions.**  Composes
 `hspecconst_of_subsets` with `hspec_of_spectrum_const`: the output is *exactly* the
 `hspec` hypothesis of `oseledets_filtration_of_interfaces`. -/
-theorem hspec_of_subsets
+theorem specList_eq_expEnum_of_subsets_ae
     {μ : Measure X} {T : X → X} (A : X → Matrix (Fin d) (Fin d) ℝ) (lam0 : ℕ → ℝ)
     (hub_spec : ∀ᵐ x ∂μ, spectrum A T x ⊆ distinctExp lam0 d)
     (hlb_spec : ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x) :
@@ -210,7 +210,7 @@ set_option linter.unusedVariables false in
 /-- **Standing-hypotheses wrapper for the `hspec` interface.**  Under `Ergodic T μ`, a probability
 measure, measurable invertible log-integrable `A` (and `A⁻¹`), and the two per-vector spectrum
 inclusions, the `hspec` hypothesis of `oseledets_filtration_of_interfaces` holds. -/
-theorem hspec_standing
+theorem specList_eq_expEnum_of_subsets_standing
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
     (A : X → Matrix (Fin d) (Fin d) ℝ)
@@ -223,6 +223,6 @@ theorem hspec_standing
     (hlb_spec : ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x) :
     ∀ᵐ x ∂μ, ∃ h : specCard A T x = numExp lam0 d,
       ∀ i : Fin (specCard A T x), specList A T x i = expEnum lam0 d (Fin.cast h i) :=
-  hspec_of_subsets A lam0 hub_spec hlb_spec
+  specList_eq_expEnum_of_subsets_ae A lam0 hub_spec hlb_spec
 
 end Oseledets

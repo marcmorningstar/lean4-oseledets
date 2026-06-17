@@ -164,7 +164,7 @@ theorem integrable_posLogNorm_cocycle (hT : MeasurePreserving T μ μ)
 
 /-- **Bounded-below proviso for free.** Since `gₙ = log⁺‖A⁽ⁿ⁾‖ ≥ 0`, its normalized integrals
 are bounded below by `0` — no `log⁺‖A⁻¹‖ ∈ L¹` is needed (contrast with
-`Oseledets.furstenbergKesten_top`). -/
+`Oseledets.furstenbergKesten_norm`). -/
 theorem bddBelow_posLogNorm (A : X → Matrix (Fin d) (Fin d) ℝ) :
     BddBelow (Set.range fun n : ℕ =>
       (∫ x, Real.posLog ‖cocycle A T (n + 1) x‖ ∂μ) / (n + 1)) := by

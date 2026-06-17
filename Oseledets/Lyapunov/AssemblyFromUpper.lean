@@ -25,13 +25,13 @@ as far as `hupper` allows, isolating the remaining content into named residual h
   slowly, hence lies in the growth sublevel (`vslow_subset_lambdaSublevel_of_upper`).  The
   reverse inclusion is taken as the typed residual hypothesis `hslowrev`.
 
-* **`hgrowth`** via `Oseledets.hgrowth_of_upper_lower`.  The upper half `hub` holds
-  unconditionally on the `IsUltrametricGrowth` good set (`hub_of_growthFunction`); the
-  boundedness `hbdd` comes from the Furstenberg–Kesten layer (`Oseledets.hbdd_of_fk`); the
-  lower bound `hlb` comes from the band-projector layer (`Oseledets.hlb_of_bandProjector`),
+* **`hgrowth`** via `Oseledets.tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower`.  The upper half `hub` holds
+  unconditionally on the `IsUltrametricGrowth` good set (`limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum`); the
+  boundedness `hbdd` comes from the Furstenberg–Kesten layer (`Oseledets.isBoundedUnder_inv_mul_log_norm_cocycle_apply_of_mem_stratum`); the
+  lower bound `hlb` comes from the band-projector layer (`Oseledets.specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_bandProjector`),
   fed the residual band-projector convergence datum `hband`.
 
-* **`hspec`** via `Oseledets.hspec_standing`.  The two `Finset` inclusions between the
+* **`hspec`** via `Oseledets.specList_eq_expEnum_of_subsets_standing`.  The two `Finset` inclusions between the
   realized exponent set `spectrum` and the deterministic exponent set `distinctExp lam0 d`
   are taken as the typed residuals `hub_spec` and `hlb_spec`.
 
@@ -43,8 +43,8 @@ derivable from `hupper` alone.
 
 * `Oseledets.vslow_subset_lambdaSublevel_of_upper`: the forward slow-flag inclusion
   `Vslow (exp t) ≤ lambdaSublevel t` from the spectral upper bound.
-* `Oseledets.hub_of_growthFunction`: the per-stratum `limsup` upper bound, almost everywhere.
-* `Oseledets.hslowflag_of_upper`: the slow-flag identification
+* `Oseledets.limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum`: the per-stratum `limsup` upper bound, almost everywhere.
+* `Oseledets.vslow_eq_lambdaSublevel_of_upper`: the slow-flag identification
   `Vslow (exp t) = lambdaSublevel t` from the spectral upper bound and the reverse inclusion.
 * `Oseledets.oseledets_filtration_of_upper`: the Oseledets filtration theorem, assembled from
   the spectral upper bound and the residual spectral-identification hypotheses.
@@ -82,7 +82,7 @@ theorem vslow_subset_lambdaSublevel_of_upper
 
 /-! ## The `hgrowth` upper half from `Vflag` membership
 
-The upper half `hub` of `Oseledets.hgrowth_of_upper_lower` is, in fact, *unconditional* given
+The upper half `hub` of `Oseledets.tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower` is, in fact, *unconditional* given
 the `IsUltrametricGrowth` good set: a vector in the stratum `Vflag i.castSucc \ Vflag i.succ`
 has `lambdaBar = specList i` exactly (`lambdaBar_eq_on_stratum`), and that `lambdaBar` is the
 `limsup` (`limsup_log_norm_cocycle_eq_lambdaBar`).  So `limsup ≤ specList i` holds (with
@@ -91,8 +91,8 @@ equality) and `hub` needs no separate analytic input. -/
 omit [NeZero d] in
 /-- **`hub` from `Vflag` membership (a.e.).**  On the `IsUltrametricGrowth` good set the
 per-stratum `limsup` equals the exact exponent `specList i`, so in particular
-`limsup ≤ specList i` — the upper half consumed by `Oseledets.hgrowth_of_upper_lower`. -/
-theorem hub_of_growthFunction
+`limsup ≤ specList i` — the upper half consumed by `Oseledets.tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower`. -/
+theorem limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -114,7 +114,7 @@ omit [NeZero d] in
 `vslow_subset_lambdaSublevel_of_upper`) with the reverse inclusion `hslowrev`
 (`lambdaSublevel t ⊆ Vslow (exp t)`) into the per-point identification
 `Vslow (exp t) = lambdaSublevel t` consumed by `oseledets_filtration_of_slowflag`. -/
-theorem hslowflag_of_upper
+theorem vslow_eq_lambdaSublevel_of_upper
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -138,11 +138,11 @@ The complete Oseledets measurable-filtration conclusion, assembled through
 deterministic exponent data `lam0` is taken from `exists_lam_tendsto_singularValue`.  The
 three a.e. interfaces are discharged as follows:
 
-* `hslowflag` — forward inclusion derived from `hupper` (`hslowflag_of_upper`), reverse
+* `hslowflag` — forward inclusion derived from `hupper` (`vslow_eq_lambdaSublevel_of_upper`), reverse
   inclusion the residual `hslowrev`;
-* `hgrowth` — `hub` derived from `Vflag` membership (`hub_of_growthFunction`), `hbdd` from
-  `hbdd_of_fk`, `hlb` from `hlb_of_bandProjector` fed the residual band datum `hband`;
-* `hspec` — `hspec_standing` fed the two residual `Finset` spectrum inclusions
+* `hgrowth` — `hub` derived from `Vflag` membership (`limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum`), `hbdd` from
+  `isBoundedUnder_inv_mul_log_norm_cocycle_apply_of_mem_stratum`, `hlb` from `specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_bandProjector` fed the residual band datum `hband`;
+* `hspec` — `specList_eq_expEnum_of_subsets_standing` fed the two residual `Finset` spectrum inclusions
   `hub_spec` / `hlb_spec`.
 
 The residual hypotheses `hslowrev`, `hband`, `hub_spec`, `hlb_spec` capture exactly the
@@ -202,15 +202,15 @@ theorem oseledets_filtration_of_upper
   obtain ⟨lam0, _hmono, hlam0⟩ :=
     exists_lam_tendsto_singularValue hT hA hAmeas hint hint'
   -- `hspec` from the two residual spectrum inclusions.
-  have hspec := hspec_standing hT A hA hAmeas hint hint' lam0
+  have hspec := specList_eq_expEnum_of_subsets_standing hT A hA hAmeas hint hint' lam0
     (hub_spec lam0 hlam0) (hlb_spec lam0 hlam0)
   -- `hslowflag` from `hupper` and the reverse inclusion.
-  have hslowflag := hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
+  have hslowflag := vslow_eq_lambdaSublevel_of_upper hT hA hAmeas hint hint' hupper hslowrev
   -- `hgrowth` from upper (`Vflag`) + lower (band) + boundedness (Furstenberg–Kesten).
-  have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
-  have hub := hub_of_growthFunction hT hA hAmeas hint hint'
-  have hlb := hlb_of_bandProjector A hA hband hbdd
-  have hgrowth := hgrowth_of_upper_lower A hub hlb hbdd
+  have hbdd := isBoundedUnder_inv_mul_log_norm_cocycle_apply_of_mem_stratum hT A hA hAmeas hint hint'
+  have hub := limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum hT hA hAmeas hint hint'
+  have hlb := specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_bandProjector A hA hband hbdd
+  have hgrowth := tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower A hub hlb hbdd
   -- Assemble through `oseledets_filtration_of_slowflag`.
   exact oseledets_filtration_of_slowflag hT A hA hAmeas hTmeas hint hint' lam0
     hspec hslowflag hgrowth

@@ -8,7 +8,7 @@ import Oseledets.Lyapunov.CapstoneWiring
 /-!
 # The fast-index spectral envelope from the graded overlap bound
 
-This module proves `hbridge_of_forward_graded`, which discharges the `hbridge` hypothesis of
+This module proves `vslow_bridge_bound_of_forward_graded`, which discharges the `hbridge` hypothesis of
 `Oseledets.limsup_le_of_mem_Vslow` (see `Oseledets/Lyapunov/CapstoneWiring.lean`), instantiated
 at `lam := lam0`, `g := fun x e ↦ lam0 (e : ℕ)`, `b' := b'`.
 
@@ -23,7 +23,7 @@ It produces the fast-index `specTerm` envelope outright; the reverse-bound premi
 
 ## Main results
 
-* `Oseledets.hbridge_of_forward_graded`: for a.e. `x`, every nonzero vector `v` of the slow
+* `Oseledets.vslow_bridge_bound_of_forward_graded`: for a.e. `x`, every nonzero vector `v` of the slow
   subspace `Vslow A T (Real.exp t) x` and every fast index `j` (one with `t < lam0 j`) satisfy
   the eventual spectral-term bound `specTerm T A n x v j ≤ Real.exp (n * (2 * t + ε))`.
 
@@ -50,7 +50,7 @@ set_option maxHeartbeats 800000 in
 /-- The `hbridge` hypothesis of `limsup_le_of_mem_Vslow`, derived from the `n`-scaled forward
 graded overlap bound, slow orthogonality, singular-exponent convergence, and Ruelle's reverse
 cofactor bound. -/
-theorem hbridge_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
+theorem vslow_bridge_bound_of_forward_graded [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
     {A : X → Matrix (Fin d) (Fin d) ℝ}
     (lam0 : ℕ → ℝ)
     (hlam0 : ∀ i : ℕ, i < d → ∀ᵐ x ∂μ, Filter.Tendsto

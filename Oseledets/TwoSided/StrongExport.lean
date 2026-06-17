@@ -111,7 +111,7 @@ theorem oseledets_filtration_dims
         Filter.atTop (𝓝 (cfc (Set.indicator (Set.Ioi c) (1 : ℝ → ℝ)) (lambdaHat A T x))) :=
     ae_tendsto_bandProjector_cfc_indicator hT hA hAmeas hint hint'
   -- The forward graded overlap bound, consuming the top-gap envelope.
-  have hfwdN := forward_graded_overlap' hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident htopgap
+  have hfwdN := forward_graded_overlap_of_topGapEnvelope hT hA hAmeas hint hint' lam0 hlam0 b' hb' hident htopgap
   -- The reverse cofactor bound for orthogonal matrices, after Ruelle.
   have hrev : ∀ (S : Matrix (Fin d) (Fin d) ℝ), S * Sᵀ = 1 →
       ∀ (g : Fin d → ℝ) (c : ℝ), 1 ≤ c →
@@ -119,7 +119,7 @@ theorem oseledets_filtration_dims
       ∀ i j : Fin d, |S i j| ≤ (d - 1).factorial * c ^ (d - 1) * Real.exp (-(g i - g j)) :=
     fun S hS g c hc hf => Ruelle13.entry_reverse_bound_of_orthogonal S hS g c hc hf
   -- The band-limit bridge.
-  have hbridge := hbridge_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
+  have hbridge := vslow_bridge_bound_of_forward_graded (A := A) lam0 hlam0 b' hslowperp hfwdN hrev
   -- The grading `g x e := lam0 e`.
   set g : X → Fin d → ℝ := fun _ e => lam0 (e : ℕ) with hgdef
   -- The trivial discharge of the forward graded-overlap hypothesis.
@@ -162,18 +162,18 @@ theorem oseledets_filtration_dims
   have hslowrev : ∀ᵐ x ∂μ, ∀ t : ℝ, lambdaSublevel A T x t ≤ Vslow A T (Real.exp t) x :=
     ae_lambdaSublevel_le_Vslow hT hA hAmeas hint hint'
   have hslowflag : ∀ᵐ x ∂μ, ∀ t : ℝ, Vslow A T (Real.exp t) x = lambdaSublevel A T x t :=
-    hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
+    vslow_eq_lambdaSublevel_of_upper hT hA hAmeas hint hint' hupper hslowrev
   -- The spectrum-identification residuals and the `hspec` interface.
   have hub_spec : ∀ᵐ x ∂μ, spectrum A T x ⊆ distinctExp lam0 d :=
     hub_spec_of_slowflag hT hA hAmeas hint hint' hslowflag lam0 hlam0
   have hlb_spec : ∀ᵐ x ∂μ, distinctExp lam0 d ⊆ spectrum A T x :=
     hlb_spec_of_slowflag hT hA hAmeas hint hint' hslowflag lam0 hlam0
-  have hspec := hspec_standing hT A hA hAmeas hint hint' lam0 hub_spec hlb_spec
+  have hspec := specList_eq_expEnum_of_subsets_standing hT A hA hAmeas hint hint' lam0 hub_spec hlb_spec
   -- The per-vector exact-growth interface.
-  have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
-  have hub := hub_of_growthFunction hT hA hAmeas hint hint'
-  have hlb := hlb_of_slowflag_ident hT hA hAmeas hint hint' hident hslowflag
-  have hgrowth := hgrowth_of_upper_lower A hub hlb hbdd
+  have hbdd := isBoundedUnder_inv_mul_log_norm_cocycle_apply_of_mem_stratum hT A hA hAmeas hint hint'
+  have hub := limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum hT hA hAmeas hint hint'
+  have hlb := specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag hT hA hAmeas hint hint' hident hslowflag
+  have hgrowth := tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower A hub hlb hbdd
   -- The structural a.e. block on `Vassembled` and its transport through `hae`.
   have hstruct := vassembled_structure_ae hT A hA hAmeas hint hint' lam0 hspec hgrowth
   have hae := hae_of_slowflag A lam0 hspec hslowflag

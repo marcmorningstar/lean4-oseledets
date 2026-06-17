@@ -26,11 +26,11 @@ integrable; the second integrability hypothesis is what keeps the bounded-below 
 
 ## Main results
 
-* `Oseledets.furstenbergKesten_top`: for an ergodic measure-preserving `T` and an
+* `Oseledets.furstenbergKesten_norm`: for an ergodic measure-preserving `T` and an
   everywhere-invertible measurable generator `A` with integrable `log⁺‖A‖` and
   `log⁺‖A⁻¹‖`, the normalized log norms `(1/n) log‖A⁽ⁿ⁾(x)‖` converge `μ`-a.e. to a
   constant (the top Lyapunov exponent).
-* `Oseledets.furstenbergKesten_bot`: the analogous a.e. limit for the inverse cocycle
+* `Oseledets.furstenbergKesten_norm_inv`: the analogous a.e. limit for the inverse cocycle
   `(1/n) log‖(A⁽ⁿ⁾(x))⁻¹‖` (the negative of the bottom Lyapunov exponent).
 * `Oseledets.isSubadditiveCocycle_logNorm` and `Oseledets.isSubadditiveCocycle_logNorm_inv`:
   subadditivity of the two log-norm cocycles.
@@ -317,7 +317,7 @@ theorem integrable_logNorm_inv_cocycle (hT : MeasurePreserving T μ μ) [IsFinit
 everywhere-invertible measurable cocycle generator with `log⁺‖A‖, log⁺‖A⁻¹‖ ∈ L¹`, the
 normalized log operator norm of the cocycle converges `μ`-a.e. to a constant `λ₁` (the
 top Lyapunov exponent). -/
-theorem furstenbergKesten_top
+theorem furstenbergKesten_norm
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :
@@ -356,7 +356,7 @@ theorem furstenbergKesten_top
 hypothesis (so the cocycle is in `GL`), the normalized log norm of the inverse cocycle
 converges `μ`-a.e. to a constant; equivalently the bottom Lyapunov exponent
 `λ_k = -lim (1/n) log‖A⁽ⁿ⁾(x)⁻¹‖` exists and is finite. -/
-theorem furstenbergKesten_bot
+theorem furstenbergKesten_norm_inv
     [IsProbabilityMeasure μ] (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) :

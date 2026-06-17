@@ -415,8 +415,8 @@ theorem lambdaBar_mem_Icc [MeasurableSpace X] {μ : Measure X}
     exact ⟨0, 0, le_refl _, Filter.Eventually.of_forall fun x v hv =>
       absurd (Subsingleton.elim v 0) hv⟩
   · haveI : NeZero d := ⟨hd.ne'⟩
-    obtain ⟨lamTop, htop⟩ := furstenbergKesten_top hT hA hAmeas hint hint'
-    obtain ⟨lamk', hbot⟩ := furstenbergKesten_bot hT hA hAmeas hint hint'
+    obtain ⟨lamTop, htop⟩ := furstenbergKesten_norm hT hA hAmeas hint hint'
+    obtain ⟨lamk', hbot⟩ := furstenbergKesten_norm_inv hT hA hAmeas hint hint'
     refine ⟨-lamk', lamTop, ?_, ?_⟩
     · -- `-lamk' ≤ lamTop`: `0 ≤ lamTop + lamk'` from
       -- `log‖M‖ + log‖M⁻¹‖ ≥ log 1 = 0`.
@@ -609,8 +609,8 @@ theorem isUltrametricGrowth_lambdaBar [MeasurableSpace X] {μ : Measure X}
     · intro v w hv _ _
       exact absurd (Subsingleton.elim v 0) hv
   · haveI : NeZero d := ⟨hd.ne'⟩
-    obtain ⟨lamTop, htop⟩ := furstenbergKesten_top hT hA hAmeas hint hint'
-    obtain ⟨lamk', hbot⟩ := furstenbergKesten_bot hT hA hAmeas hint hint'
+    obtain ⟨lamTop, htop⟩ := furstenbergKesten_norm hT hA hAmeas hint hint'
+    obtain ⟨lamk', hbot⟩ := furstenbergKesten_norm_inv hT hA hAmeas hint hint'
     -- Off the intersection of the two FK a.e. sets, both FK sequences converge.
     filter_upwards [htop, hbot] with x hx1 hx2
     refine ⟨?_, ?_⟩
@@ -645,8 +645,8 @@ theorem lambdaBar_equivariant_ae [MeasurableSpace X] {μ : Measure X}
     subst hd
     exact Filter.Eventually.of_forall fun x v hv => absurd (Subsingleton.elim v 0) hv
   · haveI : NeZero d := ⟨hd.ne'⟩
-    obtain ⟨lamTop, htop⟩ := furstenbergKesten_top hT hA hAmeas hint hint'
-    obtain ⟨lamk', hbot⟩ := furstenbergKesten_bot hT hA hAmeas hint hint'
+    obtain ⟨lamTop, htop⟩ := furstenbergKesten_norm hT hA hAmeas hint hint'
+    obtain ⟨lamk', hbot⟩ := furstenbergKesten_norm_inv hT hA hAmeas hint hint'
     -- The a.e. "boundedness at a generic point" property `P y`.
     set P : X → Prop := fun y => ∀ w : EuclideanSpace ℝ (Fin d), w ≠ 0 →
       IsBoundedUnder (· ≤ ·) atTop (growthSeq A T y w) ∧

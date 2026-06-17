@@ -723,7 +723,7 @@ private lemma htgstep_rho_lt_one (η w v δstar : ℝ) (h : w + 2 * η - (v - δ
 
 /-- **B6 — the inductive step.**  All windows + IH ⟹ the per-stratum envelope for `v`.  The IH is
 phrased over the finite set of distinct stratum values strictly between `lam0 a` and `v`. -/
-theorem perStratum_step [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0)
+theorem perStratumEnvelope_step [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0)
     (x : X) (lam0 : ℕ → ℝ) {G : ℝ} (hG : 0 < G)
     (hGgap : ∀ i j : Fin d, lam0 (i : ℕ) < lam0 (j : ℕ) → lam0 (i : ℕ) + G ≤ lam0 (j : ℕ))
     (hconv : ∀ j : ℕ, j < d → Filter.Tendsto
@@ -1119,9 +1119,9 @@ private lemma htgind_aux [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ}
   induction M with
   | zero =>
     intro v hcard hav hvstratum
-    -- The set of intermediate strata is empty (card ≤ 0), so the IH for `perStratum_step` is
+    -- The set of intermediate strata is empty (card ≤ 0), so the IH for `perStratumEnvelope_step` is
     -- vacuous.
-    refine perStratum_step hA x lam0 hG hGgap hconv htemp a v hav hvstratum ?_
+    refine perStratumEnvelope_step hA x lam0 hG hGgap hconv htemp a v hav hvstratum ?_
     intro w hlt hwv hex
     have hwmem : w ∈ htgind_S lam0 a v := (htgind_mem_S lam0 a v w).2 ⟨hex, hlt, hwv⟩
     have hempty : htgind_S lam0 a v = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
@@ -1129,7 +1129,7 @@ private lemma htgind_aux [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ}
     exact absurd hwmem (Finset.notMem_empty w)
   | succ M ih =>
     intro v hcard hav hvstratum
-    refine perStratum_step hA x lam0 hG hGgap hconv htemp a v hav hvstratum ?_
+    refine perStratumEnvelope_step hA x lam0 hG hGgap hconv htemp a v hav hvstratum ?_
     intro w hlt hwv hex
     -- `htgind_S lam0 a w ⊂ htgind_S lam0 a v`: subset by transitivity, strict since `w ∈ Sᵥ \ S_w`.
     have hsub : htgind_S lam0 a w ⊆ htgind_S lam0 a v := by
@@ -1149,8 +1149,8 @@ private lemma htgind_aux [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ}
 /-- **B7 — the strong induction.**  For every index `a` and every distinct stratum value `v` with
 `lam0 a < v`, the per-stratum envelope holds.  Strong induction on the number of distinct stratum
 values in `(lam0 a, v)` (equivalently `Finset` well-founded recursion), discharging each level by
-`perStratum_step`. -/
-theorem perStratum_strongInduction [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ}
+`perStratumEnvelope_step`. -/
+theorem perStratumEnvelope_of_lt [NeZero d] {A : X → Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ x, (A x).det ≠ 0) (x : X) (lam0 : ℕ → ℝ) {G : ℝ} (hG : 0 < G)
     (hGgap : ∀ i j : Fin d, lam0 (i : ℕ) < lam0 (j : ℕ) → lam0 (i : ℕ) + G ≤ lam0 (j : ℕ))
     (hconv : ∀ j : ℕ, j < d → Filter.Tendsto
@@ -1407,11 +1407,11 @@ theorem topGapMassEnvelope_of_perStratum [NeZero d] {A : X → Matrix (Fin d) (F
 
 Collect the a.e. windows (σ-convergence for every `j < d`, tempering) from `hlam0` and
 `tendsto_logNorm_orbit_div_atTop_zero`, fix the distinct gap `G` (deterministic), build all
-per-stratum envelopes via `perStratum_strongInduction`, and transfer via
+per-stratum envelopes via `perStratumEnvelope_of_lt`, and transfer via
 `topGapMassEnvelope_of_perStratum`. -/
 
 /-- The top-gap band-mass envelope `topGapMassEnvelope_ae`: almost everywhere the top-gap
-fast-band-mass envelope holds, discharging `htopgap` in `forward_graded_overlap'`. -/
+fast-band-mass envelope holds, discharging `htopgap` in `forward_graded_overlap_of_topGapEnvelope`. -/
 theorem topGapMassEnvelope_ae [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
     (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
@@ -1440,7 +1440,7 @@ theorem topGapMassEnvelope_ae [MeasureTheory.IsProbabilityMeasure μ] [NeZero d]
     exact hx ⟨j, hj⟩
   filter_upwards [htemp_ae, hconv_ae] with x htemp hconv
   exact topGapMassEnvelope_of_perStratum hA x lam0 hG hGgap hconv
-    (fun a e hgap => perStratum_strongInduction hA x lam0 hG hGgap hconv htemp a (lam0 (e : ℕ))
+    (fun a e hgap => perStratumEnvelope_of_lt hA x lam0 hG hGgap hconv htemp a (lam0 (e : ℕ))
       hgap ⟨e, rfl⟩)
 
 end Oseledets

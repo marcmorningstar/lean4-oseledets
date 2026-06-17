@@ -44,7 +44,7 @@ the target theorem.
   Cauchy–Schwarz.
 * `limsup_inv_mul_log_norm_cocycle_apply_le`: the per-vector growth upper bound,
   conditional on per-index leakage envelopes.
-* `tendsto_inv_mul_log_norm_cocycle_apply_of_S4`: the assembled per-vector exact growth
+* `tendsto_inv_mul_log_norm_cocycle_apply_of_bandProjector_envelope`: the assembled per-vector exact growth
   limit.
 -/
 
@@ -1135,7 +1135,7 @@ theorem tendsto_inv_mul_log_norm_cocycle_apply
 `limsup_inv_mul_log_norm_cocycle_apply_le`. Given band-projector convergence (`hP`, `hPv`),
 the per-index leakage envelopes (`henv`), positivity (`hpos`), the cobounded inputs, and
 the boundedness side-conditions, the per-vector growth converges to `λᵢ`. -/
-theorem tendsto_inv_mul_log_norm_cocycle_apply_of_S4 [NeZero d]
+theorem tendsto_inv_mul_log_norm_cocycle_apply_of_bandProjector_envelope [NeZero d]
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) {x : X}
     {v : EuclideanSpace ℝ (Fin d)} {lami : ℝ} {P : Matrix (Fin d) (Fin d) ℝ}
     (hP : Tendsto (fun n => bandProjector A T (Set.indicator (Set.Ioi (Real.exp lami)) 1) n x)

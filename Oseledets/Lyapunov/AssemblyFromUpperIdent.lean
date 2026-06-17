@@ -12,8 +12,8 @@ import Oseledets.Lyapunov.SpectrumResiduals
 This file proves a variant of `Oseledets.oseledets_filtration_of_upper` in which the
 band-projector convergence hypothesis `hband` is replaced by the spectral-identification
 hypothesis `hident`, and the lower-bound step `hlb` is accordingly obtained from
-`hlb_of_slowflag_ident` (fed `hident` and the slow-flag datum `hslowflag` computed earlier
-in the proof) instead of `hlb_of_bandProjector`.
+`specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag` (fed `hident` and the slow-flag datum `hslowflag` computed earlier
+in the proof) instead of `specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_bandProjector`.
 
 ## Main results
 
@@ -33,7 +33,7 @@ variable {X : Type*} [MeasurableSpace X] {d : ℕ} [NeZero d]
 
 Same as `oseledets_filtration_of_upper`, but with the band-projector hypothesis `hband`
 replaced by the spectral-identification hypothesis `hident`, consumed by
-`hlb_of_slowflag_ident`. -/
+`specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag`. -/
 theorem oseledets_filtration_of_upper'
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X}
     (hT : Ergodic T μ) (hTmeas : Measurable T)
@@ -86,16 +86,16 @@ theorem oseledets_filtration_of_upper'
   obtain ⟨lam0, _hmono, hlam0⟩ :=
     exists_lam_tendsto_singularValue hT hA hAmeas hint hint'
   -- `hspec` from the two spectrum inclusions.
-  have hspec := hspec_standing hT A hA hAmeas hint hint' lam0
+  have hspec := specList_eq_expEnum_of_subsets_standing hT A hA hAmeas hint hint' lam0
     (hub_spec lam0 hlam0) (hlb_spec lam0 hlam0)
   -- `hslowflag` from `hupper` and the reverse inclusion.
-  have hslowflag := hslowflag_of_upper hT hA hAmeas hint hint' hupper hslowrev
+  have hslowflag := vslow_eq_lambdaSublevel_of_upper hT hA hAmeas hint hint' hupper hslowrev
   -- `hgrowth` from the upper bound (`Vflag`), the lower bound (via `hident`), and the
   -- Furstenberg–Kesten boundedness.
-  have hbdd := hbdd_of_fk hT A hA hAmeas hint hint'
-  have hub := hub_of_growthFunction hT hA hAmeas hint hint'
-  have hlb := hlb_of_slowflag_ident hT hA hAmeas hint hint' hident hslowflag
-  have hgrowth := hgrowth_of_upper_lower A hub hlb hbdd
+  have hbdd := isBoundedUnder_inv_mul_log_norm_cocycle_apply_of_mem_stratum hT A hA hAmeas hint hint'
+  have hub := limsup_log_norm_cocycle_apply_le_specList_of_mem_stratum hT hA hAmeas hint hint'
+  have hlb := specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag hT hA hAmeas hint hint' hident hslowflag
+  have hgrowth := tendsto_inv_mul_log_norm_cocycle_apply_of_upper_lower A hub hlb hbdd
   -- Assemble through `oseledets_filtration_of_slowflag`.
   exact oseledets_filtration_of_slowflag hT A hA hAmeas hTmeas hint hint' lam0
     hspec hslowflag hgrowth

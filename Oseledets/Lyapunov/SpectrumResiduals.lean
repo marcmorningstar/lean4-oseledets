@@ -13,7 +13,7 @@ This module discharges three residuals of the MET final composer
 
 * `hub_spec_of_slowflag` — every realized exponent is one of the deterministic `lam0 i`;
 * `hlb_spec_of_slowflag` — every deterministic exponent is realized;
-* `hlb_of_slowflag_ident` — the per-stratum liminf lower bound.
+* `specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag` — the per-stratum liminf lower bound.
 
 All three are derived from two hypotheses with fixed shapes: `hident` (band-projector
 convergence to the indicator CFC of `lambdaHat`) and `hslowflag`
@@ -509,7 +509,7 @@ the cocycle grows at least at rate `specList A T x i`.  The argument sweeps thre
 (not an eigenvalue), `1 - slowProjector c = cfc (indicator (Ioi c)) lambdaHat` has nonzero
 action on `v` (else `v ∈ Vslow c`, contradicting `lambdaBar v = specList i > log c`), and
 `hident` supplies the band-projector convergence feeding `log_le_liminf_log_cocycle_apply`. -/
-theorem hlb_of_slowflag_ident
+theorem specList_le_liminf_inv_mul_log_norm_cocycle_apply_of_slowflag
     {μ : Measure X} [IsProbabilityMeasure μ] {T : X → X} (hT : Ergodic T μ)
     {A : X → Matrix (Fin d) (Fin d) ℝ} (hA : ∀ x, (A x).det ≠ 0) (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
