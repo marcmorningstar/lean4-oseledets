@@ -61,7 +61,7 @@ open scoped Matrix.Norms.L2Operator Matrix
 
 noncomputable section
 
-namespace ExteriorNorm
+namespace Oseledets.ExteriorNorm
 
 /-! ## The submultiplicativity engine
 
@@ -2533,7 +2533,7 @@ end StandardCoords
 
 end Plucker
 
-end ExteriorNorm
+end Oseledets.ExteriorNorm
 
 /-! ## Weyl eigenvalue-perturbation for symmetric operators / Hermitian matrices
 
@@ -2544,7 +2544,7 @@ characterization). Mathlib's `Mathlib/Analysis/InnerProductSpace/Rayleigh.lean` 
 resulting continuity of `Matrix.IsHermitian.eigenvalues₀` — are new. This is the analytic
 ingredient that lets the eigenvalues pass to the Oseledets matrix limit. -/
 
-namespace Weyl
+namespace Oseledets.Weyl
 
 open scoped RealInnerProductSpace
 open Module Submodule Filter Topology
@@ -2744,7 +2744,7 @@ theorem tendsto_eigenvalues₀ {ι : Type*} {l : Filter ι} {M : ι → Matrix (
 
 end Matrix
 
-end Weyl
+end Oseledets.Weyl
 
 end
 
