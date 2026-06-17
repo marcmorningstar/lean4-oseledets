@@ -27,6 +27,13 @@ there exist finitely many distinct **Lyapunov exponents** `λ₁ > ⋯ > λ_k` a
 
 The matrices act on `EuclideanSpace ℝ (Fin d)` via `Matrix.toEuclideanCLM`, so all
 norms are the L2 norm and the matrix operator norm is submultiplicative.
+
+## References
+
+* V. I. Oseledets, *A multiplicative ergodic theorem. Lyapunov characteristic numbers for
+  dynamical systems*, Trans. Moscow Math. Soc. **19** (1968), 197–231.
+* D. Ruelle, *Ergodic theory of differentiable dynamical systems*, Publ. Math. IHÉS **50** (1979).
+* M. Viana, *Lectures on Lyapunov Exponents*, Cambridge Studies in Adv. Math. **145** (2014).
 -/
 
 open MeasureTheory Filter Topology

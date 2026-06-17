@@ -38,6 +38,12 @@ average `∫ g ∂μ`).
   measure. The finiteness hypothesis is necessary (see the theorem docstring).
 * `Oseledets.tendsto_birkhoffAverage_ae_integral`: the ergodic case over a probability
   measure, where the a.e. limit is the space average `∫ g ∂μ`.
+
+## References
+
+* G. D. Birkhoff, *Proof of the ergodic theorem*, Proc. Natl. Acad. Sci. USA **17** (1931).
+* Y. Katznelson, B. Weiss, *A simple proof of some ergodic theorems*,
+  Israel J. Math. **42** (1982).
 -/
 
 open MeasureTheory Filter Topology

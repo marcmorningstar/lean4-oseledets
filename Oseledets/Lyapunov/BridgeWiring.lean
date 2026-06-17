@@ -45,7 +45,7 @@ namespace Oseledets
 variable {X : Type*} [MeasurableSpace X] {μ : MeasureTheory.Measure X}
 variable {d : ℕ} {T : X → X}
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- the five-step assembly elaborates many `EuclideanSpace ℝ (Fin d)` inner products and
 -- `sortedGramEigenbasis` index casts inside nested `filter_upwards`/`calc` blocks
 /-- The `hbridge` hypothesis of `limsup_le_of_mem_vslow`, derived from the `n`-scaled forward

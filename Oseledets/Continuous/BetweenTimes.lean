@@ -116,7 +116,7 @@ theorem ae_tendsto_flowError_zero (φ : MeasurePreservingFlow μ)
 
 /-! ### Deliverable 2: discrete limit implies continuous limit -/
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- The sandwich combines several `calc` blocks over `toEuclideanCLM` norms and a triple
 -- floor-squeeze, so the default heartbeat budget is exceeded; raise it for this command only.
 /-- **Crux: continuous growth equals integer-time growth.** Fix a flow `φ`, a flow cocycle

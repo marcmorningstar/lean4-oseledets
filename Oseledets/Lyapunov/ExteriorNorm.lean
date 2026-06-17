@@ -1316,7 +1316,7 @@ theorem norm_proj_sub_le_wedge {k : ℕ} (U V : Matrix (Fin d) (Fin k) ℝ)
     rw [← hprodeq]; nlinarith [hAMGM]
   exact le_trans hnorm hfinal
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **The product of singular values is the L2 operator norm of the compound matrix.** Combining
 the singular-value bridge with the compound identity: `∏_{i<k} σᵢ(toEuclideanLin M) = ‖C_k(M)‖`. -/
@@ -1454,7 +1454,7 @@ theorem norm_sq_compound_mul_ge (k : ℕ) {B : Matrix (Fin d) (Fin d) ℝ} (hB :
   have hcMnn : 0 ≤ ‖compoundMatrix k M‖ := norm_nonneg _
   nlinarith [hstep, hcMnn, norm_nonneg (compoundMatrix k (B * M)), hcBipos]
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **Lemma 1 — the rank-1 per-vector step.** The squared norm of the compound of a product,
 applied to `w`, is dominated by `‖compound B‖²` times the squared norm of the `M`-compound at `w`:
@@ -1524,7 +1524,7 @@ theorem rayleigh_deficit_kernel {BM CB r CBi mu : ℝ}
     have heq : mu ^ 2 - mu ^ 2 / (CB * CBi) ^ 2 = (1 - 1 / (CB * CBi) ^ 2) * mu ^ 2 := by ring
     linarith [hr2, heq.ge, heq.le]
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 1600000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **Lemma 3 — the rank-1 exterior Rayleigh-deficit bound.**
 For invertible `B` and a unit vector `v'` that achieves the operator norm of the compound
@@ -2381,7 +2381,7 @@ section StandardCoords
 
 variable {d : ℕ}
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 800000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(A) — the isolated matrix-identification step.** Through the standard orthonormal-wedge
 trivialization (`onbTriv (EuclideanSpace.basisFun (Fin d) ℝ)`), the conjugated compound of
@@ -2396,7 +2396,7 @@ theorem conjExteriorMap_basisFun_toEuclideanLin_eq_compound
       = Matrix.toEuclideanLin (compoundMatrix k M) :=
   conjExteriorMap_eq_toEuclideanLin_compound k M
 
-set_option maxHeartbeats 1200000 in
+set_option maxHeartbeats 1200000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(B) — `plucker_eigenpair_ceiling_standard`.** The Plücker eigenpair + second-eigenvalue
 ceiling in *standard* compound-matrix coordinates. For a symmetric PSD `f = toEuclideanLin Q` with
@@ -2458,7 +2458,7 @@ private lemma onbChange_symm_apply {E : Type*}
   rw [LinearIsometryEquiv.apply_symm_apply, onbChange_apply,
     LinearEquiv.symm_apply_apply, LinearEquiv.apply_symm_apply]
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 1600000 in -- heavy elaboration; exceeds the default budget
 -- The `⋀^k`-finrank-indexed `EuclideanSpace` statement is expensive to elaborate.
 /-- **(B') — witness-exposing `plucker_eigenpair_ceiling_standard`.** Same spectral data as
 `plucker_eigenpair_ceiling_standard`, but with the top eigenvector produced *explicitly* as the
