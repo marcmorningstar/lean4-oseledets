@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Marcel Morgenstern
 -/
 import Oseledets.Lyapunov.RuelleCore
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.ForwardAngle
 import Oseledets.Lyapunov.SpectrumResiduals

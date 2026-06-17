@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Marcel Morgenstern
 -/
 import Oseledets.Lyapunov.ForwardMeasurable
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 
 /-!
 # The measurable Λ-spectral filtration `V`

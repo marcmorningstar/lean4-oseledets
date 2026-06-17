@@ -6,7 +6,7 @@ Authors: Marcel Morgenstern
 import Oseledets.Lyapunov.RuelleCore
 import Oseledets.Lyapunov.Forward
 import Oseledets.Lyapunov.ForwardV
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 import Oseledets.Lyapunov.ForwardLowerWiring
 import Oseledets.Lyapunov.ForwardSqueezeCore
 import Oseledets.Cocycle.Basic

@@ -5,7 +5,7 @@ Authors: Marcel Morgenstern
 -/
 import Oseledets.Lyapunov.ForwardGradedOverlapTopGap
 import Oseledets.Lyapunov.ChainRecursion
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 
 /-!
 # The top-gap band-mass envelope `topGapMassEnvelope_ae`

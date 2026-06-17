@@ -5,7 +5,7 @@ Authors: Marcel Morgenstern
 -/
 import Oseledets.Lyapunov.ForwardV
 import Oseledets.Lyapunov.LimitEigenbasis
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 
 /-!
 # Forward spectral-rank / dimension formula (two-sided MET, Phase P1)

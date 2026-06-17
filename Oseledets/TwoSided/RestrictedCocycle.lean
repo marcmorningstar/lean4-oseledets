@@ -7,7 +7,7 @@ import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.KingmanMeans
 import Oseledets.Lyapunov.MeasurableSubspace
 import Oseledets.Cocycle.FurstenbergKesten
-import Oseledets.Lyapunov.OseledetsLimit
+import Oseledets.Lyapunov.OseledetsLimit.Limit
 
 /-!
 # The backward-orbit restricted envelope (Phase P4a)
