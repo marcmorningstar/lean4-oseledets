@@ -79,6 +79,10 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.IsOseledetsFiltration.exists_multiplicity
 
+/-- info: 'Oseledets.IsOseledetsFiltration.k_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.IsOseledetsFiltration.k_pos
+
 -- Additive extensions: the full Lyapunov spectrum object.
 
 /-- info: 'Oseledets.exponents_antitone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -107,6 +111,18 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.sumPosExp_pos_iff
 
+/-- info: 'Oseledets.sumNegExp_nonpos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.sumNegExp_nonpos
+
+/-- info: 'Oseledets.sumNegExp_eq_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.sumNegExp_eq_zero_iff
+
+/-- info: 'Oseledets.sumNegExp_neg_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.sumNegExp_neg_iff
+
 /-- info: 'Oseledets.gammaK_eq_sum_top_exponents' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.gammaK_eq_sum_top_exponents
@@ -132,6 +148,10 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.tendsto_log_abs_det_cocycle' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.tendsto_log_abs_det_cocycle
+
+/-- info: 'Oseledets.tendsto_abs_det_cocycle_atTop_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_abs_det_cocycle_atTop_zero
 
 -- Inverse / time reversal (item 8).
 
@@ -197,6 +217,10 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.exists_exponents_nonergodic
 
+/-- info: 'Oseledets.exists_sumPosExp_nonergodic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exists_sumPosExp_nonergodic
+
 -- Regularity in the generator: Fekete inf + USC/LSC (item 4).
 
 /-- info: 'Oseledets.gammaK_eq_gammaKInf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -218,6 +242,10 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.botExp_lowerSemicontinuous' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.botExp_lowerSemicontinuous
+
+/-- info: 'Oseledets.botExp_eq_exponents_last' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.botExp_eq_exponents_last
 
 -- Regularity regime 2: a.e.-convergence + uniform integrability (Vitali) continuity (item 4, deferred part).
 
