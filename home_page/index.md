@@ -1,0 +1,31 @@
+---
+# Feel free to add content and custom Front Matter to this file.
+# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
+
+# layout: home
+usemathjax: true
+---
+
+This site hosts the [blueprint]({{ site.url }}/blueprint/) and the
+[API documentation]({{ site.url }}/docs/) of a **Lean 4 + Mathlib formalization of
+the Oseledets multiplicative ergodic theorem (MET)**.
+
+Three headline theorems are formalized, sorry-free:
+
+* `Oseledets.oseledets_filtration` — the one-sided MET (filtration form);
+* `Oseledets.oseledets_splitting` — the two-sided splitting;
+* `Oseledets.oseledets_flow` — the continuous-flow MET.
+
+together with a layer of companion results (the Lyapunov spectrum, exponent sums,
+the trace–determinant identity, exterior/wedge growth, the inverse spectrum,
+restriction to invariant subbundles, the non-ergodic spectrum, regularity of the
+exponents, and singular one-sided bounds).
+
+Useful links:
+
+* [Blueprint]({{ site.url }}/blueprint/)
+* [Blueprint as pdf]({{ site.url }}/blueprint.pdf)
+* [Dependency graph]({{ site.url }}/blueprint/dep_graph_document.html)
+* [API documentation]({{ site.url }}/docs/)
+* [GitHub repository](https://github.com/marcmorningstar/lean4-oseledets)
+* [Zulip chat for Lean](https://leanprover.zulipchat.com/)

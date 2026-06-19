@@ -1,0 +1,343 @@
+\chapter{The linear cocycle and Furstenberg--Kesten}
+\label{chap:cocycle}
+
+\section{The measure-preserving system and the linear cocycle}
+
+The Oseledets theorem studies the long-term growth of products of matrices driven by a
+dynamical system. The data are a measure-preserving self-map \(T : X \to X\) of a
+probability space \((X,\mu)\) and a matrix-valued generator
+\(A : X \to \Matrix(\Fin d)(\Fin d)\,\R\). The fundamental object is the
+\emph{iterated linear cocycle}: the product of the generator evaluated along the orbit
+of \(x\). We use the convention that the newest factor sits on the left.
+
+\begin{definition}[The entrywise measurable structure on matrices]\label{instMeasurableSpaceMatrix}
+  \lean{Oseledets.instMeasurableSpaceMatrix}\leanok
+  A matrix is a function \(m \to n \to \alpha\), and we equip
+  \(\Matrix\, m\, n\, \alpha\) with the Pi (product) \(\sigma\)-algebra induced from the
+  entry type \(\alpha\). For finitely many entries over a Borel \(\alpha\) this agrees
+  with the Borel \(\sigma\)-algebra. Mathlib does not register this automatically because
+  \(\Matrix\) is a \texttt{def} rather than reducibly the underlying Pi type, so the
+  ambient Pi instance does not transfer; we install it explicitly.
+\end{definition}
+
+\begin{definition}[The iterated linear cocycle]\label{cocycle}
+  \lean{Oseledets.cocycle}\leanok
+  Given \(A : X \to \Matrix(\Fin d)(\Fin d)\,\R\) and \(T : X \to X\), define
+  \(A^{(n)} = \texttt{cocycle}\,A\,T\,n\) by recursion on \(n\):
+  \[
+    A^{(0)}(x) = 1, \qquad A^{(n+1)}(x) = A^{(n)}(Tx)\cdot A(x).
+  \]
+  Unfolding, \(A^{(n)}(x) = A(T^{n-1}x)\cdots A(Tx)\,A(x)\), with the newest factor on
+  the left. The matrix norm throughout is the scoped L2 operator norm, which is
+  submultiplicative; vectors live in \(\mathrm{EuclideanSpace}\;\R\,(\Fin d)\) and the
+  action is via \(\texttt{toEuclideanCLM}\).
+\end{definition}
+
+\begin{theorem}[The cocycle identity]\label{cocycle_add}
+  \lean{Oseledets.cocycle_add}\leanok
+  For all \(m, n \in \N\) and \(x \in X\),
+  \[
+    A^{(m+n)}(x) = A^{(m)}(T^{n}x)\cdot A^{(n)}(x).
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{cocycle}
+  Induction on \(n\) with \(x\) generalized. For \(n = 0\) both sides equal \(A^{(m)}(x)\).
+  For the step, reassociate \(m + (n+1)\) and apply the defining recursion
+  \(A^{(k+1)}(x) = A^{(k)}(Tx)\cdot A(x)\) on both sides, then use the inductive
+  hypothesis at \(Tx\) together with \(T^{n+1}x = T^{n}(Tx)\) and associativity of matrix
+  multiplication.
+\end{proof}
+
+\begin{definition}[One-sided log-integrability of the generator]\label{IntegrableLogNorm}
+  \lean{Oseledets.IntegrableLogNorm}\leanok
+  The hypothesis \(\texttt{IntegrableLogNorm}\,A\,\mu\) asserts that the positive part of
+  the log-norm of the generator is integrable: \(\log^{+}\norm{A(\cdot)} \in L^{1}(\mu)\),
+  where \(\log^{+} t = \max(\log t, 0)\). This is the standard integrability assumption of
+  the Furstenberg--Kesten and Oseledets theorems; combined with the same hypothesis for
+  the inverse generator \(A^{-1}\) it pins both extremal Lyapunov exponents in \(\R\).
+\end{definition}
+
+\begin{theorem}[Measurability of the cocycle iterates]\label{measurable_cocycle}
+  \lean{Oseledets.measurable_cocycle}\leanok
+  If \(A\) and \(T\) are measurable then for each \(n\) the iterate
+  \(x \mapsto A^{(n)}(x)\) is measurable for the entrywise structure
+  \ref{instMeasurableSpaceMatrix}.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{cocycle, instMeasurableSpaceMatrix}
+  Induction on \(n\). The base case is a constant map. For the step, the recursion writes
+  \(A^{(n+1)}\) as the product \((A^{(n)}\circ T)\cdot A\); matrix multiplication is jointly
+  measurable on the Pi structure because each entry of a product is the finite sum
+  \(\sum_k M_{ik}N_{kj}\) of products of measurable coordinate projections, so the result
+  follows by composing the inductive hypothesis with \(T\) and multiplying by \(A\).
+\end{proof}
+
+\section{Measurability of the operator norm and the inverse}
+
+To feed the cocycle into the ergodic theory we must know that the operator norm and the
+matrix inverse are measurable on the entrywise structure. The subtlety is that Mathlib's
+\(\texttt{Measurable.norm}\) is stated for a \texttt{BorelSpace}, whereas our matrix
+\(\sigma\)-algebra is the Pi structure; the two coincide here because the L2
+operator-norm topology is definitionally the Pi product topology.
+
+\begin{lemma}[The Pi structure is an opens-measurable space]\label{instOpensMeasurableSpaceMatrix}
+  \lean{Oseledets.instOpensMeasurableSpaceMatrix}\leanok
+  The entrywise (Pi) measurable structure on \(\Matrix(\Fin d)(\Fin d)\,\R\) is an
+  \texttt{OpensMeasurableSpace} for the L2 operator-norm topology, since that topology is
+  installed (via \texttt{replaceTopology}) to be definitionally the Pi product topology, of
+  which the Pi \(\sigma\)-algebra is exactly the Borel structure.
+\end{lemma}
+
+\begin{theorem}[Measurability of the L2 operator norm]\label{measurable_l2_opNorm}
+  \lean{Oseledets.measurable_l2_opNorm}\leanok
+  The map \(M \mapsto \norm{M}\) on \(\Matrix(\Fin d)(\Fin d)\,\R\) is measurable.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{instOpensMeasurableSpaceMatrix, instMeasurableSpaceMatrix}
+  The norm is continuous for the operator-norm topology, and by
+  \ref{instOpensMeasurableSpaceMatrix} that topology's Borel structure is the entrywise
+  Pi structure; continuous maps into a Borel codomain are measurable.
+\end{proof}
+
+\begin{theorem}[Measurability of the determinant]\label{measurable_det}
+  \lean{Oseledets.measurable_det}\leanok
+  The determinant \(M \mapsto \det M\) is measurable.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{instMeasurableSpaceMatrix}
+  By the Leibniz formula \(\det M = \sum_{\sigma}\operatorname{sgn}(\sigma)\prod_i M_{i,\sigma(i)}\),
+  the determinant is a finite sum of finite products of measurable coordinate
+  projections, hence measurable.
+\end{proof}
+
+\begin{theorem}[Measurability of the matrix inverse]\label{measurable_inv_matrix}
+  \lean{Oseledets.measurable_inv_matrix}\leanok
+  The inverse \(M \mapsto M^{-1}\) is measurable on the entrywise structure.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{measurable_det, instMeasurableSpaceMatrix}
+  Writing \(M^{-1} = (\det M)^{-1}\cdot \operatorname{adj}(M)\), each entry is a ratio of
+  polynomials in the entries. The adjugate is measurable (each entry is a determinant of a
+  row update, again a polynomial in the entries), and \((\det M)^{-1}\) is measurable by
+  \ref{measurable_det} and measurability of inversion on \(\R\); the product is therefore
+  measurable entrywise.
+\end{proof}
+
+\section{Positivity and submultiplicativity of the log-norm}
+
+To take logarithms cleanly we need the iterate norms to be strictly positive, which
+forces the generator to be everywhere invertible (\(\det A \neq 0\)) and the dimension to
+be nonzero. These hypotheses also make the \(\log\) of a product split as a genuine sum,
+which is what yields subadditivity rather than a mere inequality with junk values.
+
+\begin{lemma}[Invertibility of the iterates]\label{det_cocycle_ne_zero}
+  \lean{Oseledets.det_cocycle_ne_zero}\leanok
+  If \(\det A(x) \neq 0\) for every \(x\), then \(\det A^{(n)}(x) \neq 0\) for all
+  \(n, x\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cocycle}
+  Induction on \(n\). The base case is \(\det 1 = 1\). For the step,
+  \(\det(A^{(n)}(Tx)\cdot A(x)) = \det A^{(n)}(Tx)\cdot \det A(x)\), and both factors are
+  nonzero by the inductive hypothesis and the assumption on \(A\).
+\end{proof}
+
+\begin{lemma}[The unit matrix has norm one]\label{norm_one_matrix}
+  \lean{Oseledets.norm_one_matrix}\leanok
+  When \(d \neq 0\), \(\norm{(1 : \Matrix(\Fin d)(\Fin d)\,\R)} = 1\) for the L2 operator
+  norm.
+\end{lemma}
+\begin{proof}\leanok
+  For \(d \neq 0\) the space \(\mathrm{EuclideanSpace}\;\R\,(\Fin d)\) is nontrivial. The
+  star-algebra equivalence \(\texttt{toEuclideanCLM}\) sends the identity matrix to the
+  identity operator and preserves the norm, and the operator norm of the identity on a
+  nontrivial space is \(1\). There is no \texttt{NormOneClass} instance for the matrix
+  operator norm, so this must be proved by hand; note that at \(d = 0\) the statement is
+  false (\(\norm{1} = 0\)), which is why \(d \neq 0\) is required.
+\end{proof}
+
+\begin{lemma}[Positivity of the iterate norms]\label{norm_cocycle_pos}
+  \lean{Oseledets.norm_cocycle_pos}\leanok
+  Assume \(\det A(x) \neq 0\) for all \(x\) and \(d \neq 0\). Then
+  \(0 < \norm{A^{(n)}(x)}\) for every \(n, x\). The analogous statement
+  \(\texttt{norm\_inv\_cocycle\_pos}\) holds for the inverse iterates
+  \(\norm{(A^{(n)}(x))^{-1}}\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{det_cocycle_ne_zero}
+  If \(\norm{A^{(n)}(x)} = 0\) then \(A^{(n)}(x)\) is the zero matrix, whose determinant
+  vanishes (as \(d \neq 0\)), contradicting \ref{det_cocycle_ne_zero}. The inverse case is
+  identical using \(\det\bigl((A^{(n)}(x))^{-1}\bigr) = (\det A^{(n)}(x))^{-1} \neq 0\).
+\end{proof}
+
+\begin{theorem}[Subadditivity of the log-norm cocycle]\label{isSubadditiveCocycle_logNorm}
+  \lean{Oseledets.isSubadditiveCocycle_logNorm}\leanok
+  Assume \(\det A \neq 0\) everywhere and \(d \neq 0\). Then
+  \(g_n(x) = \log\norm{A^{(n)}(x)}\) is a subadditive cocycle over \(T\):
+  \[
+    g_{m+n}(x) \le g_m(x) + g_n(T^{m}x).
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{cocycle_add, norm_cocycle_pos}
+  Rewrite \(m+n\) as \(n+m\) and apply the cocycle identity \ref{cocycle_add} to get
+  \(A^{(m+n)}(x) = A^{(n)}(T^{m}x)\cdot A^{(m)}(x)\). Submultiplicativity of the operator
+  norm and monotonicity of \(\log\) give
+  \(\log\norm{A^{(m+n)}(x)} \le \log\bigl(\norm{A^{(n)}(T^{m}x)}\cdot\norm{A^{(m)}(x)}\bigr)\);
+  both factors are strictly positive by \ref{norm_cocycle_pos}, so \(\log\) of the product
+  splits as the sum \(\log\norm{A^{(n)}(T^{m}x)} + \log\norm{A^{(m)}(x)}\), which is the
+  required bound after commuting the summands.
+\end{proof}
+
+\begin{theorem}[Subadditivity of the inverse log-norm cocycle]\label{isSubadditiveCocycle_logNorm_inv}
+  \lean{Oseledets.isSubadditiveCocycle_logNorm_inv}\leanok
+  Under the same hypotheses, \(g_n(x) = \log\norm{(A^{(n)}(x))^{-1}}\) is a subadditive
+  cocycle over \(T\).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{cocycle_add, norm_cocycle_pos}
+  As above, after \(\ref{cocycle_add}\) the inverse of the product reverses the order:
+  \((A^{(m+n)}(x))^{-1} = (A^{(m)}(x))^{-1}\cdot (A^{(n)}(T^{m}x))^{-1}\). Submultiplicativity,
+  monotone \(\log\), strict positivity of each inverse norm (\ref{norm_cocycle_pos}), and
+  \(\log\) of a product splitting as a sum give the subadditive inequality.
+\end{proof}
+
+\section{Birkhoff-sum sandwich bounds}
+
+The two-sided integrability hypothesis controls the log-norm by Birkhoff sums of
+\(\log^{+}\norm{A}\) and \(\log^{+}\norm{A^{-1}}\) on both sides. These bounds drive both
+the integrability of each level and the bounded-below proviso of Kingman's theorem.
+
+\begin{lemma}[Upper Fekete bound]\label{logNorm_cocycle_le_birkhoffSum}
+  \lean{Oseledets.logNorm_cocycle_le_birkhoffSum}\leanok
+  For \(\det A \neq 0\) everywhere and \(d \neq 0\),
+  \[
+    \log\norm{A^{(n)}(x)} \le \sum_{k<n}\log^{+}\norm{A(T^{k}x)}.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cocycle, norm_cocycle_pos}
+  Induction on \(n\). The base case is \(0 \le 0\). For the step, the recursion gives
+  \(A^{(n+1)}(x) = A^{(n)}(Tx)\cdot A(x)\); submultiplicativity and \(\log\)-splitting bound
+  \(\log\norm{A^{(n+1)}(x)}\) by \(\log\norm{A(x)} + \log\norm{A^{(n)}(Tx)}\), and then
+  \(\log\norm{A(x)} \le \log^{+}\norm{A(x)}\) together with the inductive hypothesis at
+  \(Tx\) peels off one Birkhoff term.
+\end{proof}
+
+\begin{lemma}[Lower bound via the inverse Birkhoff sum]\label{neg_birkhoffSum_le_logNorm_cocycle}
+  \lean{Oseledets.neg_birkhoffSum_le_logNorm_cocycle}\leanok
+  Under the same hypotheses,
+  \[
+    -\sum_{k<n}\log^{+}\norm{(A(T^{k}x))^{-1}} \le \log\norm{A^{(n)}(x)}.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{logNorm_inv_cocycle_le_birkhoffSum, norm_one_matrix, det_cocycle_ne_zero}
+  From \(A^{(n)}(x)\cdot (A^{(n)}(x))^{-1} = 1\) and submultiplicativity,
+  \(1 = \norm{1} \le \norm{A^{(n)}(x)}\cdot\norm{(A^{(n)}(x))^{-1}}\) (using
+  \ref{norm_one_matrix} and \ref{det_cocycle_ne_zero}), so taking logs gives
+  \(0 \le \log\norm{A^{(n)}(x)} + \log\norm{(A^{(n)}(x))^{-1}}\). Bounding the inverse
+  log-norm above by its Birkhoff sum \ref{logNorm_inv_cocycle_le_birkhoffSum} and
+  rearranging yields the claim.
+\end{proof}
+
+\begin{lemma}[Upper Fekete bound for the inverse cocycle]\label{logNorm_inv_cocycle_le_birkhoffSum}
+  \lean{Oseledets.logNorm_inv_cocycle_le_birkhoffSum}\leanok
+  Under the same hypotheses,
+  \[
+    \log\norm{(A^{(n)}(x))^{-1}} \le \sum_{k<n}\log^{+}\norm{(A(T^{k}x))^{-1}}.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cocycle, norm_cocycle_pos}
+  Induction on \(n\), exactly as for the forward bound but with the inverse generator: the
+  recursion and \(\texttt{mul\_inv\_rev}\) give
+  \((A^{(n+1)}(x))^{-1} = (A(x))^{-1}\cdot (A^{(n)}(Tx))^{-1}\), and submultiplicativity plus
+  \(\log\)-splitting and \(\log\norm{(A(x))^{-1}} \le \log^{+}\norm{(A(x))^{-1}}\) peel off
+  one Birkhoff term.
+\end{proof}
+
+\section{Integrability of each level}
+
+\begin{lemma}[Integral of a Birkhoff sum]\label{integral_birkhoffSum}
+  \lean{Oseledets.integral_birkhoffSum}\leanok
+  For measure-preserving \(T\) and integrable \(f\),
+  \(\int \sum_{k<n} f(T^{k}x)\,d\mu = n\int f\,d\mu\).
+\end{lemma}
+\begin{proof}\leanok
+  Each composition \(f\circ T^{k}\) is integrable and integral-preserving because
+  \(T^{k}\) is measure-preserving, so \(\int f\circ T^{k}\,d\mu = \int f\,d\mu\). Summing
+  the \(n\) equal terms over the finite range gives \(n\int f\,d\mu\).
+\end{proof}
+
+\begin{theorem}[Integrability of the log-norm levels]\label{integrable_logNorm_cocycle}
+  \lean{Oseledets.integrable_logNorm_cocycle}\leanok
+  Let \(T\) be measure-preserving for a finite measure \(\mu\), \(A\) measurable and
+  everywhere invertible, \(d \neq 0\), with both \(\log^{+}\norm{A}\) and
+  \(\log^{+}\norm{A^{-1}}\) integrable. Then each \(x \mapsto \log\norm{A^{(n)}(x)}\) is
+  integrable. The companion \(\texttt{integrable\_logNorm\_inv\_cocycle}\) gives the same
+  for the inverse iterates.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{logNorm_cocycle_le_birkhoffSum, neg_birkhoffSum_le_logNorm_cocycle, integral_birkhoffSum, measurable_l2_opNorm, IntegrableLogNorm}
+  The level \(g_n\) is sandwiched between \(-B_n^{-}\) and \(B_n^{+}\), where
+  \(B_n^{\pm}\) are the Birkhoff sums of \(\log^{+}\norm{A}\) and \(\log^{+}\norm{A^{-1}}\)
+  (Lemmas \ref{logNorm_cocycle_le_birkhoffSum}, \ref{neg_birkhoffSum_le_logNorm_cocycle}).
+  Both \(B_n^{\pm}\) are nonnegative and integrable (finite sums of integrable, m.p.
+  precompositions), so \(\abs{g_n} \le B_n^{+} + B_n^{-}\) pointwise. Since \(g_n\) is
+  measurable (\ref{measurable_l2_opNorm} composed with the cocycle), domination by the
+  integrable \(B_n^{+}+B_n^{-}\) gives integrability.
+\end{proof}
+
+\section{The Furstenberg--Kesten theorems}
+
+Feeding the subadditive cocycles into Kingman's ergodic theorem produces the two extremal
+Lyapunov exponents as a.e.-constant limits. The bounded-below proviso of Kingman is
+supplied by the cross integrability hypothesis: for the top exponent the lower bound comes
+from \(\log^{+}\norm{A^{-1}}\), and vice versa. This is precisely where the second
+integrability hypothesis keeps the limit finite in \(\R\) rather than \(-\infty\).
+
+\begin{theorem}[Furstenberg--Kesten, top exponent]\label{furstenbergKesten_norm}
+  \lean{Oseledets.furstenbergKesten_norm}\leanok
+  Let \(T\) be ergodic for a probability measure \(\mu\), let \(A\) be measurable and
+  everywhere invertible with \(\log^{+}\norm{A}, \log^{+}\norm{A^{-1}} \in L^{1}(\mu)\).
+  Then there is a constant \(\lambda_1 \in \R\) (the top Lyapunov exponent) with
+  \[
+    \frac{1}{n}\log\norm{A^{(n)}(x)} \xrightarrow{n\to\infty} \lambda_1
+    \qquad \text{for } \mu\text{-a.e. } x.
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{isSubadditiveCocycle_logNorm, integrable_logNorm_cocycle, neg_birkhoffSum_le_logNorm_cocycle, integral_birkhoffSum, tendsto_kingman_ergodic, lambdaBar}
+  If \(d = 0\) the matrix algebra is trivial, every norm is \(0\), and the limit is the
+  constant \(0\). Otherwise set \(d \neq 0\) and let \(g_n = \log\norm{A^{(n)}}\). It is a
+  subadditive cocycle (\ref{isSubadditiveCocycle_logNorm}) with each level integrable
+  (\ref{integrable_logNorm_cocycle}). For the bounded-below proviso, the lower bound
+  \ref{neg_birkhoffSum_le_logNorm_cocycle} and the Birkhoff integral identity
+  \ref{integral_birkhoffSum} give \((\int g_{n+1})/(n+1) \ge -\int \log^{+}\norm{A^{-1}}\,d\mu\),
+  a constant lower bound. The ergodic Kingman theorem \ref{tendsto_kingman_ergodic} then
+  returns the a.e. constant limit, which is the top exponent \(\lambda_1\) (see
+  \ref{lambdaBar}).
+\end{proof}
+
+\begin{theorem}[Furstenberg--Kesten, bottom exponent]\label{furstenbergKesten_norm_inv}
+  \lean{Oseledets.furstenbergKesten_norm_inv}\leanok
+  Under the same hypotheses there is a constant \(\lambda \in \R\) with
+  \[
+    \frac{1}{n}\log\norm{(A^{(n)}(x))^{-1}} \xrightarrow{n\to\infty} \lambda
+    \qquad \text{for } \mu\text{-a.e. } x,
+  \]
+  so the bottom Lyapunov exponent \(\lambda_k = -\lambda\) exists and is finite.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{isSubadditiveCocycle_logNorm_inv, integrable_logNorm_cocycle, logNorm_cocycle_le_birkhoffSum, integral_birkhoffSum, norm_one_matrix, tendsto_kingman_ergodic}
+  Identical to the top case with the inverse subadditive cocycle
+  \(g_n = \log\norm{(A^{(n)})^{-1}}\) (\ref{isSubadditiveCocycle_logNorm_inv}). The roles of
+  the two integrability hypotheses swap: the bounded-below proviso now uses the lower
+  bound \(-\sum_{k<n}\log^{+}\norm{A(T^{k}x)} \le \log\norm{(A^{(n)}(x))^{-1}}\), obtained
+  from \(\norm{1} \le \norm{A^{(n)}}\cdot\norm{(A^{(n)})^{-1}}\) (\ref{norm_one_matrix}) and
+  the forward Fekete bound \ref{logNorm_cocycle_le_birkhoffSum}, together with the integral
+  identity \ref{integral_birkhoffSum}. Ergodic Kingman \ref{tendsto_kingman_ergodic}
+  delivers the a.e. constant limit.
+\end{proof}

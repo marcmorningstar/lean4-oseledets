@@ -1,0 +1,28 @@
+name: Create Release
+
+# Whenever `lean-toolchain` changes on the default branch, create a matching git
+# release tag. The Lean Reservoir (reservoir.lean-lang.org) treats git tags as
+# package versions, so this keeps Reservoir's version list in sync with the
+# toolchain the project builds against.
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'lean-toolchain'
+
+jobs:
+  lean-release-tag:
+    name: Add Lean release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: lean-release-tag action
+        uses: leanprover-community/lean-release-tag@9ca7ed09e240259871327bfc3a3a8d8c4bcb41aa # 2025-05-22
+        with:
+          before: ${{ github.event.before }}
+          after: ${{ github.event.after }}
+          do-release: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

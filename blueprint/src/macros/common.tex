@@ -1,0 +1,33 @@
+% In this file you should put all LaTeX macros and settings to be used both by
+% the pdf version and the web version.
+% This should be most of your macros.
+
+% The theorem-like environments defined below are those that appear by default
+% in the dependency graph. See the README of leanblueprint if you need help to
+% customize this.
+% The configuration below use the theorem counter for all those environments
+% (this is what the [theorem] arguments mean) and never resets it.
+% Numbered within chapters via the [chapter] argument on the first environment.
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% Notation used throughout the blueprint.
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\bignorm}[1]{\bigl\lVert #1 \bigr\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newcommand{\Matrix}{\operatorname{Matrix}}
+\newcommand{\Fin}{\operatorname{Fin}}
+\newcommand{\ext}{\textstyle\bigwedge}
+\DeclareMathOperator{\GL}{GL}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator*{\esssup}{ess\,sup}

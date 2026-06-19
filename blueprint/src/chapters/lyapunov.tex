@@ -1,0 +1,419 @@
+\chapter{Lyapunov exponents and the limsup filtration}
+\label{chap:lyapunov}
+
+This chapter constructs, from the linear cocycle $A$ over the
+measure-preserving system $T$, the geometric scaffolding of the Oseledets
+theorem: a per-vector growth rate, the finite Lyapunov spectrum it produces,
+and the decreasing flag of subspaces along which the cocycle grows at exactly
+the prescribed rates. Throughout, $A \colon X \to \mathrm{Mat}_{d\times d}(\R)$
+is invertible ($\det(A x)\neq 0$) and acts on $v\in\R^d$ through the Euclidean
+representation $\mathtt{toEuclideanCLM}(M)\colon v\mapsto M\cdot v$. Two
+abstract ingredients are imported: the Furstenberg--Kesten extremal exponents
+(the a.e.\ limits of $\tfrac1n\log\norm{A^{(n)}(x)}$ and
+$\tfrac1n\log\norm{A^{(n)}(x)^{-1}}$) and the subadditive ergodic theorem of
+Kingman (\uses{tendsto_kingman}). The headline statement assembled downstream
+from this material is \uses{oseledets_filtration}.
+
+\section{Ultrametric growth functions}
+
+The combinatorial heart of the construction is purely linear-algebraic: a
+scaling-invariant, non-Archimedean real function on the nonzero vectors of a
+real vector space has only finitely many values, and its sublevel sets are
+subspaces. We isolate this with no reference to dynamics.
+
+\begin{definition}[Ultrametric growth function]\label{IsUltrametricGrowth}
+  \lean{Oseledets.IsUltrametricGrowth}\leanok
+  Let $E$ be a real vector space. A function $g\colon E\to\R$ is an
+  \emph{ultrametric growth function} when it is scaling-invariant,
+  \[ g(c\cdot v) = g(v) \qquad (c\neq 0), \]
+  and non-Archimedean (strong triangle inequality),
+  \[ g(v+w) \le \max\bigl(g(v),\,g(w)\bigr)
+     \qquad (v,w,\,v+w \neq 0). \]
+  The value $g(0)$ is never used; the side conditions $v\neq 0$ are carried
+  explicitly to avoid extended-real arithmetic.
+\end{definition}
+
+\begin{lemma}[Strict ultrametric equality]\label{add_eq_max_of_ne}
+  \lean{Oseledets.IsUltrametricGrowth.add_eq_max_of_ne}\leanok
+  If $g$ is an ultrametric growth function and $g(v)\neq g(w)$ (with
+  $v,w,v+w$ nonzero), then $g(v+w)=\max(g(v),g(w))$.
+  \begin{proof}\leanok
+  \uses{IsUltrametricGrowth}
+  By symmetry ($v+w=w+v$) assume $g(v)<g(w)$, so $\max=g(w)$. The
+  non-Archimedean inequality gives $g(v+w)\le g(w)$. Conversely
+  $w=(v+w)+(-v)$ and $g(-v)=g(v)$ (scaling by $-1$), so
+  $g(w)\le\max(g(v+w),g(v))$. Were $g(v+w)<g(w)$, then both arguments of this
+  $\max$ would be $<g(w)$, contradicting the bound. Hence $g(w)\le g(v+w)$,
+  giving equality.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Sum of distinct-value vectors]\label{sum_ne_zero_and_g_eq_sup'}
+  \lean{Oseledets.IsUltrametricGrowth.sum_ne_zero_and_g_eq_sup'}\leanok
+  Let $g$ be an ultrametric growth function, $s$ a nonempty finite index set,
+  and $v\colon s\to E$ a family of nonzero vectors with $g\circ v$ injective on
+  $s$. Then $\sum_{i\in s} v_i \neq 0$ and
+  $g\bigl(\sum_{i\in s} v_i\bigr) = \sup_{i\in s} g(v_i)$.
+  \begin{proof}\leanok
+  \uses{add_eq_max_of_ne}
+  Strong induction on $s$, peeling off one element $a$. For the inductive step,
+  the tail sum is nonzero with $g$-value $g(v_b)$ for some $b$ in the tail; since
+  $g(v_a)\neq g(v_b)$, \ref{add_eq_max_of_ne} applies to
+  $v_a + \sum_{\text{tail}} v_i$, yielding both nonvanishing and the equality of
+  the value with the new maximum. The two conclusions are proved jointly because
+  each step needs the tail subsum to be nonzero.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Distinct values are independent]\label{linearIndependent_of_injOn}
+  \lean{Oseledets.IsUltrametricGrowth.linearIndependent_of_injOn}\leanok
+  If $g$ is an ultrametric growth function and $v\colon \iota\to E$ is a family
+  of nonzero vectors with $g\circ v$ injective, then $v$ is linearly
+  independent over $\R$.
+  \begin{proof}\leanok
+  \uses{sum_ne_zero_and_g_eq_sup'}
+  Suppose $\sum_{j} c_j v_j = 0$ with some $c_i\neq 0$. Restrict to the support
+  $t=\{j : c_j\neq 0\}\ni i$, nonempty. The scaled vectors $c_j v_j$ are nonzero,
+  and $g(c_j v_j)=g(v_j)$ by scaling-invariance, so $g\circ(c\cdot v)$ is still
+  injective on $t$. By \ref{sum_ne_zero_and_g_eq_sup'} the support sum is
+  nonzero, contradicting $\sum_{j\in t} c_j v_j=0$.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Finiteness of the value set]\label{finite_range}
+  \lean{Oseledets.IsUltrametricGrowth.finite_range}\leanok
+  If $E$ is finite-dimensional and $g$ is an ultrametric growth function, then
+  $\{g(v) : v\neq 0\}$ is finite, with at most $\dim_{\R} E$ elements.
+  \begin{proof}\leanok
+  \uses{linearIndependent_of_injOn}
+  If the value set were infinite, pick $\dim_{\R} E + 1$ distinct values and
+  witnessing nonzero vectors. By \ref{linearIndependent_of_injOn} these are
+  linearly independent, exceeding $\dim_{\R} E$, a contradiction.
+  \end{proof}
+\end{lemma}
+
+\begin{definition}[Sublevel submodule]\label{sublevel}
+  \lean{Oseledets.IsUltrametricGrowth.sublevel}\leanok
+  \uses{IsUltrametricGrowth}
+  For an ultrametric growth function $g$ and threshold $t\in\R$, the
+  \emph{sublevel set}
+  \[ \mathrm{sublevel}(g,t) = \{\, v \mid v=0 \ \lor\ g(v)\le t \,\} \]
+  is a submodule of $E$: it contains $0$; closure under addition is the
+  non-Archimedean inequality together with $\max(g v,g w)\le t$; closure under
+  scaling is scaling-invariance. These submodules are monotone in $t$
+  (\texttt{sublevel\_mono}).
+\end{definition}
+
+\section{The upper Lyapunov growth function}
+
+We now instantiate the abstract machinery at the per-vector logarithmic growth
+rate of the cocycle.
+
+\begin{definition}[Defining sequence]\label{growthSeq}
+  \leanok
+  For $x\in X$ and $v\in\R^d$ the \emph{growth sequence} is
+  \[ \mathrm{growthSeq}(A,T,x,v)(n)
+     = \frac1n\,\log\norm{A^{(n)}(x)\cdot v}, \]
+  where $A^{(n)}(x)=\mathtt{cocycle}\,A\,T\,n\,x$ is the $n$-step cocycle iterate
+  acting on $v$ via $\mathtt{toEuclideanCLM}$.
+\end{definition}
+
+\begin{definition}[Upper Lyapunov growth function]\label{lambdaBar}
+  \lean{Oseledets.lambdaBar}\leanok
+  \uses{growthSeq}
+  The \emph{upper Lyapunov growth function} is the $\limsup$ of the growth
+  sequence,
+  \[ \bar\lambda(v) \;=\; \mathrm{lambdaBar}(A,T,x,v)
+     \;=\; \limsup_{n\to\infty}\ \frac1n\,\log\norm{A^{(n)}(x)\cdot v}. \]
+\end{definition}
+
+The basic per-$n$ sandwich is the submultiplicativity of the operator norm:
+$\norm{A^{(n)}(x)^{-1}}^{-1}\norm{v} \le \norm{A^{(n)}(x)\cdot v}
+\le \norm{A^{(n)}(x)}\,\norm{v}$, which after taking $\tfrac1n\log$ pins
+$\mathrm{growthSeq}$ between two sequences differing from the Furstenberg--Kesten
+data by a term tending to $0$. This yields both boundedness and finiteness.
+
+\begin{lemma}[Scaling invariance]\label{lambdaBar_smul}
+  \lean{Oseledets.lambdaBar_smul}\leanok
+  For $c\neq 0$ and $v\neq 0$, $\bar\lambda(c\cdot v)=\bar\lambda(v)$.
+  \begin{proof}\leanok
+  \uses{lambdaBar, growthSeq}
+  By linearity $\norm{A^{(n)}(x)(c\cdot v)}=\abs{c}\,\norm{A^{(n)}(x)v}$, so the
+  two growth sequences differ by $\tfrac1n\log\abs{c}$, which $\to 0$. A
+  $\limsup$ is unchanged under a perturbation tending to zero (a robust helper
+  proved directly on the defining sets $\{a:\forall^{\infty} n,\ u_n\le a\}$, with
+  no boundedness hypothesis). The bound is unconditional.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Finiteness sandwich]\label{lambdaBar_mem_Icc}
+  \lean{Oseledets.lambdaBar_mem_Icc}\leanok
+  Assume $T$ ergodic on a probability space, $A$ measurable and invertible, with
+  $\log\norm{A}$ and $\log\norm{A^{-1}}$ integrable. Then there exist
+  $\lambda_{\mathrm{bot}}\le\lambda_{\mathrm{top}}$ such that for a.e.\ $x$ and
+  every $v\neq 0$, $\bar\lambda(v)\in[\lambda_{\mathrm{bot}},\lambda_{\mathrm{top}}]$.
+  \begin{proof}\leanok
+  \uses{lambdaBar, growthSeq}
+  Take $\lambda_{\mathrm{top}}$ and $\lambda_k'$ from the Furstenberg--Kesten
+  limits of $\tfrac1n\log\norm{A^{(n)}}$ and $\tfrac1n\log\norm{(A^{(n)})^{-1}}$,
+  and set $\lambda_{\mathrm{bot}}=-\lambda_k'$. The ordering follows from
+  $\norm{A^{(n)}}\norm{(A^{(n)})^{-1}}\ge 1$. On the intersection of the two
+  full-measure convergence sets, the upper sandwich bounds
+  $\bar\lambda(v)=\limsup\mathrm{growthSeq}$ above by $\lambda_{\mathrm{top}}$,
+  while the lower sandwich bounds the $\liminf$ below by $-\lambda_k'$; since
+  $\liminf\le\limsup$ the value lies in the interval.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Non-Archimedean inequality]\label{lambdaBar_add_le}
+  \lean{Oseledets.lambdaBar_add_le}\leanok
+  For nonzero $v,w,v+w$, if the three growth sequences are bounded, then
+  $\bar\lambda(v+w)\le\max(\bar\lambda(v),\bar\lambda(w))$.
+  \begin{proof}\leanok
+  \uses{lambdaBar, growthSeq}
+  From the triangle inequality $\norm{A^{(n)}(v+w)}\le\norm{A^{(n)}v}+\norm{A^{(n)}w}
+  \le 2\max(\norm{A^{(n)}v},\norm{A^{(n)}w})$, taking $\tfrac1n\log$ gives
+  $\mathrm{growthSeq}(v+w)(n)\le\tfrac1n\log 2 +
+  \max(\mathrm{growthSeq}(v)(n),\mathrm{growthSeq}(w)(n))$. The term
+  $\tfrac1n\log 2\to 0$, and $\limsup\max=\max\limsup$ for bounded sequences,
+  giving the claim.
+  \end{proof}
+\end{lemma}
+
+\begin{theorem}[$\bar\lambda$ is an ultrametric growth function, a.e.]\label{isUltrametricGrowth_lambdaBar}
+  \lean{Oseledets.isUltrametricGrowth_lambdaBar}\leanok
+  Under the hypotheses of \ref{lambdaBar_mem_Icc}, for a.e.\ $x$ the function
+  $v\mapsto\bar\lambda(v)$ is an ultrametric growth function.
+  \begin{proof}\leanok
+  \uses{IsUltrametricGrowth, lambdaBar_smul, lambdaBar_add_le, lambdaBar_mem_Icc}
+  Scaling-invariance is \ref{lambdaBar_smul} (trivial on $v=0$). The
+  non-Archimedean axiom is \ref{lambdaBar_add_le}, whose boundedness hypotheses
+  are discharged on the full-measure Furstenberg--Kesten convergence set, where
+  the growth sequence of every nonzero vector is bounded above and below by the
+  two FK sandwich sequences.
+  \end{proof}
+\end{theorem}
+
+\begin{theorem}[$A$-equivariance, a.e.]\label{lambdaBar_equivariant_ae}
+  \lean{Oseledets.lambdaBar_equivariant_ae}\leanok
+  Under the same hypotheses, for a.e.\ $x$ and every $v\neq 0$,
+  \[ \bar\lambda_x(v) = \bar\lambda_{Tx}(A x\cdot v). \]
+  \begin{proof}\leanok
+  \uses{lambdaBar, growthSeq}
+  The cocycle identity $A^{(n+1)}(x)=A^{(n)}(Tx)\,A(x)$ gives
+  $\mathrm{growthSeq}_x(v)(n+1)=\tfrac1{n+1}\log\norm{A^{(n)}(Tx)(A x\cdot v)}$.
+  Reindexing the $\limsup$ by one, the two scalings differ by
+  $(\tfrac1{n+1}-\tfrac1n)\log\norm{\cdot}=-\tfrac1{n+1}\cdot(\tfrac1n\log\norm{\cdot})$,
+  which tends to $0$ precisely because $\tfrac1n\log\norm{\cdot}$ is bounded. The
+  boundedness is needed at the image point $Tx$; it holds a.e.\ in $x$ by pulling
+  back the a.e.\ boundedness at a generic point through the measure-preserving $T$.
+  \end{proof}
+\end{theorem}
+
+\section{The Lyapunov spectrum and the descending exponent list}
+
+\begin{definition}[Lyapunov spectrum]\label{lyapunovSpectrum}
+  \lean{Oseledets.lyapunovSpectrum}\leanok
+  \uses{lambdaBar, finite_range}
+  The \emph{Lyapunov spectrum} at $x$ is the finite set of realized values
+  \[ \mathrm{lyapunovSpectrum}(A,T,x)
+     = \{\,\bar\lambda_x(v) : v\neq 0\,\}, \]
+  defined as a \texttt{Finset} via \ref{finite_range} on the good set where
+  $\bar\lambda_x$ is an ultrametric growth function, and as $\emptyset$ off it.
+  A value lies in it iff it is realized by some nonzero vector.
+\end{definition}
+
+\begin{definition}[Multiplicity count and descending list]\label{specList}
+  \lean{Oseledets.specList}\leanok
+  \uses{lyapunovSpectrum}
+  Write $k=\mathrm{specCard}(A,T,x)$ for the number of distinct exponents (the
+  cardinality of the spectrum). The \emph{exponent list}
+  $\mathrm{specList}\colon \mathrm{Fin}\,k\to\R$ enumerates the spectrum in
+  \emph{strictly descending} order, $\lambda_0>\lambda_1>\cdots>\lambda_{k-1}$,
+  obtained from the order embedding of the finset composed with index reversal.
+  It is strictly antitone, every $\mathrm{specList}(i)$ lies in the spectrum, and
+  every spectrum value is $\mathrm{specList}(i)$ for a unique $i$.
+\end{definition}
+
+\section{The limsup filtration}
+
+\begin{definition}[Sublevel subspace]\label{lambdaSublevel}
+  \lean{Oseledets.lambdaSublevel}\leanok
+  \uses{lambdaBar, sublevel}
+  The \emph{sublevel subspace} at threshold $t$,
+  \[ \mathrm{lambdaSublevel}(A,T,x,t)
+     = \{\, v \mid v=0 \ \lor\ \bar\lambda_x(v)\le t \,\}, \]
+  is the submodule \ref{sublevel} of $\bar\lambda_x$ at $t$ on the good set, and
+  $\bot$ off it.
+\end{definition}
+
+\begin{definition}[Oseledets filtration / limsup flag]\label{vflag}
+  \lean{Oseledets.vflag}\leanok
+  \uses{lambdaSublevel, specList}
+  The \emph{limsup flag} at $x$ is the family
+  $\mathrm{vflag}(A,T,x)\colon\mathrm{Fin}\,(k+1)\to\mathrm{Submodule}$ with
+  \[ \mathrm{vflag}(A,T,x)(j)
+     = \begin{cases}
+        \mathrm{lambdaSublevel}\bigl(A,T,x,\ \mathrm{specList}(j)\bigr) & j<k,\\
+        \bot & j=k.
+       \end{cases} \]
+  With the descending enumeration, level $j$ is the sublevel set at $\lambda_j$,
+  so the flag decreases from the whole space down to $\bot$.
+\end{definition}
+
+\begin{lemma}[Extremal levels]\label{vflag_zero}
+  \lean{Oseledets.vflag_zero}\leanok
+  On the good set, $\mathrm{vflag}(A,T,x)(0)=\top$; and unconditionally
+  $\mathrm{vflag}(A,T,x)(\mathrm{last})=\bot$ (\texttt{vflag\_last}).
+  \begin{proof}\leanok
+  \uses{vflag, lyapunovSpectrum, specList}
+  For any $v\neq 0$, $\bar\lambda_x(v)$ lies in the spectrum, so $k>0$ and
+  $\mathrm{specList}(0)$ is the maximum of the spectrum; thus
+  $\bar\lambda_x(v)\le\mathrm{specList}(0)$ and $v$ lies in level $0$. Level $k$
+  is $\bot$ by definition.
+  \end{proof}
+\end{lemma}
+
+\begin{theorem}[Strict decrease]\label{vflag_strictAnti}
+  \lean{Oseledets.vflag_strictAnti}\leanok
+  On the good set, $\mathrm{vflag}(A,T,x)(i{+}1) \subsetneq
+  \mathrm{vflag}(A,T,x)(i)$ for each interior index $i$.
+  \begin{proof}\leanok
+  \uses{vflag, specList, lambdaBar_eq_on_stratum}
+  Inclusion: since $\mathrm{specList}$ is strictly antitone,
+  $\mathrm{specList}(i{+}1)<\mathrm{specList}(i)$, so the sublevel at the smaller
+  threshold is contained in that at the larger. Strictness: a witness $w$ with
+  $\bar\lambda_x(w)=\mathrm{specList}(i)$ exists (the value is realized); it lies
+  in level $i$ but its value exceeds $\mathrm{specList}(i{+}1)$, so it is not in
+  level $i{+}1$.
+  \end{proof}
+\end{theorem}
+
+\begin{lemma}[Stratum exactness]\label{lambdaBar_eq_on_stratum}
+  \lean{Oseledets.lambdaBar_eq_on_stratum}\leanok
+  On the good set, if $v\in\mathrm{vflag}(A,T,x)(i)$ but
+  $v\notin\mathrm{vflag}(A,T,x)(i{+}1)$, then $\bar\lambda_x(v)=\mathrm{specList}(i)=\lambda_i$.
+  \begin{proof}\leanok
+  \uses{vflag, specList, lyapunovSpectrum}
+  Membership in level $i$ gives $\bar\lambda_x(v)\le\lambda_i$. Since
+  $\bar\lambda_x(v)$ is a spectrum value, $\bar\lambda_x(v)=\lambda_j$ for some
+  $j\ge i$. Non-membership in level $i{+}1$ rules out $\bar\lambda_x(v)\le
+  \lambda_{i+1}$, forcing $j\le i$. Hence $j=i$ by injectivity of the strictly
+  antitone list.
+  \end{proof}
+\end{lemma}
+
+\begin{theorem}[$A$-equivariance of spectrum and flag, a.e.]\label{vflag_equivariant}
+  \lean{Oseledets.vflag_equivariant}\leanok
+  Under the standing hypotheses, for a.e.\ $x$ the spectrum is invariant,
+  $\mathrm{lyapunovSpectrum}(A,T,x)=\mathrm{lyapunovSpectrum}(A,T,Tx)$
+  (\texttt{lyapunovSpectrum\_equivariant\_ae}), and the action of $A x$ maps each
+  flag level (each sublevel subspace) at $x$ onto the corresponding level at $Tx$:
+  \[ (A x)_*\,\mathrm{lambdaSublevel}(A,T,x,t)
+     = \mathrm{lambdaSublevel}(A,T,Tx,t). \]
+  \begin{proof}\leanok
+  \uses{lambdaBar_equivariant_ae, lambdaSublevel, vflag, isUltrametricGrowth_lambdaBar}
+  The bijection $v\mapsto A x\cdot v$ preserves $\bar\lambda$ by
+  \ref{lambdaBar_equivariant_ae} (a.e.), hence carries witnesses at $x$ to
+  witnesses at $Tx$ and conversely (using $(A x)^{-1}$), giving the spectrum
+  identity. The same value-preserving bijection sends $\{v=0\lor\bar\lambda_x(v)\le t\}$
+  onto $\{w=0\lor\bar\lambda_{Tx}(w)\le t\}$, which is the claimed image of
+  sublevel sets.
+  \end{proof}
+\end{theorem}
+
+\section{Measurability of the filtration}
+
+The Oseledets theorem requires the flag to vary measurably in $x$. Mathlib has
+no measurable structure on submodules, so we encode a subspace by its
+orthogonal-projection matrix.
+
+\begin{definition}[Projection matrix encoding]\label{orthProjMatrix}
+  \lean{Oseledets.orthProjMatrix}\leanok
+  For $K\le\R^d$, $\mathrm{orthProjMatrix}(K)$ is the matrix of the orthogonal
+  projection onto $K$, namely the preimage of $K.\mathtt{starProjection}$ under
+  the star-algebra isomorphism $\mathtt{toEuclideanCLM}$. A subspace is
+  determined by this matrix, which lives in a space carrying the Borel/Pi
+  measurable structure. Its $(i,j)$ entry equals the $i$-th coordinate of the
+  projection applied to the standard basis vector $e_j$
+  (\texttt{orthProjMatrix\_apply}).
+\end{definition}
+
+\begin{definition}[Measurable family of subspaces]\label{MeasurableSubspace}
+  \lean{Oseledets.MeasurableSubspace}\leanok
+  \uses{orthProjMatrix}
+  A subspace-valued map $V\colon X\to\mathrm{Submodule}\,\R\,\R^d$ is a
+  \emph{measurable family of subspaces} when $x\mapsto\mathrm{orthProjMatrix}(V x)$
+  is measurable. Equivalently (\texttt{measurable\_orthProjMatrix\_iff}), for each
+  standard basis index $j$ the $\R^d$-valued map
+  $x\mapsto (V x).\mathtt{starProjection}(e_j)$ is measurable.
+\end{definition}
+
+\begin{lemma}[Scalar growth is measurable]\label{measurable_lambdaBar_apply}
+  \lean{Oseledets.measurable_lambdaBar_apply}\leanok
+  For fixed $v$, the map $x\mapsto\bar\lambda_x(v)$ is measurable.
+  \begin{proof}\leanok
+  \uses{lambdaBar}
+  It is the $\limsup$ of the sequence
+  $x\mapsto\tfrac1n\log\norm{A^{(n)}(x)\cdot v}$. Each term is measurable:
+  $x\mapsto A^{(n)}(x)$ is measurable (measurability of the cocycle), and
+  $M\mapsto\norm{M\cdot v}$ is continuous (a fixed-vector linear map of $M$,
+  on a finite-dimensional space, post-composed with the norm), so the composite
+  with $\log$ is measurable, and a $\limsup$ of measurable functions is measurable.
+  \end{proof}
+\end{lemma}
+
+\begin{lemma}[Polynomial in a measurable matrix]\label{measurable_aeval_matrix}
+  \lean{Oseledets.measurable_aeval_matrix}\leanok
+  For a fixed real polynomial $q$, the map $a\mapsto q(a)$ on
+  $\mathrm{Mat}_{d\times d}(\R)$ is measurable.
+  \begin{proof}\leanok
+  Induction on $q$ over the constant/sum/monomial generators, using that matrix
+  addition and multiplication are measurable in each argument
+  (\texttt{instMeasurableAdd₂Matrix} and the matrix \texttt{MeasurableMul₂}
+  instance), whence $a\mapsto a^n$ is measurable (\texttt{measurable\_matrix\_pow}).
+  \end{proof}
+\end{lemma}
+
+\begin{theorem}[CFC measurability via interpolating polynomial]\label{measurable_cfc_eqOn_polynomial}
+  \lean{Oseledets.measurable_cfc_eqOn_polynomial}\leanok
+  Let $M\colon X\to\mathrm{Mat}_{d\times d}(\R)$ be measurable with each $M x$
+  self-adjoint, and let $g\colon\R\to\R$. If a \emph{fixed} polynomial $q$
+  agrees with $g$ on the spectrum of every $M x$, then
+  $x\mapsto\mathrm{cfc}\,g\,(M x)$ is measurable.
+  \begin{proof}\leanok
+  \uses{measurable_aeval_matrix}
+  On the spectrum of $M x$ the continuous functional calculus of $g$ coincides
+  with that of $q$, and for a polynomial $\mathrm{cfc}\,q\,(M x)=q(M x)$. Thus
+  pointwise $\mathrm{cfc}\,g\,(M x)=q(M x)$, which is measurable in $x$ by
+  \ref{measurable_aeval_matrix}. This uses only the bare Hermitian CFC instance,
+  avoiding the isometric CFC (absent for real matrices) and any measurable
+  selection.
+  \end{proof}
+\end{theorem}
+
+\begin{theorem}[CFC measurability for continuous functions]\label{measurable_cfc_continuous}
+  \lean{Oseledets.measurable_cfc_continuous}\leanok
+  Let $M$ be measurable with each $M x$ self-adjoint, and $f\colon\R\to\R$
+  continuous. Then $x\mapsto\mathrm{cfc}\,f\,(M x)$ is measurable.
+  \begin{proof}\leanok
+  \uses{measurable_aeval_matrix, measurable_cfc_eqOn_polynomial}
+  A single polynomial need not agree with $f$ on the unbounded family of spectra,
+  so approximate per point: by Weierstrass choose, for each $k$, a polynomial
+  $q_k$ with $\abs{q_k-f}\le 1/(k{+}1)$ on $[-k,k]$. Each spectrum is finite,
+  hence in some $[-R,R]$, so $q_k\to f$ uniformly on $\mathrm{spectrum}(M x)$ and
+  $\mathrm{cfc}\,q_k\,(M x)\to\mathrm{cfc}\,f\,(M x)$. Each
+  $x\mapsto\mathrm{cfc}\,q_k\,(M x)=q_k(M x)$ is measurable, and matrix-entrywise
+  the metrizable limit upgrades to measurability of $x\mapsto\mathrm{cfc}\,f\,(M x)$.
+  \end{proof}
+\end{theorem}
+
+These CFC tools deliver $\mathrm{MeasurableSubspace}$ for the concrete Oseledets
+flag once the Oseledets limit operator
+$\Lambda x=\lim_n\bigl((A^{(n)})^{\top} A^{(n)}\bigr)^{1/(2n)}$ is available: each
+flag projection is realized as a spectral band projector $P_i x=\mathrm{cfc}\,g_i\,(\Lambda x)$
+of $\Lambda x$ for a continuous gap function $g_i$, so the projection matrix of
+its range equals $P_i x$ definitionally, and measurability of $x\mapsto P_i x$
+follows from \ref{measurable_cfc_continuous} (or, on the gapped good set where
+the spectrum is the fixed Lyapunov set, from \ref{measurable_cfc_eqOn_polynomial}).
+This is the measurability input feeding \uses{oseledets_filtration}.

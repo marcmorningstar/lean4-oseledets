@@ -1,0 +1,335 @@
+\chapter{Companion results and extensions}
+\label{chap:corollaries}
+
+The Oseledets multiplicative ergodic theorem $\texttt{oseledets\_filtration}$ delivers, $\mu$-a.e., a strictly decreasing $A$-equivariant flag $\R^d = V_0(x) \supsetneq \cdots \supsetneq V_k(x) = 0$ together with a strictly decreasing exponent list $\lambda_0 > \cdots > \lambda_{k-1}$ governing the growth $\tfrac1n \log\norm{A^{(n)}(x)v} \to \lambda_i$ on each stratum $V_i \setminus V_{i+1}$. This chapter collects its companion results. Many are surprisingly cheap: they follow from the \emph{statement} of the main theorem, quantified over an arbitrary witness of its conclusion, with no access to the construction. To make this precise we bundle the conclusion as a predicate.
+
+\section{The bundled predicate and uniqueness}
+
+\begin{definition}[Bundled Oseledets filtration]\label{IsOseledetsFiltration}
+  \lean{Oseledets.IsOseledetsFiltration}\leanok
+  For a measure $\mu$, map $T$, generator $A$, count $k$, exponent list $\lambda : \mathrm{Fin}\,k \to \R$ and flag $V : \mathrm{Fin}(k+1) \to X \to \mathrm{Submodule}$, the predicate $\mathrm{IsOseledetsFiltration}\ \mu\ T\ A\ k\ \lambda\ V$ asserts: $\lambda$ is strictly antitone; each level $V_i$ is a measurable subspace family; and $\mu$-a.e.\ $x$ carries the strictly decreasing $A$-equivariant flag $\R^d = V_0(x) \supsetneq \cdots \supsetneq V_k(x) = 0$ with exact growth rate $\lambda_i$ on the stratum $V_i \setminus V_{i+1}$. This is byte-identical to the conclusion of the main theorem.
+\end{definition}
+
+\begin{theorem}[Repackaged existence]\label{oseledets_filtration'}
+  \lean{Oseledets.oseledets_filtration'}\leanok
+  Under the standing hypotheses (ergodic $T$, invertible measurable $A$ with $\log^+\norm{A}, \log^+\norm{A^{-1}} \in L^1$), there exist $k, \lambda, V$ with $\mathrm{IsOseledetsFiltration}\ \mu\ T\ A\ k\ \lambda\ V$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration, IsOseledetsFiltration}
+  Destructure the conclusion of $\texttt{oseledets\_filtration}$ and repackage its three conjuncts as the bundled predicate; the data match definitionally.
+\end{proof}
+
+\begin{theorem}[Canonical sublevel characterization]\label{ae_mem_iff_limsup_le}
+  \lean{Oseledets.IsOseledetsFiltration.ae_mem_iff_limsup_le}\leanok
+  If $\mathrm{IsOseledetsFiltration}\ \mu\ T\ A\ k\ \lambda\ V$ holds, then $\mu$-a.e.\ each interior flag level is exactly a growth-sublevel set: for every $i$ and vector $v$,
+  \[ v \in V_i(x) \iff v = 0 \ \lor\ \limsup_n \tfrac1n \log\norm{A^{(n)}(x)v} \le \lambda_i. \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration, IsOseledetsFiltration}
+  At a good point pick the stratum index $j$ of $v \ne 0$; the per-stratum convergence gives $\limsup = \lambda_j$. Membership in $V_i$ forces $i \le j$, so by antitonicity $\lambda_j \le \lambda_i$; conversely if $v \notin V_i$ then $j < i$ and $\lambda_j > \lambda_i$ strictly, contradicting the bound. The disjunct $v = 0$ handles $\log 0$. No machinery beyond the a.e.\ block is used.
+\end{proof}
+
+\begin{theorem}[Uniqueness of the spectrum and filtration]\label{unique}
+  \lean{Oseledets.IsOseledetsFiltration.unique}\leanok
+  On a probability space, any two Oseledets filtration data $(k, \lambda, V)$ and $(k_2, \lambda_2, V_2)$ for the same cocycle agree: $k = k_2$, the exponents coincide under the index cast, and $\mu$-a.e.\ the flags agree level by level.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{ae_mem_iff_limsup_le, oseledets_filtration}
+  At a single good point the set of realized growth limits equals $\mathrm{range}\,\lambda$ and $\mathrm{range}\,\lambda_2$; two strictly antitone enumerations of one finite set coincide, giving $k = k_2$ and $\lambda = \lambda_2$. Levelwise identity then follows from the sublevel characterization $\ref{ae_mem_iff_limsup_le}$ applied to both data.
+\end{proof}
+
+\section{The top exponent as operator-norm growth}
+
+\begin{lemma}[Nontriviality]\label{k_pos}
+  \lean{Oseledets.IsOseledetsFiltration.k_pos}\leanok
+  On a probability space with $0 < d$, any Oseledets filtration has $0 < k$.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{oseledets_filtration}
+  If $k = 0$ then at a good point $\R^d = V_0(x) = V_{\mathrm{last}}(x) = 0$, forcing $\mathrm{finrank} = 0$, contradicting $d > 0$.
+\end{proof}
+
+\begin{theorem}[Top exponent = norm growth]\label{tendsto_log_opNorm_cocycle}
+  \lean{Oseledets.IsOseledetsFiltration.tendsto_log_opNorm_cocycle}\leanok
+  On a probability space, with $A$ invertible and $0 < k$, $\mu$-a.e.\ the operator-norm growth rate of the cocycle converges to the top exponent:
+  \[ \tfrac1n \log\norm{A^{(n)}(x)} \to \lambda_0. \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration, k_pos}
+  Two-sided squeeze from the flag block. \emph{Lower:} a vector $v$ in the top stratum has $\tfrac1n\log\norm{A^{(n)}v} \to \lambda_0$ and $\norm{A^{(n)}v} \le \norm{A^{(n)}}\,\norm{v}$. \emph{Upper:} the column-sum bound $\norm{M} \le \sum_j \norm{M e_j}$ on the $L^2$ operator norm, each basis vector being nonzero, gives eventually $\tfrac1n\log\norm{A^{(n)}} \le \lambda_0 + \varepsilon$. Neither Furstenberg--Kesten nor singular values are needed.
+\end{proof}
+
+\begin{corollary}[Identification of the Furstenberg--Kesten constant]\label{oseledets_top_exponent_eq_furstenbergKesten}
+  \lean{Oseledets.oseledets_top_exponent_eq_furstenbergKesten}\leanok
+  Any constant $c$ to which $\tfrac1n\log\norm{A^{(n)}(x)}$ converges $\mu$-a.e.\ (e.g.\ the Furstenberg--Kesten constant) equals $\lambda_0$.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{tendsto_log_opNorm_cocycle}
+  Both $\ref{tendsto_log_opNorm_cocycle}$ and the hypothesis hold at a common good point; uniqueness of limits gives $\lambda_0 = c$.
+\end{proof}
+
+\section{A.e.-constant multiplicities}
+
+\begin{theorem}[Deterministic dimension profile]\label{exists_finrank_ae_eq}
+  \lean{Oseledets.IsOseledetsFiltration.exists_finrank_ae_eq}\leanok
+  For ergodic $T$ and invertible $A$, every Oseledets filtration has a deterministic dimension profile: there is a strictly decreasing $m : \mathrm{Fin}(k+1) \to \N$ with $m_0 = d$, $m_k = 0$ and, $\mu$-a.e., $\mathrm{finrank}\,V_i(x) = m_i$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration}
+  The dimension $x \mapsto \mathrm{finrank}\,V_i(x)$ is measurable via the trace of the orthogonal projector, and $T$-invariant a.e.\ because equivariance through the invertible $A(x)$ preserves dimension. Ergodicity makes each invariant $\N$-valued function a.e.\ constant. The profile structure ($\mathrm{StrictAnti}$, endpoints) is read off one good point.
+\end{proof}
+
+\begin{corollary}[Per-exponent multiplicities]\label{exists_multiplicity}
+  \lean{Oseledets.IsOseledetsFiltration.exists_multiplicity}\leanok
+  For ergodic $T$ and invertible $A$, each exponent $\lambda_i$ carries a positive deterministic multiplicity $m_i = \dim V_i - \dim V_{i+1}$ with $\sum_i m_i = d$.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{exists_finrank_ae_eq}
+  Set $m_i$ to the consecutive dimension drops of $\ref{exists_finrank_ae_eq}$; positivity is strict antitonicity, and the telescoping sum equals $m_0 - m_k = d$.
+\end{proof}
+
+\begin{theorem}[MET with multiplicities]\label{oseledets_filtration_with_multiplicities}
+  \lean{Oseledets.oseledets_filtration_with_multiplicities}\leanok
+  Under the standing hypotheses there exist $k, \lambda, V$ and a strictly decreasing $m$ with $m_0 = d$, $m_k = 0$, such that $\mathrm{IsOseledetsFiltration}\ \mu\ T\ A\ k\ \lambda\ V$ holds and $\mu$-a.e.\ $\mathrm{finrank}\,V_i(x) = m_i$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration', exists_finrank_ae_eq}
+  Obtain a witness from $\ref{oseledets_filtration'}$ and apply $\ref{exists_finrank_ae_eq}$ to it.
+\end{proof}
+
+\section{The Lyapunov spectrum}
+
+\begin{definition}[Sorted spectrum]\label{exponents}
+  \lean{Oseledets.exponents}\leanok
+  The full Lyapunov spectrum with multiplicity is the total function $\mathrm{exponents} : \mathrm{Fin}\,d \to \R$, whose $i$-th entry is the deterministic limit of $\tfrac1n\log\sigma_i(A^{(n)})$, sorted non-increasingly. The top entry is $\mathrm{topExponent}$.
+\end{definition}
+
+\begin{theorem}[Defining $\sigma$-limit and order]\label{exponents_tendsto_log_singularValue}
+  \lean{Oseledets.exponents_tendsto_log_singularValue}\leanok
+  For each sorted index $i$ and $\mu$-a.e.\ $x$, $\tfrac1n\log\sigma_i(A^{(n)}(x)) \to \mathrm{exponents}_i$; moreover $\mathrm{exponents}$ is antitone.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration}
+  The deterministic exponent sequence is extracted by $\mathrm{Classical.choose}$ from the singular-value convergence theorem underlying the MET; antitonicity and the a.e.\ limit are its defining specification.
+\end{proof}
+
+\begin{theorem}[Eigenvalue tie]\label{exp_exponents_eq_eigenvalues₀_oseledetsLimit}
+  \lean{Oseledets.exp_exponents_eq_eigenvalues₀_oseledetsLimit}\leanok
+  $\mu$-a.e., $\exp(\mathrm{exponents}_i)$ is the $i$-th sorted eigenvalue of the Oseledets limit matrix $\Lambda(x)$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{exponents_tendsto_log_singularValue}
+  The $\sigma$-limit identifies $\mathrm{lamSing}(x,i) = \mathrm{exponents}_i$ a.e.; combine with the eigenvalues of $\Lambda$ being $e^{\mathrm{lamSing}}$.
+\end{proof}
+
+\section{Exponent sums}
+
+\begin{theorem}[Sign characterizations of exponent sums]\label{sumPosExp_pos_iff}
+  \lean{Oseledets.sumPosExp_pos_iff}\leanok
+  The sum $\mathrm{sumPosExp}$ of the strictly positive exponents is nonnegative, vanishes iff all exponents are $\le 0$, and is strictly positive iff some exponent is positive (and dually $\mathrm{sumNegExp} \le 0$ with the mirror characterizations).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{exponents_tendsto_log_singularValue}
+  Each summand of $\mathrm{sumPosExp}$ is strictly positive on the filter, so the sum is $\ge 0$; a sum of nonnegatives vanishes iff the filter is empty, i.e.\ no exponent is positive.
+\end{proof}
+
+\begin{theorem}[Telescoping identity for partial sums]\label{gammaK_eq_sum_top_exponents}
+  \lean{Oseledets.gammaK_eq_sum_top_exponents}\leanok
+  For $k \le d$, the ergodic growth rate $\Gamma_k$ of the product of the top-$k$ singular values equals the sum of the top-$k$ exponents: $\Gamma_k = \sum_{i<k} \mathrm{exponents}_i$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{exponents_tendsto_log_singularValue}
+  Since $\mathrm{sprod}_k = \prod_{i<k}\sigma_i$, the normalized $\log\mathrm{sprod}_k$ is the finite sum of the per-index $\tfrac1n\log\sigma_i$, each converging to $\mathrm{exponents}_i$. The sum of convergents converges to the sum of limits; uniqueness against the defining limit of $\Gamma_k$ closes it.
+\end{proof}
+
+\section{Exterior (wedge) growth}
+
+\begin{definition}[Exterior cocycle generator]\label{extGen}
+  \lean{Oseledets.extGen}\leanok
+  The $k$-th exterior generator $\mathrm{extGen}\,k\,A$ sends $x$ to the $k$-th compound matrix $C_k(A x)$ of $k\times k$ minors. Its iterated cocycle is the compound of the iterate: $\mathrm{cocycle}(\mathrm{extGen}\,k\,A)\,T\,n\,x = C_k(A^{(n)}(x))$.
+\end{definition}
+
+\begin{theorem}[$k$-volume growth rate]\label{tendsto_log_opNorm_compound_cocycle}
+  \lean{Oseledets.tendsto_log_opNorm_compound_cocycle}\leanok
+  For $k \le d$ and $\mu$-a.e.\ $x$, the operator-norm growth of the compound cocycle converges to $\Gamma_k$: $\tfrac1n\log\norm{C_k(A^{(n)}(x))} \to \Gamma_k$, the $k$-dimensional volume growth rate.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{gammaK_eq_sum_top_exponents}
+  The operator norm of the compound matrix is $\mathrm{sprod}_k$, the product of the top-$k$ singular values; rewrite and apply the defining a.e.\ limit of $\Gamma_k$.
+\end{proof}
+
+\begin{corollary}[Positive sum as a maximal partial sum]\label{sumPosExp_eq_gammaK_card_pos}
+  \lean{Oseledets.sumPosExp_eq_gammaK_card_pos}\leanok
+  Writing $k_+ = \#\{i : 0 < \mathrm{exponents}_i\}$, the positive-exponent sum equals the partial sum $\Gamma_{k_+} = \sum_{i<k_+}\mathrm{exponents}_i$.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{gammaK_eq_sum_top_exponents, sumPosExp_pos_iff}
+  By antitonicity the strictly positive entries are exactly the top $k_+$ indices, so the filtered positive sum coincides with the top-$k_+$ prefix sum, which is $\Gamma_{k_+}$ via $\ref{gammaK_eq_sum_top_exponents}$.
+\end{proof}
+
+\section{The trace--determinant identity}
+
+\begin{lemma}[Product of singular values is the absolute determinant]\label{sprod_d_eq_abs_det}
+  \lean{Oseledets.sprod_d_eq_abs_det}\leanok
+  For every $n$, $x$: $\mathrm{sprod}\,A\,T\,d\,n\,x = \abs{\det A^{(n)}(x)}$.
+\end{lemma}
+\begin{proof}\leanok
+  Squaring, $\mathrm{sprod}_d^2 = \prod_i \sigma_i^2 = \det(M^{\top} M) = (\det M)^2$ for the symmetric Gram operator; take the nonnegative square root. No invertibility is needed.
+\end{proof}
+
+\begin{theorem}[Determinant identity]\label{sumAllExp_eq_integral_log_abs_det}
+  \lean{Oseledets.sumAllExp_eq_integral_log_abs_det}\leanok
+  The sum of all Lyapunov exponents equals the integral of $\log\abs{\det}$ of the generator:
+  \[ \sum_i \mathrm{exponents}_i = \int_X \log\abs{\det A(x)}\,d\mu. \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{sprod_d_eq_abs_det, gammaK_eq_sum_top_exponents}
+  Two a.e.\ limits of $\tfrac1n\log\abs{\det A^{(n)}}$: it equals $\tfrac1n\log\mathrm{sprod}_d \to \Gamma_d = \sum_i\mathrm{exponents}_i$ by $\ref{sprod_d_eq_abs_det}$ and $\ref{gammaK_eq_sum_top_exponents}$; and $\log\abs{\det A^{(n)}}$ is the additive Birkhoff sum of $\log\abs{\det A}$, whose ergodic average tends to $\int\log\abs{\det A}$. Uniqueness of limits closes the identity.
+\end{proof}
+
+\begin{corollary}[Volume contraction]\label{tendsto_abs_det_cocycle_atTop_zero}
+  \lean{Oseledets.tendsto_abs_det_cocycle_atTop_zero}\leanok
+  If $\sum_i \mathrm{exponents}_i < 0$ then $\mu$-a.e.\ $\abs{\det A^{(n)}(x)} \to 0$.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{sumAllExp_eq_integral_log_abs_det}
+  Since $\tfrac1n\log\abs{\det A^{(n)}}$ tends to a negative constant, $\log\abs{\det A^{(n)}} \to -\infty$, so its exponential tends to $0$.
+\end{proof}
+
+\section{The inverse / time-reversed spectrum}
+
+\begin{theorem}[Inverse cocycle exponents]\label{tendsto_log_singularValue_inv_cocycle}
+  \lean{Oseledets.tendsto_log_singularValue_inv_cocycle}\leanok
+  For each sorted index $i$ and $\mu$-a.e.\ $x$, the singular-value exponents of the inverse-matrix cocycle are the negated, reversed exponents of $A$:
+  \[ \tfrac1n\log\sigma_i\!\big((A^{(n)}(x))^{-1}\big) \to -\,\mathrm{exponents}_{\mathrm{rev}\,i}. \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{exponents_tendsto_log_singularValue}
+  Singular-value reciprocity $\sigma_i(M^{-1}) = \sigma_{\mathrm{rev}\,i}(M)^{-1}$ for invertible $M$, applied to the iterate, turns the forward limit $\mathrm{exponents}_{\mathrm{rev}\,i}$ into its negative.
+\end{proof}
+
+\begin{corollary}[Top of the reversed spectrum is minus the bottom]\label{topExponent_inv_eq_neg_bot}
+  \lean{Oseledets.topExponent_inv_eq_neg_bot}\leanok
+  $\mu$-a.e.\ the largest exponent of the inverse cocycle is $-\,\mathrm{exponents}_{d-1}$, the negative of the smallest forward exponent.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{tendsto_log_singularValue_inv_cocycle}
+  Specialize $\ref{tendsto_log_singularValue_inv_cocycle}$ at $i = 0$, where $\mathrm{rev}\,0 = d-1$.
+\end{proof}
+
+\section{Restriction to invariant subbundles}
+
+\begin{definition}[Invariant subbundle]\label{InvariantSubbundle}
+  \lean{Oseledets.InvariantSubbundle}\leanok
+  An invariant subbundle is a measurable family of fibre subspaces $W(x) \le \R^d$ that is $A$-equivariant a.e.: $A(x)\,W(x) = W(Tx)$.
+\end{definition}
+
+\begin{lemma}[Dimension interlacing]\label{restricted_finrank_le}
+  \lean{Oseledets.restricted_finrank_le}\leanok
+  At each ambient flag level, the dimension captured by the subbundle is bounded by the ambient dimension: $\dim\big(W(x) \cap V_i(x)\big) \le \dim V_i(x)$, so the restricted multiplicities are a sub-multiset of the ambient ones.
+\end{lemma}
+\begin{proof}\leanok
+  Monotonicity of $\mathrm{finrank}$ under $W \cap V_i \le V_i$.
+\end{proof}
+
+\begin{theorem}[Restricted strict Oseledets filtration]\label{restricted_strict_filtration}
+  \lean{Oseledets.restricted_strict_filtration}\leanok
+  For ergodic $T$, invertible $A$, and an invariant subbundle $W$, collapsing the constant-dimension levels of $i \mapsto W \cap V_i$ yields a genuine \emph{strict} Oseledets filtration inside $W$: a strictly antitone $\lambda'$ and a measurable family $V'$ with, $\mu$-a.e., $V'_0(x) = W(x)$, $V'_{k'}(x) = 0$, strictly descending and $A$-equivariant, with exact growth rate $\lambda'_i$ per stratum and all levels $\le W(x)$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration', exists_finrank_ae_eq, restricted_finrank_le}
+  Obtain a forward witness via $\ref{oseledets_filtration'}$, restrict the flag to $W$ and read its a.e.-constant dimension profile (the restricted analogue of $\ref{exists_finrank_ae_eq}$); enumerate the first-occurrence surviving indices via an order embedding to collapse repeats into a strict flag, inheriting equivariance and per-stratum growth. The top level is $W$, not $\top$, so the result is stated directly rather than through $\ref{IsOseledetsFiltration}$.
+\end{proof}
+
+\section{The non-ergodic spectrum}
+
+\begin{theorem}[Non-ergodic exponents]\label{exists_exponents_nonergodic}
+  \lean{Oseledets.exists_exponents_nonergodic}\leanok
+  For merely measure-preserving $T$ (no ergodicity) and invertible measurable $A$ with the standing integrability, there is a family of $T$-invariant integrable functions $\lambda_i : X \to \R$ such that for each $i < d$ and $\mu$-a.e.\ $x$, $\tfrac1n\log\sigma_i(A^{(n)}(x)) \to \lambda_i(x)$. The exponents become invariant functions rather than constants.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration}
+  The non-ergodic Kingman theorem applied to the subadditive cocycle $\log\mathrm{sprod}_k$ produces invariant integrable partial-sum limits $G_k$; set $\lambda_i = G_{i+1} - G_i$, with the per-$\sigma$ telescoping as in the ergodic case.
+\end{proof}
+
+\begin{corollary}[Non-ergodic positive-exponent sum]\label{exists_sumPosExp_nonergodic}
+  \lean{Oseledets.exists_sumPosExp_nonergodic}\leanok
+  Summing the positive parts $\max(\lambda_i(x),0)$ over $i < d$ yields a single $T$-invariant integrable function $G_+ : X \to \R$, the non-ergodic analogue of the positive-exponent sum.
+\end{corollary}
+\begin{proof}\leanok
+  \uses{exists_exponents_nonergodic}
+  A finite sum of positive parts of the invariant integrable functions of $\ref{exists_exponents_nonergodic}$ is invariant and integrable.
+\end{proof}
+
+\section{Regularity of the exponents}
+
+\begin{theorem}[Fekete infimum representation]\label{gammaK_eq_iInf}
+  \lean{Oseledets.gammaK_eq_iInf}\leanok
+  The partial-sum growth rate is the infimum over $n$ of the normalized integrals:
+  \[ \Gamma_k = \inf_n \frac{1}{n+1}\int_X \log\mathrm{sprod}_k(n+1,x)\,d\mu. \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{gammaK_eq_sum_top_exponents}
+  The integral sequence is subadditive (Fekete), so it converges to its infimum; a Fatou estimate against the dominating Birkhoff averages of $\log^+\norm{A^{\pm1}}$ identifies that limit with the a.e.\ growth rate $\Gamma_k$ in both directions.
+\end{proof}
+
+\begin{theorem}[Upper semicontinuity of partial sums and top exponent]\label{gammaK_upperSemicontinuous}
+  \lean{Oseledets.gammaK_upperSemicontinuous}\leanok
+  Along a filter of generators $B_i \to A$ for which each fixed-$n$ integral is continuous, the partial-sum rate is upper semicontinuous: $\limsup_i \Gamma_k(B_i) \le \Gamma_k(A)$; specializing $k=1$ gives the same for the top exponent. This is USC, not continuity --- equality can fail when a spectral gap closes.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{gammaK_eq_iInf}
+  $\Gamma_k$ is an infimum of the per-$n$ continuous normalized integrals ($\ref{gammaK_eq_iInf}$); for each $n$, $\Gamma_k(B_i)$ is below the $n$-th integral, whose limit along the filter is the $n$-th integral of $A$, so $\limsup_i \Gamma_k(B_i)$ is at most every term of the infimum.
+\end{proof}
+
+\begin{theorem}[Lower semicontinuity of the bottom exponent]\label{botExp_lowerSemicontinuous}
+  \lean{Oseledets.botExp_lowerSemicontinuous}\leanok
+  The bottom exponent $\lambda_d = \Gamma_d - \Gamma_{d-1}$ is lower semicontinuous in the generator: $\lambda_d(A) \le \liminf_i \lambda_d(B_i)$.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{gammaK_upperSemicontinuous, sumAllExp_eq_integral_log_abs_det}
+  Writing $\Gamma_d = \int\log\abs{\det}$ (the determinant identity $\ref{sumAllExp_eq_integral_log_abs_det}$), which is continuous in the generator under the hypothesis, and $\Gamma_{d-1}$ upper semicontinuous ($\ref{gammaK_upperSemicontinuous}$), the difference $\Gamma_d - \Gamma_{d-1}$ is lower semicontinuous.
+\end{proof}
+
+\section{Singular one-sided bounds}
+
+\begin{theorem}[Forward top value]\label{tendsto_top_posLogNorm}
+  \lean{Oseledets.tendsto_top_posLogNorm}\leanok
+  For ergodic $T$ and a possibly-singular measurable generator with only $\log^+\norm{A} \in L^1$ (no invertibility, no inverse integrability), the normalized positive-part log-norms $\tfrac1n\log^+\norm{A^{(n)}(x)}$ converge $\mu$-a.e.\ to a constant $\lambda_1^+$.
+\end{theorem}
+\begin{proof}\leanok
+  Apply the ergodic Kingman theorem to the subadditive, bounded-below, integrable cocycle $\log^+\norm{A^{(n)}}$; only the forward integrability is used.
+\end{proof}
+
+\begin{theorem}[Upper bound on the singular top exponent]\label{limsup_logNorm_le_top}
+  \lean{Oseledets.limsup_logNorm_le_top}\leanok
+  Under the same singular hypotheses there is $\lambda_1^+$ with, $\mu$-a.e.,
+  \[ \limsup_n\Big(\tfrac1n\log\norm{A^{(n)}(x)} : \mathrm{EReal}\Big) \le \lambda_1^+. \]
+  The $\limsup$ is taken in $\mathrm{EReal}$ so the bound is unconditional even when the growth tends to $-\infty$; this is one-sided only.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{tendsto_top_posLogNorm}
+  Termwise $\log \le \log^+$, then pass to the $\mathrm{EReal}$ $\limsup$; since the $\log^+$ sequence converges to $\lambda_1^+$ ($\ref{tendsto_top_posLogNorm}$), its $\limsup$ is $\lambda_1^+$.
+\end{proof}
+
+\begin{theorem}[Sharp $\limsup$ in the expanding case]\label{limsup_logNorm_eq_top_of_pos}
+  \lean{Oseledets.limsup_logNorm_eq_top_of_pos}\leanok
+  There is a forward top value $\lambda_1^+$ (the a.e.\ limit of $\tfrac1n\log^+\norm{A^{(n)}}$) such that, whenever $\lambda_1^+ > 0$, $\mu$-a.e.\ the genuine log-norm $\limsup$ is exactly $\lambda_1^+$:
+  \[ \limsup_n\Big(\tfrac1n\log\norm{A^{(n)}(x)} : \mathrm{EReal}\Big) = \lambda_1^+. \]
+  The positivity hypothesis is essential; in the contracting case $\lambda_1^+ = 0$ the genuine growth may tend to $-\infty$ and equality fails.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{limsup_logNorm_le_top, tendsto_top_posLogNorm}
+  The $\le$ half is $\ref{limsup_logNorm_le_top}$. For $\ge$: where $\tfrac1n\log^+\norm{A^{(n)}} \to \lambda_1^+ > 0$ the sequence is eventually positive, forcing $\log\norm{A^{(n)}} > 0$, so $\log^+ = \log$ eventually; the two $\mathrm{EReal}$ sequences agree eventually, hence so do their $\limsup$s, which equal $\lambda_1^+$.
+\end{proof}
+
+\begin{theorem}[Singular top-$k$ volume upper bound]\label{limsup_logSprod_le_top}
+  \lean{Oseledets.limsup_logSprod_le_top}\leanok
+  For ergodic $T$ and a possibly-singular generator with $\log^+\norm{A} \in L^1$, there is a constant $\Gamma_k^+$ with, $\mu$-a.e.,
+  \[ \limsup_n\Big(\tfrac1n\log\mathrm{sprod}_k(x) : \mathrm{EReal}\Big) \le \Gamma_k^+. \]
+  The top-$k$ volume growth is bounded above unconditionally (the $\mathrm{EReal}$ $\limsup$ allows volume collapse), again one-sided only.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{tendsto_top_posLogNorm}
+  Since $\mathrm{sprod}_k \ge 0$ is submultiplicative with no invertibility, the same $\log^+$-of-a-nonnegative-subadditive-quantity Kingman construction gives the a.e.-constant value $\Gamma_k^+$ and the termwise $\log \le \log^+$ domination transfers to the $\mathrm{EReal}$ $\limsup$.
+\end{proof}

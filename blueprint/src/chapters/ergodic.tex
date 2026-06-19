@@ -1,0 +1,464 @@
+\chapter{Ergodic theorems}
+\label{chap:ergodic}
+
+This chapter develops the three classical ergodic theorems that drive the
+multiplicative ergodic theorem: the \emph{maximal ergodic inequality} of
+Hopf and Garsia, the \emph{pointwise (Birkhoff) ergodic theorem}, and
+\emph{Kingman's subadditive ergodic theorem}. The first is the analytic
+gateway; the second turns the gateway into almost-everywhere convergence of
+Birkhoff averages; the third is the genuine engine of Oseledets, turning a
+subadditive sequence of log-norms into an almost-everywhere limit.
+
+Throughout, \(T : X \to X\) is a map on a measurable space carrying a measure
+\(\mu\), \texttt{birkhoffSum}\,\(T\,g\,n\,x = \sum_{k<n} g(T^{[k]}x)\) is the
+\(n\)-th Birkhoff partial sum, and \texttt{birkhoffAverage}\,\(\R\,T\,g\,n\,x =
+n^{-1}\,\texttt{birkhoffSum}\,T\,g\,n\,x\) is the Birkhoff average. The
+arguments are due to Garsia, Katznelson--Weiss, and Karlsson; the formalization
+keeps every quantity in \(\R\) (or, where \(-\infty\) cannot be excluded a
+priori, in \texttt{EReal}) to avoid junk values.
+
+\section{Maximal ergodic inequality}
+
+\begin{definition}[Garsia's maximal function]\label{maxBirkhoff}
+  \lean{Oseledets.maxBirkhoff}\leanok
+  For a measurable \(T\), a function \(g : X \to \R\), \(N : \N\) and \(x\),
+  the \emph{maximal function} is
+  \[
+    \texttt{maxBirkhoff}\,T\,g\,N\,x
+      = \max_{0 \le k \le N} \texttt{birkhoffSum}\,T\,g\,k\,x,
+  \]
+  the nonempty \texttt{Finset.sup'} of the Birkhoff partial sums over
+  \(k \in \texttt{range}\,(N+1)\). Since the \(k = 0\) term equals
+  \(\texttt{birkhoffSum}\,T\,g\,0\,x = 0\), the maximal function is its own
+  positive part.
+\end{definition}
+
+\begin{lemma}[Nonnegativity of the maximal function]\label{maxBirkhoff_nonneg}
+  \lean{Oseledets.maxBirkhoff_nonneg}\leanok
+  For all \(g, N, x\) one has \(0 \le \texttt{maxBirkhoff}\,T\,g\,N\,x\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{maxBirkhoff}
+  The index \(k = 0\) lies in \(\texttt{range}\,(N+1)\), and the corresponding
+  term is \(\texttt{birkhoffSum}\,T\,g\,0\,x = 0\). The supremum over a
+  nonempty finite set dominates each of its terms, so the maximal function is
+  at least \(0\).
+\end{proof}
+
+\begin{lemma}[Recursion for the maximal function]\label{maxBirkhoff_succ}
+  \lean{Oseledets.maxBirkhoff_succ}\leanok
+  For all \(g, N, x\),
+  \[
+    \texttt{maxBirkhoff}\,T\,g\,(N+1)\,x
+      = \texttt{birkhoffSum}\,T\,g\,(N+1)\,x
+        \sqcup \texttt{maxBirkhoff}\,T\,g\,N\,x.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{maxBirkhoff}
+  This is the identity \(\texttt{range}\,(N+2) = \texttt{insert}\,(N+1)\,
+  (\texttt{range}\,(N+1))\) applied to the supremum: splitting off the top
+  index gives the join of the new term with the previous maximum. Both
+  inequalities follow from the universal/existential characterizations of
+  \texttt{Finset.sup'}. The recursion is what makes integrability provable by
+  induction on \(N\).
+\end{proof}
+
+\begin{lemma}[Garsia's pointwise inequality]\label{maxBirkhoff_le_add}
+  \lean{Oseledets.maxBirkhoff_le_add}\leanok
+  On the set where the maximal function is positive, for every \(x\) with
+  \(0 < \texttt{maxBirkhoff}\,T\,g\,N\,x\),
+  \[
+    \texttt{maxBirkhoff}\,T\,g\,N\,x
+      \le g\,x + \texttt{maxBirkhoff}\,T\,g\,N\,(T x).
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{maxBirkhoff,maxBirkhoff_nonneg}
+  Pull the constant \(g\,x\) through the supremum: by the additive shift of a
+  nonempty \texttt{sup'} and the recursion
+  \(\texttt{birkhoffSum}\,T\,g\,(k+1)\,x = g\,x +
+  \texttt{birkhoffSum}\,T\,g\,k\,(Tx)\), the right-hand side equals
+  \(\max_{0 \le k \le N} \texttt{birkhoffSum}\,T\,g\,(k+1)\,x\), the maximum of
+  the \emph{shifted} partial sums. The maximum defining the left-hand side is
+  attained at some index \(k_0\); positivity forces \(k_0 \ge 1\) (the index
+  \(0\) gives the value \(0\)), so \(\texttt{birkhoffSum}\,T\,g\,k_0\,x\) is one
+  of the shifted sums and is therefore dominated by their maximum.
+\end{proof}
+
+\begin{lemma}[Measurability and integrability of the maximal function]\label{integrable_maxBirkhoff}
+  \lean{Oseledets.integrable_maxBirkhoff}\leanok
+  If \(T\) is measure-preserving and \(g\) is integrable, then each Birkhoff
+  partial sum and the maximal function \(\texttt{maxBirkhoff}\,T\,g\,N\) are
+  integrable; if moreover \(g\) and \(T\) are measurable, then
+  \(\texttt{maxBirkhoff}\,T\,g\,N\) is measurable.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{maxBirkhoff,maxBirkhoff_succ}
+  Each summand \(g \circ T^{[j]}\) is integrable because \(T^{[j]}\) is
+  measure-preserving, so the finite Birkhoff sum is integrable; measurability
+  is likewise a finite sum of measurable compositions. Integrability of the
+  maximal function follows by induction on \(N\) using the recursion
+  \cref{maxBirkhoff_succ} and the fact that a join of two integrable functions
+  is integrable; measurability is the measurability of a finite \texttt{sup'}.
+\end{proof}
+
+\begin{proposition}[Garsia's inequality at a fixed level]\label{setIntegral_maxBirkhoff_pos_nonneg}
+  \lean{Oseledets.setIntegral_maxBirkhoff_pos_nonneg}\leanok
+  For a measure-preserving \(T\) and a measurable integrable \(g\), and every
+  \(N : \N\),
+  \[
+    0 \le \int_{\{x \,:\, 0 < \texttt{maxBirkhoff}\,T\,g\,N\,x\}} g \, d\mu.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{maxBirkhoff_le_add,maxBirkhoff_nonneg,integrable_maxBirkhoff}
+  Write \(E\) for the level set and \(M = \texttt{maxBirkhoff}\,T\,g\,N\).
+  Integrating the pointwise inequality \cref{maxBirkhoff_le_add} over \(E\)
+  gives \(\int_E (M - M \circ T) \le \int_E g\). Now \(\int_E M \circ T \le
+  \int_X M \circ T = \int_X M\) by nonnegativity and measure-preservation (via
+  \texttt{integral\_map} and \(\texttt{map}\,T\,\mu = \mu\), avoiding any
+  embedding hypothesis), and \(\int_X M = \int_E M\) since \(M\) vanishes off
+  \(E\). Chaining these cancels the two maximal-function integrals and leaves
+  \(0 \le \int_E (M - M\circ T) \le \int_E g\).
+\end{proof}
+
+\begin{lemma}[Level sets exhaust the target set]\label{iUnion_setOf_maxBirkhoff_pos}
+  \lean{Oseledets.iUnion_setOf_maxBirkhoff_pos}\leanok
+  The level sets \(\{x : 0 < \texttt{maxBirkhoff}\,T\,g\,N\,x\}\) are monotone
+  in \(N\), and their union over all \(N\) is exactly
+  \(\{x : \exists n,\ 0 < \texttt{birkhoffSum}\,T\,g\,(n+1)\,x\}\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{maxBirkhoff}
+  Monotonicity is \texttt{Finset.sup'} monotonicity over the nested ranges.
+  For the union: \(0 < \texttt{maxBirkhoff}\,T\,g\,N\,x\) means some
+  \(\texttt{birkhoffSum}\,T\,g\,k\,x > 0\) with \(k \le N\); the index \(0\)
+  gives \(0\) and is excluded, so \(k = n+1\) for some \(n\). Conversely a
+  positive partial sum at index \(n+1\) makes the maximal function positive at
+  level \(N = n+1\).
+\end{proof}
+
+\begin{theorem}[Maximal ergodic inequality (Hopf--Garsia)]\label{setIntegral_birkhoffSum_pos_nonneg}
+  \lean{Oseledets.setIntegral_birkhoffSum_pos_nonneg}\leanok
+  For a measure-preserving \(T\) and an integrable \(f : X \to \R\),
+  \[
+    0 \le \int_{\{x \,:\, \exists n,\ 0 < \texttt{birkhoffSum}\,T\,f\,(n+1)\,x\}}
+      f \, d\mu.
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{setIntegral_maxBirkhoff_pos_nonneg,iUnion_setOf_maxBirkhoff_pos}
+  First treat a measurable integrable \(g\): by
+  \cref{setIntegral_maxBirkhoff_pos_nonneg} each level-set integral is
+  nonnegative, and these integrals converge to the integral over the union
+  \cref{iUnion_setOf_maxBirkhoff_pos} by monotone convergence of set integrals,
+  so the limit is nonnegative. For general integrable \(f\), pass to a
+  measurable representative \(g =^{\text{a.e.}} f\); the Birkhoff sums of \(f\)
+  and \(g\) agree a.e., so the two target sets agree a.e.\ (the one for \(g\)
+  being measurable, the one for \(f\) null-measurable), and the integrands
+  agree a.e., which transfers the inequality from \(g\) to \(f\).
+\end{proof}
+
+\section{Birkhoff}
+
+\begin{theorem}[Conditional expectation commutes with the dynamics]\label{condExp_invariants_comp_self}
+  \lean{Oseledets.condExp_invariants_comp_self}\leanok
+  For a finite measure, a measure-preserving measurable \(T\) and integrable
+  \(g\), the conditional expectation onto the \(\sigma\)-algebra
+  \(\texttt{invariants}\,T\) of \(T\)-invariant sets is a.e.\ \(T\)-invariant:
+  \[
+    \big(\mu[g \mid \texttt{invariants}\,T]\big) \circ T
+      =^{\text{a.e.}} \mu[g \mid \texttt{invariants}\,T].
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  Set-integral invariance of \(h \circ T\) over a measurable invariant set
+  reduces, via \(\texttt{map}\,T\,\mu = \mu\), to the integral of \(h\). Hence
+  \(\mu[g \circ T \mid \mathcal I]\) and \(\mu[g \mid \mathcal I]\) have equal
+  integrals over every invariant set, so by uniqueness of the conditional
+  expectation they agree a.e.; combining this with the commutation identity
+  \(\mu[g\circ T \mid \mathcal I] =^{\text{a.e.}} (\mu[g\mid\mathcal I])\circ T\)
+  (again by uniqueness, using that \(T\) is \((\mathcal I,\mathcal I)\)-measurable)
+  yields the invariance.
+\end{proof}
+
+\begin{lemma}[Subexponential orbital tail]\label{ae_tendsto_orbit_div_atTop_zero}
+  \lean{Oseledets.ae_tendsto_orbit_div_atTop_zero}\leanok
+  For a measure-preserving \(T\) and integrable \(g\), the orbital tail
+  \(n^{-1}\, g(T^{[n]}x)\) tends to \(0\) for \(\mu\)-a.e.\ \(x\).
+\end{lemma}
+\begin{proof}\leanok
+  A Borel--Cantelli argument. For each threshold \(\delta = 1/(k+1)\) the series
+  \(\sum_n \mu\{x : (n+1)\delta \le \abs{g\,x}\}\) is finite: the pointwise count
+  of crossed thresholds is at most \(\abs{g\,x}/\delta\), and integrating
+  (Tonelli) bounds the series by \(\delta^{-1}\int \abs{g}\). Measure-preservation
+  transfers finiteness to the shifted orbit \(g \circ T^{[n]}\), so a.e.\ only
+  finitely many \(n\) cross any fixed threshold; choosing \(k\) large makes the
+  tail eventually smaller than any \(\varepsilon\).
+\end{proof}
+
+\begin{lemma}[A.e.\ boundedness of Birkhoff averages]\label{ae_bddAbove_birkhoffAverage}
+  \lean{Oseledets.ae_bddAbove_birkhoffAverage}\leanok
+  For a finite measure, a measure-preserving \(T\) and integrable \(g\), the
+  Birkhoff averages \(n \mapsto \texttt{birkhoffAverage}\,\R\,T\,g\,(n+1)\,x\)
+  are a.e.\ bounded above (and, applied to \(-g\), a.e.\ bounded below).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{setIntegral_birkhoffSum_pos_nonneg}
+  The maximal ergodic inequality applied to \(g - c\) yields, for the maximal
+  set \(B_c = \{x : \exists n,\ c < \texttt{birkhoffAverage}\,\R\,T\,g\,(n+1)\,x\}\),
+  the estimate \(c\,\mu B_c \le \int_{B_c} g \le \int \abs{g}\). Taking
+  \(c = k \in \N\) gives \(\mu B_k \le \int\abs{g}/k \to 0\), so the
+  intersection \(\bigcap_k B_k\) is null. Off this null set the range of
+  Birkhoff averages is bounded above.
+\end{proof}
+
+\begin{lemma}[Limsup invariance and vanishing perturbations]\label{limsup_birkhoffAverage_comp_ae}
+  \leanok
+  The pointwise limsup \(x \mapsto \limsup_n
+  \texttt{birkhoffAverage}\,\R\,T\,g\,n\,x\) is a.e.\ \(T\)-invariant.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{ae_tendsto_orbit_div_atTop_zero,ae_bddAbove_birkhoffAverage}
+  The difference \(A_n(g)(Tx) - A_n(g)(x) = n^{-1}(g(T^{[n]}x) - g\,x)\) tends
+  to \(0\) a.e.\ by the tail estimate \cref{ae_tendsto_orbit_div_atTop_zero}.
+  Two bounded sequences differing by a null sequence have equal limsup (proved
+  via \texttt{limsup\_add\_const} and an \(\varepsilon\)-argument), and
+  boundedness holds a.e.\ at both \(x\) and \(Tx\) by
+  \cref{ae_bddAbove_birkhoffAverage}; hence the limsup is a.e.\ \(T\)-invariant.
+\end{proof}
+
+\begin{proposition}[The core maximal-inequality step]\label{measure_setOf_lt_limsup_eq_zero}
+  \lean{Oseledets.measure_setOf_lt_limsup_eq_zero}\leanok
+  For a finite measure, measure-preserving \(T\), integrable \(g\) and
+  \(\varepsilon > 0\), the superlevel set where the limsup of the Birkhoff
+  averages exceeds \(\mu[g\mid\mathcal I] + \varepsilon\) is null.
+\end{proposition}
+\begin{proof}\leanok
+  \uses{setIntegral_birkhoffSum_pos_nonneg,condExp_invariants_comp_self,limsup_birkhoffAverage_comp_ae}
+  Write \(L = \mu[g\mid\mathcal I]\) and \(Ls = \limsup A_\bullet(g)\). The set
+  \(E = \{L + \varepsilon < Ls\}\) is a.e.\ \(T\)-invariant
+  (\cref{condExp_invariants_comp_self}, \cref{limsup_birkhoffAverage_comp_ae}),
+  hence a.e.\ equal to a genuinely invariant measurable set \(E'\). Feed
+  \(\varphi = \mathbf 1_{E'}(g - L - \varepsilon)\) to the maximal ergodic
+  inequality \cref{setIntegral_birkhoffSum_pos_nonneg}; on \(E'\) the partial
+  sums of \(\varphi\) telescope (using orbit-constancy of \(L\)), and the
+  maximal set equals \(E'\). Thus
+  \(0 \le \int_{E'}(g - L - \varepsilon) = -\varepsilon\,\mu E'\) (using
+  \(\int_{E'} g = \int_{E'} L\)), forcing \(\mu E' = 0\).
+\end{proof}
+
+\begin{theorem}[Pointwise (Birkhoff) ergodic theorem]\label{tendsto_birkhoffAverage_ae}
+  \lean{Oseledets.tendsto_birkhoffAverage_ae}\leanok
+  For a finite measure, a measure-preserving \(T\) and an integrable \(g\), the
+  Birkhoff averages converge \(\mu\)-a.e.\ to the conditional expectation of
+  \(g\) onto the invariant \(\sigma\)-algebra:
+  \[
+    \texttt{birkhoffAverage}\,\R\,T\,g\,n\,x \to
+      \big(\mu[g \mid \texttt{invariants}\,T]\big)(x).
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{measure_setOf_lt_limsup_eq_zero,ae_bddAbove_birkhoffAverage}
+  Unioning the null superlevel sets of \cref{measure_setOf_lt_limsup_eq_zero}
+  over \(\varepsilon = 1/(k+1)\) gives \(\limsup A_\bullet(g) \le
+  \mu[g\mid\mathcal I]\) a.e.; applying the same to \(-g\) (and using
+  \(\limsup(-a) = -\liminf a\)) gives \(\mu[g\mid\mathcal I] \le
+  \liminf A_\bullet(g)\) a.e. With a.e.\ boundedness
+  \cref{ae_bddAbove_birkhoffAverage}, the sandwich
+  \(\limsup \le \mu[g\mid\mathcal I] \le \liminf\) forces convergence to
+  \(\mu[g\mid\mathcal I]\).
+\end{proof}
+
+\begin{corollary}[Ergodic case of Birkhoff]\label{tendsto_birkhoffAverage_ae_integral}
+  \lean{Oseledets.tendsto_birkhoffAverage_ae_integral}\leanok
+  For an ergodic \(T\) on a probability space and integrable \(g\), the Birkhoff
+  averages converge \(\mu\)-a.e.\ to the space average \(\int g\, d\mu\).
+\end{corollary}
+\begin{proof}\leanok
+  \uses{tendsto_birkhoffAverage_ae,condExp_invariants_comp_self}
+  By \cref{tendsto_birkhoffAverage_ae} the limit is \(\mu[g\mid\mathcal I]\),
+  which is a.e.\ \(T\)-invariant \cref{condExp_invariants_comp_self}; ergodicity
+  forces it a.e.\ constant. Its integral equals \(\int g\) (conditional
+  expectation preserves the integral) and equals the constant times
+  \(\mu(X) = 1\), so the constant is \(\int g\).
+\end{proof}
+
+\section{Kingman}
+
+\begin{definition}[Subadditive cocycle]\label{IsSubadditiveCocycle}
+  \lean{Oseledets.IsSubadditiveCocycle}\leanok
+  A sequence \(g : \N \to X \to \R\) is a \emph{subadditive cocycle} over \(T\)
+  when
+  \[
+    g\,(m+n)\,x \le g\,m\,x + g\,n\,(T^{[m]}x)
+      \qquad \text{for all } m, n, x.
+  \]
+  For \(g_n = \log\norm{A^{(n)}}\) this is submultiplicativity of the operator
+  norm composed with the cocycle identity.
+\end{definition}
+
+\begin{lemma}[Singleton and block subadditivity]\label{le_birkhoffSum_one}
+  \lean{Oseledets.IsSubadditiveCocycle.le_birkhoffSum_one}\leanok
+  For a subadditive cocycle and \(n : \N\), one has
+  \(g\,(n+1)\,x \le \texttt{birkhoffSum}\,T\,(g\,1)\,(n+1)\,x\); more generally,
+  for any decomposition of \([0,N)\) into \(k+1\) consecutive blocks of lengths
+  \(\ell_0, \dots, \ell_k\), the cocycle is dominated by the sum of the block
+  values along the orbit at the frontiers \(T^{[\sum_{j<i}\ell_j]}x\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{IsSubadditiveCocycle}
+  Both are inductions that peel off the last block and apply the defining
+  subadditivity at the split point. The statement is restricted to nonempty
+  decompositions (and to index \(n+1\)) because subadditivity at \((0,0)\) only
+  forces \(0 \le g\,0\,x\), the wrong sign for a one-sided bound at \(0\).
+\end{proof}
+
+\begin{definition}[Normalized cocycle]\label{cdiv}
+  \lean{Oseledets.Kingman.cdiv}\leanok
+  The \emph{normalized cocycle} is
+  \(\texttt{cdiv}\,g\,n\,x = g\,(n+1)\,x / (n+1)\), the sequence whose a.e.\
+  limit is the content of Kingman's theorem; its \texttt{EReal} coercion is
+  \(\texttt{ecdiv}\,g\,n\,x\), used where \(-\infty\) cannot be excluded a
+  priori.
+\end{definition}
+
+\begin{lemma}[Fekete limit of the normalized integrals]\label{exists_fekete}
+  \lean{Oseledets.Kingman.exists_fekete}\leanok
+  For a measure-preserving \(T\), an integrable subadditive cocycle \(g\) whose
+  normalized integrals are bounded below, the sequence
+  \((\int g\,(n+1)\,d\mu)/(n+1)\) converges to the Fekete constant \(\gamma\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{IsSubadditiveCocycle}
+  Integrating the cocycle inequality and using measure-preservation
+  (\(\int g\,n\,(T^{[m]}\cdot) = \int g\,n\)) shows the integral sequence
+  \(a_n = \int g\,n\) is subadditive in Fekete's sense. The \((n+1)\)-indexed
+  lower bound is bridged by hand to a lower bound on \(a_n/n\) (the \(n=0\) term
+  is \(0\)), and Fekete's lemma delivers convergence of \(a_n/n\), hence of the
+  shifted sequence, to \(\gamma = \inf_n a_n/n\).
+\end{proof}
+
+\begin{lemma}[Invariance from a one-sided orbital bound]\label{ae_eq_comp_of_le_comp}
+  \lean{Oseledets.Kingman.ae_eq_comp_of_le_comp}\leanok
+  For a finite measure, measure-preserving \(T\) and an a.e.\ measurable \(F\)
+  with \(F\,x \le F\,(Tx)\) for a.e.\ \(x\), one has \(F \circ T =^{\text{a.e.}}
+  F\).
+\end{lemma}
+\begin{proof}\leanok
+  For each rational \(c\) the upper level set \(\{c \le F\}\) is null-measurable
+  (via a measurable representative) and a.e.\ contained in its preimage
+  \(T^{-1}\{c \le F\}\), which has equal finite measure; an a.e.\ subset of
+  equal finite measure is a.e.\ equal. Ranging over all rational \(c\) and
+  collecting the a.e.\ statements gives the invariance.
+\end{proof}
+
+\begin{lemma}[Envelopes are a.e.\ measurable and \(T\)-invariant]\label{limsup_div_comp_ae}
+  \lean{Oseledets.Kingman.limsup_div_comp_ae}\leanok
+  For a finite measure, measure-preserving \(T\), an integrable subadditive
+  cocycle with normalized integrals bounded below, the limsup envelope
+  \(f_+(x) = \limsup_n \texttt{cdiv}\,g\,n\,x\) (and likewise the liminf
+  envelope \(f_-\)) is a.e.\ \(T\)-invariant.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cdiv,ae_eq_comp_of_le_comp,exists_fekete}
+  The subadditive bound \(\texttt{cdiv}\,g\,n\,x \le g\,1\,x/(n+1) + g\,n\,(Tx)/(n+1)\)
+  differs from \(\texttt{cdiv}\,g\,n\,(Tx)\) by a null sequence, so the
+  vanishing-perturbation lemma for limsup gives the pointwise comparison
+  \(f_+(x) \le f_+(Tx)\) wherever the cocycle is a.e.\ bounded (above and
+  below) at \(x\) and \(Tx\). Feeding this into
+  \cref{ae_eq_comp_of_le_comp} yields a.e.\ invariance.
+\end{proof}
+
+\begin{lemma}[Integrability of the limsup envelope]\label{int_limsup_div_integrable}
+  \lean{Oseledets.Kingman.int_limsup_div_integrable}\leanok
+  Under the same hypotheses, the limsup envelope \(f_+\) is integrable.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cdiv,tendsto_birkhoffAverage_ae,exists_fekete}
+  The nonnegative Fatou defect \(d_n(x) = \texttt{birkhoffAverage}\,\R\,T\,(g\,1)\,
+  (n+1)\,x - \texttt{cdiv}\,g\,n\,x \ge 0\) (singleton subadditivity) controls
+  the envelope. The \texttt{ENNReal} Fatou inequality \(\int^- \liminf u_n \le
+  \liminf \int^- u_n\) applied to \(u_n = \texttt{ofReal}\,d_n\), together with
+  \(\int d_n = \int g\,1 - a_{n+1}/(n+1) \to \int g\,1 - \gamma < \infty\)
+  (\cref{exists_fekete}) and Birkhoff convergence of \(A_{n+1}(g\,1)\) to a loose
+  envelope \(B\) (\cref{tendsto_birkhoffAverage_ae}), shows \(B - f_+ \ge 0\) has
+  finite lower integral, hence is integrable; therefore \(f_+ = B - (B - f_+)\)
+  is integrable.
+\end{proof}
+
+\begin{proposition}[Hard direction: \(\limsup \le \liminf\) a.e.]\label{ae_ereal_limsup_le_liminf}
+  \lean{Oseledets.Kingman.ae_ereal_limsup_le_liminf}\leanok
+  Under the same hypotheses, for a.e.\ \(x\) the \texttt{EReal} limsup of the
+  normalized cocycle is dominated by its liminf.
+\end{proposition}
+\begin{proof}\leanok
+  \uses{cdiv,le_birkhoffSum_one,tendsto_birkhoffAverage_ae,ae_eq_comp_of_le_comp}
+  This is the stopping-time / greedy block argument of Katznelson--Weiss and
+  Karlsson. After the WLOG shift to the nonpositive process \(\tilde g\,(n+1)
+  \le 0\), fix \(\varepsilon, M > 0\) and set \(h = \mu[\max(f_-, -M) \mid
+  \mathcal I]\). A greedy two-type partition of \([0,n)\) into ``good'' blocks
+  (where the stopping time \(\tau \le L\) realizing \(\tilde g\,\tau \le
+  \tau(h+\varepsilon)\) exists) and short singletons (bad/overrun) bounds, via
+  block subadditivity \cref{le_birkhoffSum_one},
+  \(\tilde g\,n\,x/n \le (h\,x+\varepsilon)(1 - (L-1)/n -
+  \texttt{birkhoffAverage}\,\mathbf 1_{B_L})\). Letting \(n \to \infty\)
+  (Birkhoff, \cref{tendsto_birkhoffAverage_ae}), then \(L \to \infty\) (the bad
+  sets \(B_L\) shrink to a null set), \(M \to \infty\) and \(\varepsilon \to 0\)
+  yields \(f_+ \le f_-\) a.e. The whole argument is carried in \texttt{EReal} to
+  keep the bookkeeping clean near \(-\infty\).
+\end{proof}
+
+\begin{theorem}[Kingman core: a.e.\ existence of an integrable limit]\label{ae_tendsto_cdiv}
+  \lean{Oseledets.Kingman.ae_tendsto_cdiv}\leanok
+  For a finite measure, measure-preserving measurable \(T\), an integrable
+  subadditive cocycle with normalized integrals bounded below, there is an
+  integrable \(G\) with \(\texttt{cdiv}\,g\,n\,x \to G\,x\) for \(\mu\)-a.e.\
+  \(x\).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{cdiv,int_limsup_div_integrable,ae_ereal_limsup_le_liminf}
+  Take \(G = f_+\), integrable by \cref{int_limsup_div_integrable}. On the
+  a.e.\ good set the \texttt{EReal} limsup \(e\) satisfies \(\bot < e \le B <
+  \top\) (finiteness from the loose envelope and the Fatou step), and
+  \(\liminf = \limsup = e\) \cref{ae_ereal_limsup_le_liminf}; in a complete
+  linear order equal liminf and limsup force convergence to \(e\). Transferring
+  to \(\R\) gives \(\texttt{cdiv}\,g\,n\,x \to e^{\text{toReal}} = f_+\,x\).
+\end{proof}
+
+\begin{theorem}[Kingman's subadditive ergodic theorem]\label{tendsto_kingman}
+  \lean{Oseledets.tendsto_kingman}\leanok
+  For a finite measure, a measure-preserving \(T\), an integrable subadditive
+  cocycle \(g\) whose normalized integrals are bounded below, there is a
+  \(T\)-invariant integrable \(G\) with
+  \[
+    n^{-1}\, g\,n\,x \to G\,x
+      \qquad \text{for } \mu\text{-a.e.\ } x.
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{ae_tendsto_cdiv,limsup_div_comp_ae,int_limsup_div_integrable,isSubadditiveCocycle_logNorm,lambdaBar}
+  Take \(G = f_-\). On the a.e.\ set where the normalized cocycle is bounded,
+  \(\liminf \le \limsup\) is trivial and \(\limsup \le \liminf\) is the hard
+  direction inside \cref{ae_tendsto_cdiv}, so \(f_- =^{\text{a.e.}} f_+\); the
+  sandwich \(\limsup \le f_- \le \liminf\) yields pointwise convergence to
+  \(f_-\), and reindexing removes the \(n=0\) term. Invariance is
+  \cref{limsup_div_comp_ae} (liminf variant), and integrability follows from
+  \(f_- =^{\text{a.e.}} f_+\) with \cref{int_limsup_div_integrable}.
+\end{proof}
+
+\begin{corollary}[Kingman, ergodic case]\label{tendsto_kingman_ergodic}
+  \lean{Oseledets.tendsto_kingman_ergodic}\leanok
+  For an ergodic \(T\) on a probability space, an integrable subadditive cocycle
+  with normalized integrals bounded below, there is a constant \(c\) with
+  \(n^{-1}\,g\,n\,x \to c\) for \(\mu\)-a.e.\ \(x\).
+\end{corollary}
+\begin{proof}\leanok
+  \uses{tendsto_kingman}
+  Kingman's theorem \cref{tendsto_kingman} gives a \(T\)-invariant integrable
+  limit \(G\); ergodicity forces an a.e.\ \(T\)-invariant integrable function to
+  be a.e.\ constant, so \(G =^{\text{a.e.}} c\) and the limit is \(c\). (That
+  constant is the Fekete infimum \(\gamma\); only a.e.-constancy is asserted, as
+  this is what the multiplicative ergodic theorem consumes.)
+\end{proof}

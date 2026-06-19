@@ -1,0 +1,305 @@
+\chapter{The two-sided splitting}
+\label{chap:twosided}
+
+The one-sided multiplicative ergodic theorem produces, for a measurable matrix cocycle over an ergodic system, a decreasing measurable equivariant \emph{filtration} \(\R^d = V_0(x) \supsetneq V_1(x) \supsetneq \cdots \supsetneq V_k(x) = 0\) whose successive quotients carry the distinct Lyapunov exponents \(\lambda_0 > \cdots > \lambda_{k-1}\). When the base dynamics is \emph{invertible} and the generator is everywhere invertible with \(\log^+\norm{A}, \log^+\norm{A^{-1}} \in L^1\), the filtration upgrades to a genuine direct-sum \emph{splitting} \(\R^d = E_0(x) \oplus \cdots \oplus E_{k-1}(x)\), with each \(E_i\) equivariant and the cocycle growing at the exact rate \(+\lambda_i\) forward and \(-\lambda_i\) backward on \(E_i \setminus \{0\}\).
+
+This chapter develops that upgrade. The strategy applies the one-sided theorem twice — once forward to \((T, A)\), once to a reflected \emph{backward generator} over \(T^{-1}\) — and intersects the two filtrations. Two genuinely new analytic nodes carry the argument: an identification of the Kingman subadditive constant with the limit of integral means, and a backward-orbit growth envelope for restricted cocycles. Their consequence is the \emph{transversality crux}: forward and backward exponents of any common nonzero vector add to a nonnegative number, so opposite-side sublevels meet in \(0\). A pure multiset reflection lemma then aligns the backward spectrum to the negated forward one, after which a telescoping-flag lattice argument assembles the splitting.
+
+\section{The invertible setup and the backward generator}
+
+The base dynamics is an invertible measure-preserving system \(T : X \simeq_m X\) (a \texttt{MeasurableEquiv}) with \(T^{-1} = T.\mathrm{symm}\). The backward iterates of the cocycle \(A^{(n)}(x) = \mathrm{cocycle}\,A\,T\,n\,x\) are governed by the \emph{backward generator}, a generator over \(T^{-1}\) whose cocycle reflects the forward one through inverse and orbit reversal.
+
+\begin{definition}[Backward generator]\label{backwardGen}
+  \lean{Oseledets.backwardGen}\leanok
+  For \(A : X \to \mathrm{Matrix}\,(\mathrm{Fin}\,d)\,(\mathrm{Fin}\,d)\,\R\) and \(T : X \simeq_m X\), the backward generator is
+  \[
+    \mathrm{backwardGen}\,A\,T\,x \;=\; \bigl(A(T^{-1}x)\bigr)^{-1}.
+  \]
+  Its cocycle is taken over \(T^{-1}\).
+\end{definition}
+
+\begin{lemma}[Cocycle recursion, newest factor on the right]\label{cocycle_succ'}
+  \lean{Oseledets.cocycle_succ'}\leanok
+  For any generator \(A\) and map \(T\), \(A^{(n+1)}(x) = A(T^{[n]}x)\cdot A^{(n)}(x)\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cocycle_add}
+  This is the companion of the standard recursion \(A^{(n+1)}(x) = A^{(n)}(Tx)\cdot A(x)\): apply the additive law \(A^{(m+n)} = A^{(m)}(T^{[n]}\cdot)\cdot A^{(n)}\) with \(m = 1\) after commuting the summands.
+\end{proof}
+
+\begin{lemma}[Backward cocycle identity]\label{cocycle_backwardGen}
+  \lean{Oseledets.cocycle_backwardGen}\leanok
+  Writing \(B = \mathrm{backwardGen}\,A\,T\), the cocycle of \(B\) over \(T^{-1}\) satisfies
+  \[
+    B^{(n)}(x) \;=\; \bigl(A^{(n)}(T^{-n}x)\bigr)^{-1}, \qquad B^{(n)}(T^{n}y) \;=\; \bigl(A^{(n)}(y)\bigr)^{-1}.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{cocycle_succ',backwardGen}
+  Induct on \(n\). The successor step expands \(B^{(n+1)}\) by the left recursion, applies the inductive hypothesis at \(T^{-1}x\), rewrites \(B = (A\circ T^{-1})^{-1}\) by \cref{cocycle_succ'}, and collapses the product of inverses by \(\mathrm{Matrix.mul\_inv\_rev}\); a left-inverse iterate identity \((T\circ T^{-1})^{[n]} = \mathrm{id}\) reindexes the orbit point. The dual form follows by substituting \(x = T^{n}y\) and cancelling \((T^{-1}\circ T)^{[n]} = \mathrm{id}\). This identity is exactly what makes the second (backward) growth limit in the splitting theorem the cocycle \((A^{(n)}(T^{-n}x))^{-1}\), avoiding any moving-point singular-value bookkeeping.
+\end{proof}
+
+\begin{proposition}[Backward standing hypotheses]\label{backwardData_of}
+  \lean{Oseledets.backwardData_of}\leanok
+  If \(\det A(x) \neq 0\) for all \(x\), \(A\) is measurable, \(T\) is measure-preserving, and \(\log^+\norm{A}, \log^+\norm{A^{-1}} \in L^1(\mu)\), then the backward system \((T^{-1}, B)\) satisfies the same four hypotheses: \(\det B \neq 0\) everywhere, \(B\) measurable, and \(\log^+\norm{B}, \log^+\norm{B^{-1}} \in L^1(\mu)\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{backwardGen}
+  Invertibility of \(B = (A\circ T^{-1})^{-1}\) is \(\det(M^{-1}) = (\det M)^{-1} \neq 0\); measurability is composition of matrix inversion with the measurable \(T^{-1}\). For integrability, \(T^{-1}\) is measure-preserving (Mathlib's \(\mathrm{MeasurePreserving.symm}\)), so \(\log^+\norm{B} = \log^+\norm{A^{-1}}\circ T^{-1}\) and \(\log^+\norm{B^{-1}} = \log^+\norm{A}\circ T^{-1}\) (using \((M^{-1})^{-1} = M\)) transfer by composition. Crucially \(T\) ergodic implies \(T^{-1}\) ergodic (Mathlib's \(\mathrm{Ergodic.symm}\)), so the one-sided theorem applies verbatim to the backward system.
+\end{proof}
+
+\begin{lemma}[Biinvariant conull set]\label{exists_conull_biinvariant}
+  \lean{Oseledets.exists_conull_biinvariant}\leanok
+  For \(T\) measure-preserving on a probability space and a conull measurable set \(S\), there is a conull measurable \(S' \subseteq S\) invariant under both \(T\) and \(T^{-1}\).
+\end{lemma}
+\begin{proof}\leanok
+  Take \(S' = \bigl(\bigcap_n (T^{[n]})^{-1}S\bigr) \cap \bigl(\bigcap_n (T^{-[n]})^{-1}S\bigr)\). Each iterate is measure-preserving, so every preimage of the conull \(S\) is conull and the countable intersection is conull. Membership is "all forward and backward iterates land in \(S\)"; applying \(T\) or \(T^{-1}\) merely shifts the index, the cross term collapsing through \(T^{-1}\circ T = \mathrm{id}\).
+\end{proof}
+
+\section{The strong one-sided export with dimensions}
+
+The crux argument needs the dimensions of the filtration spaces, which the headline one-sided statement quantifies away. We re-run the one-sided composition with concrete witnesses, exposing the spectrum \(\lambda\) and the filtration \(V\) together with a dimension formula.
+
+\begin{proposition}[Strong one-sided export]\label{oseledets_filtration_dims}
+  \lean{Oseledets.oseledets_filtration_dims}\leanok
+  Under the one-sided hypotheses (with \([\mathrm{NeZero}\,d]\)) there exist a decreasing exponent sequence \(\mathrm{lam0} : \N \to \R\) realizing the a.e.\ per-index singular-value limits, and a measurable filtration \(V : \mathrm{Fin}(k+1) \to X \to \mathrm{Submodule}\,\R\,(\R^d)\) where \(k = \mathrm{numExp}\,\mathrm{lam0}\,d\), such that for a.e.\ \(x\): \(V_0 x = \top\), \(V_k x = \bot\), \(V\) is strictly decreasing and \(A\)-equivariant, every \(v \in V_{i}x \setminus V_{i+1}x\) grows at rate \(\mathrm{expEnum}\,\mathrm{lam0}\,d\,i\), and
+  \[
+    \mathrm{finrank}\,(V_{i}x) \;=\; \#\{\, j < d : \mathrm{lam0}\,j \le \mathrm{expEnum}\,\mathrm{lam0}\,d\,i \,\}.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{oseledets_filtration,ae_finrank_vslow}
+  This is the committed one-sided assembly, re-run with the concrete witness \(V = V'\,A\,T\,\mathrm{lam0}\): obtain \(\mathrm{lam0}\) from the singular-value exponents, discharge the top-gap mass envelope, build the spectral, slow-flag and growth interfaces exactly as the headline proof does, and read the structural block off the same conull set. The dimension formula is supplied by \cref{ae_finrank_vslow} combined with the slow-flag identification \(V'_i x = \mathrm{vslow}\,(\exp\lambda_i)\,x\).
+\end{proof}
+
+\begin{proposition}[Rank of the slow space]\label{ae_finrank_vslow}
+  \lean{Oseledets.ae_finrank_vslow}\leanok
+  For a.e.\ \(x\) and all \(t \in \R\),
+  \[
+    \mathrm{finrank}\,\bigl(\mathrm{vslow}\,A\,T\,(\exp t)\,x\bigr) \;=\; \#\{\, j < d : \mathrm{lam0}\,j \le t \,\}.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{cfc_apply_of_eigenvector}
+  The sanitized limit operator \(\widehat\Lambda\) has an orthonormal eigenbasis with eigenvalues \(\exp(\mathrm{lamSing}\,x\,e)\), and a.e.\ \(\mathrm{lamSing}\,x\,j = \mathrm{lam0}\,j\) (a countable conjunction over \(j < d\)). The slow space is the range of a spectral sublevel projector \(\mathrm{cfc}\,f\,\widehat\Lambda\); \cref{cfc_apply_of_eigenvector} shows it acts diagonally on the eigenbasis with eigenvalues in \(\{0,1\}\), and the rank of such a self-adjoint idempotent equals the number of \(1\)-eigenvectors, which by \(\exp\)-monotonicity of the threshold is \(\#\{j : \mathrm{lam0}\,j \le t\}\).
+\end{proof}
+
+\begin{lemma}[Functional calculus on an eigenvector]\label{cfc_apply_of_eigenvector}
+  \lean{Oseledets.cfc_apply_of_eigenvector}\leanok
+  If \(M\) is self-adjoint and \(M v = c\,v\) for \(v \neq 0\), then \((\mathrm{cfc}\,f\,M)\,v = f(c)\cdot v\).
+\end{lemma}
+\begin{proof}\leanok
+  The eigenvalue \(c\) lies in the (finite) spectrum of \(M\). Pick a Lagrange interpolating polynomial \(q\) with \(q = f\) on the spectrum; then \(\mathrm{cfc}\,f\,M = \mathrm{cfc}\,q\,M = q(M)\), and \(q(M)v = q(c)v = f(c)v\) because \(v\) is an eigenvector. This is pointwise, so no measurability is incurred.
+\end{proof}
+
+\section{The Kingman means identification}
+
+The repository's ergodic Kingman theorem exhibits a constant \(c\) with \((1/n)g_n \to c\) a.e., but defers identifying \(c\) with the Fekete infimum of the integral means. The two-sided theorem is the first consumer that needs the means form, in order to equate the Kingman constants of a subadditive cocycle over \(T\) and of its orbit-reversed version over \(T^{-1}\).
+
+\begin{proposition}[Kingman constant as the limit of integral means]\label{tendsto_kingman_ergodic_means}
+  \lean{Oseledets.tendsto_kingman_ergodic_means}\leanok
+  Under the hypotheses of the ergodic Kingman theorem, there is a constant \(c\) with
+  \[
+    \frac{1}{n+1}\int_X g_{n+1}\,d\mu \longrightarrow c \qquad\text{and}\qquad \tfrac{1}{n}\,g_n(x) \longrightarrow c \ \text{ for a.e. } x.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{tendsto_kingman}
+  Let \(L\) be the Fekete limit of the means (existing by subadditivity). For \(c \le L\): iterate subadditivity \(g_{mn}(x) \le \sum_{j<m} g_n(T^{[jn]}x)\), divide by \(mn\) and let \(m\to\infty\); the left side converges to \(c\) along a subsequence, the right to the Birkhoff average of \((1/n)g_n\) for the measure-preserving \(T^{[n]}\) (no ergodicity needed), whose integral is \((1/n)\int g_n\); integrate the inequality. For \(c \ge L\): apply Fatou to the nonnegative sequence \(A_n - \mathrm{cdiv}_n\), where \(A_n\) is the Birkhoff average of \(g_1\) (nonnegative by single-step subadditivity) and \(\mathrm{cdiv}_n\) tends to \(L\); since \(A_n - \mathrm{cdiv}_n \to B - c\) a.e.\ and \(\int A_n = \int g_1\), Fatou yields \(\int g_1 - L \ge \int g_1 - c\).
+\end{proof}
+
+\section{Restricted cocycles and their exponent}
+
+To measure the growth of \(A^{(n)}\) restricted to a filtration level \(V_i\), we form a restricted cocycle by post-composing the orthogonal projector onto \(V_i\). A \emph{floor} term repairs the failure of everywhere-subadditivity off the good set, so that Kingman applies without an a.e.\ caveat.
+
+\begin{definition}[Floored restricted log-cocycle]\label{restLog}
+  \lean{Oseledets.restLog}\leanok
+  For a measurable family \(V : X \to \mathrm{Submodule}\,\R\,(\R^d)\), set \(\mathrm{restGen}\,A\,V\,x = A(x)\cdot P_{V(x)}\) (with \(P_K\) the orthogonal projector onto \(K\)), \(\mathrm{sFloor}\,A\,T\,n\,x = \prod_{j<n}\norm{(A(T^{[j]}x))^{-1}}^{-1}\), and
+  \[
+    \mathrm{restLog}\,A\,V\,T\,n\,x \;=\; \log\Bigl(\bignorm{\mathrm{cocycle}(\mathrm{restGen}\,A\,V)\,T\,n\,x} \;\sqcup\; \mathrm{sFloor}\,A\,T\,n\,x\Bigr).
+  \]
+\end{definition}
+
+\begin{lemma}[Everywhere subadditivity]\label{isSubadditiveCocycle_restLog}
+  \lean{Oseledets.isSubadditiveCocycle_restLog}\leanok
+  \(\mathrm{restLog}\,A\,V\,T\) is an everywhere subadditive cocycle: for all \(m,n,x\), \(\mathrm{restLog}\,(m+n)\,x \le \mathrm{restLog}\,m\,x + \mathrm{restLog}\,n\,(T^{[m]}x)\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{restLog}
+  The floor is multiplicative, \(\mathrm{sFloor}\,(m+n) = \mathrm{sFloor}\,m \cdot (\mathrm{sFloor}\,n)\circ T^{[m]}\), the norm of the restricted product is submultiplicative, and \(\max(ab, cd) \le \max(a,c)\max(b,d)\) for nonnegatives; taking \(\log\) (monotone) gives subadditivity with no exceptional set. The floor is the only mechanism that keeps the everywhere signature Kingman requires; on the good set it is dominated and disappears.
+\end{proof}
+
+\begin{lemma}[Restricted Kingman, both directions of time]\label{restLog_backward_kingman}
+  \lean{Oseledets.restLog_backward_kingman}\leanok
+  Kingman applied to \(\mathrm{restLog}\) over \(T\) yields a constant \(\chi_V\); the orbit-reversed cocycle \(h_n(x) = \mathrm{restLog}_n(T^{-n}x)\) is subadditive over \(T^{-1}\) with the same integral means, hence converges a.e.\ to the same \(\chi_V\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{isSubadditiveCocycle_restLog,tendsto_kingman_ergodic_means}
+  Over \(T\), \cref{isSubadditiveCocycle_restLog} together with integrability of the endpoints gives a Kingman constant \(\chi_V\). The reversed family \(h_n = \mathrm{restLog}_n\circ T^{-n}\) is subadditive over \(T^{-1}\) by an index juggle through the additive law, and \(\int h_n = \int \mathrm{restLog}_n\) by measure-preservation of \(T^{-n}\). Since \(T^{-1}\) is ergodic, \cref{tendsto_kingman_ergodic_means} forces the two Kingman constants — both being the common limit of the identical integral means — to coincide.
+\end{proof}
+
+\begin{proposition}[Restricted exponent equals \(\lambda_i\)]\label{restricted_const_eq}
+  \lean{Oseledets.restricted_const_eq}\leanok
+  For the forward level \(V_i\), the restricted Kingman constant equals the \(i\)-th exponent: \(\chi_{V_i} = \mathrm{expEnum}\,\mathrm{lam0}\,d\,i\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{restLog_backward_kingman,oseledets_filtration_dims}
+  Lower bound \(\ge\): on the good set, for \(v \in V_i x\) the restricted cocycle equals \(A^{(n)}(x)v\); a stratum witness from strictness of the filtration realizes the rate \(\lambda_i\). Upper bound \(\le\): pointwise, expand any \(P_{V_i(y)}w\) in a classical orthonormal basis of \(V_i(y)\); then \(\norm{A^{(n)}P w} \le \sum_j \norm{A^{(n)}e_j}\) with each \(e_j\) in a stratum of index \(\ge i\), so its growth is \(\le \lambda_i\); the log-of-a-finite-sum lemma passes the maximum through. Both bounds match the a.e.-constant Kingman limit.
+\end{proof}
+
+\begin{proposition}[Backward-orbit growth envelope]\label{ae_limsup_restricted_backward_le}
+  \lean{Oseledets.ae_limsup_restricted_backward_le}\leanok
+  For a.e.\ \(x\),
+  \[
+    \limsup_{n} \tfrac{1}{n}\log\bignorm{A^{(n)}(T^{-n}x)\cdot P_{V_i(T^{-n}x)}} \;\le\; \mathrm{expEnum}\,\mathrm{lam0}\,d\,i.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{restricted_const_eq,restLog_backward_kingman}
+  This is the analytic heart. By \cref{restLog_backward_kingman} the reversed restricted log converges a.e.\ to the same constant \(\chi_{V_i}\), which \cref{restricted_const_eq} identifies as \(\lambda_i\). On the good set the floor is absorbed, so the \(\limsup\) of the genuine restricted norm along the backward orbit is bounded by \(\lambda_i\). Only the \(\le\) direction is consumed downstream.
+\end{proof}
+
+\section{The transversality crux}
+
+The envelope feeds the central nonnegativity fact: a vector cannot decay backward strictly faster than \(-\lambda_i\) while lying in \(V_i\). The crux is pointwise — ergodicity is not used here — and directly kills nonzero intersection vectors of opposite-side sublevels.
+
+\begin{proposition}[Sublevels of opposite sign are transverse]\label{inf_eq_bot_of_neg_sum}
+  \lean{Oseledets.inf_eq_bot_of_neg_sum}\leanok
+  Fix \(x\). If the forward envelope for \(V_x\) holds at rate \(a\), \(U_x\) decays backward at rate \(\le b\), and \(a + b < 0\), then \(V_x \sqcap U_x = \bot\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{cocycle_backwardGen,ae_limsup_restricted_backward_le}
+  Suppose \(0 \neq v \in V_x \sqcap U_x\). Put \(v_n = B^{(n)}(x)v\); by \cref{cocycle_backwardGen} \(v = A^{(n)}(T^{-n}x)\,v_n\) and, by forward equivariance along the backward orbit, \(v_n \in V_i(T^{-n}x)\). Hence \(\log\norm{v} \le \mathrm{restLog}\text{-envelope}_n(x) + \log\norm{v_n}\), whose right side behaves like \(n(a + b + 2\varepsilon)\), tending to \(-\infty\). This contradicts \(\norm{v}\) being a positive constant.
+\end{proof}
+
+\begin{proposition}[The a.e.\ crux]\label{ae_crux}
+  \lean{Oseledets.ae_crux}\leanok
+  For a.e.\ \(x\), for every forward level \(i\) and backward level \(s\) with \(\mathrm{expEnum}\,\mathrm{lam0}\,d\,i + \mathrm{expEnum}\,\mathrm{mu0}\,d\,s < 0\),
+  \[
+    V_{i}x \;\sqcap\; W_{s}x \;=\; \bot.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{inf_eq_bot_of_neg_sum,exists_conull_biinvariant,ae_limsup_restricted_backward_le}
+  Bundle all the a.e.\ facts — the forward envelope (one application of \cref{ae_limsup_restricted_backward_le} per forward level), the backward growth (flag descent in \(W\)) and equivariance along the orbit — onto a single biinvariant conull set via \cref{exists_conull_biinvariant}. On it, every pair \((i,s)\) with negative exponent sum satisfies the hypotheses of \cref{inf_eq_bot_of_neg_sum}, so the intersection is \(\bot\). The quantifiers over the finite \(\mathrm{Fin}\,k \times \mathrm{Fin}\,l\) are discharged simultaneously.
+\end{proof}
+
+\begin{corollary}[Counting bound]\label{ae_counting}
+  \lean{Oseledets.ae_counting}\leanok
+  For all \(a, b \in \R\) with \(a + b < 0\),
+  \[
+    \#\{\, j < d : \mathrm{lam0}\,j \le a \,\} \;+\; \#\{\, j < d : \mathrm{mu0}\,j \le b \,\} \;\le\; d.
+  \]
+\end{corollary}
+\begin{proof}\leanok
+  \uses{ae_crux,oseledets_filtration_dims}
+  Convert thresholds to filtration levels and apply \cref{ae_crux} at one good point: the two sublevel spaces meet in \(\bot\), so by the Grassmann formula their dimensions sum to at most \(\dim \R^d = d\). The dimension formula of \cref{oseledets_filtration_dims} (forward and backward) turns the dimensions into the stated counts. The bound is deterministic, so it holds outright.
+\end{proof}
+
+\section{Spectral reflection}
+
+The backward spectrum must be aligned to the forward one. The determinant identity \(\sum_j \mathrm{lam0}\,j = \int \log\abs{\det A}\) — and its backward negation — together with the counting bound pin the backward exponents to the negated, reversed forward ones, by a purely combinatorial multiset argument that avoids any exterior-power calculus for \(\norm{\ext^q M^{-1}}\).
+
+\begin{proposition}[Forward determinant sum]\label{sum_lam0_eq_integral_log_abs_det}
+  \lean{Oseledets.sum_lam0_eq_integral_log_abs_det}\leanok
+  Any exponent sequence \(\mathrm{lam0}\) realizing the a.e.\ singular-value limits satisfies \(\sum_{j<d}\mathrm{lam0}\,j = \int_X \log\abs{\det A(x)}\,d\mu\).
+\end{proposition}
+\begin{proof}\leanok
+  By uniqueness of a.e.\ limits at a common conull point, \(\mathrm{lam0}\,j\) equals the chosen spectrum \(\mathrm{exponents}\,j\) for each \(j < d\); the sum of those is the integral of \(\log\abs{\det A} = \log\prod_j \sigma_j\) via the established singular-value/determinant identity.
+\end{proof}
+
+\begin{proposition}[Backward sum is the negated forward sum]\label{sum_mu0_eq_neg_sum_lam0}
+  \lean{Oseledets.sum_mu0_eq_neg_sum_lam0}\leanok
+  For a backward exponent sequence \(\mathrm{mu0}\), \(\sum_{j<d}\mathrm{mu0}\,j = -\sum_{j<d}\mathrm{lam0}\,j\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{sum_lam0_eq_integral_log_abs_det,backwardData_of}
+  Apply \cref{sum_lam0_eq_integral_log_abs_det} to the backward system (legitimate by \cref{backwardData_of}): \(\sum \mathrm{mu0}\,j = \int \log\abs{\det B}\). The pointwise identity \(\log\abs{\det B} = -\log\abs{\det(A\circ T^{-1})}\) and the change of variables along the measure-preserving \(T^{-1}\) give \(\int \log\abs{\det B} = -\int \log\abs{\det A} = -\sum \mathrm{lam0}\,j\).
+\end{proof}
+
+\begin{proposition}[Reflection lemma]\label{reflect_of_counting_and_sum}
+  \lean{Oseledets.reflect_of_counting_and_sum}\leanok
+  Let \(p, q : \N \to \R\) be antitone on \([0,d)\). If \(\#\{p \le a\} + \#\{q \le b\} \le d\) whenever \(a + b < 0\), and \(\sum_{j<d} q\,j = -\sum_{j<d} p\,j\), then \(q\,j = -p\,(d-1-j)\) for all \(j < d\).
+\end{proposition}
+\begin{proof}\leanok
+  Apply the counting bound at \(b\) and \(a = -q(j) - \varepsilon\): since antitone tuples are their own sorted enumerations, this gives the sorted domination \(q\,j \ge -p\,(d-1-j)\) for each \(j\). A pointwise \(\ge\) whose total sum is an equality forces pointwise equality, so \(q\,j = -p\,(d-1-j)\). This is pure finite combinatorics with no analytic content.
+\end{proof}
+
+\begin{corollary}[Aligned backward index]\label{sidx_exp}
+  \lean{Oseledets.sidx_exp}\leanok
+  Under the reflection \(\mathrm{mu0}\,j = -\mathrm{lam0}\,(d-1-j)\), the backward count of distinct exponents equals the forward one, and the index \(\mathrm{sidx}\,i = \mathrm{cast}\,(\mathrm{Fin.rev}\,i)\) satisfies \(\mathrm{expEnum}\,\mathrm{mu0}\,d\,(\mathrm{sidx}\,i) = -\mathrm{expEnum}\,\mathrm{lam0}\,d\,i\).
+\end{corollary}
+\begin{proof}\leanok
+  \uses{reflect_of_counting_and_sum}
+  From \cref{reflect_of_counting_and_sum} the multisets of distinct values agree up to negation and reversal, so \(\mathrm{numExp}\,\mathrm{mu0}\,d = \mathrm{numExp}\,\mathrm{lam0}\,d\) and the enumerations satisfy \(\mathrm{expEnum}\,\mathrm{mu0}\,d\,a = -\mathrm{expEnum}\,\mathrm{lam0}\,d\,(\mathrm{Fin.rev}\,a)\). Substituting \(a = \mathrm{sidx}\,i = \mathrm{Fin.rev}\,i\) and computing the index by \(\mathrm{omega}\) gives the negated forward exponent.
+\end{proof}
+
+\section{Measurability of the intersection bundle}
+
+The split bundle is \(x \mapsto V_i x \sqcap W_{\mathrm{sidx}\,i}\,x\). Measurable subspaces do not close under \(\sqcap\) for free, and Mathlib has no alternating-projection theorem; instead a single von Neumann-style power lemma supplies measurability.
+
+\begin{proposition}[Powers of the projector triple converge to the intersection projector]\label{tendsto_pow_orthProj_inf}
+  \lean{Oseledets.tendsto_pow_orthProj_inf}\leanok
+  For subspaces \(K, L\) of \(\R^d\), with \(P_K, P_L\) the orthogonal projectors,
+  \[
+    \bigl(P_K\,P_L\,P_K\bigr)^{n} \longrightarrow P_{K \sqcap L} \qquad (n \to \infty).
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{one_eigenspace_projComp}
+  The matrix \(S = P_K P_L P_K\) is self-adjoint, PSD, and a contraction, so its eigenvalues lie in \([0,1]\); by \cref{one_eigenspace_projComp} its \(1\)-eigenspace is exactly \(K \sqcap L\). Diagonalizing by the spectral theorem, \(c^n \to 1\) if \(c = 1\) and \(\to 0\) otherwise, so \(S^n\) converges to the orthogonal projection onto the \(1\)-eigenspace, namely \(P_{K\sqcap L}\).
+\end{proof}
+
+\begin{lemma}[The intersection fixes exactly \(K \sqcap L\)]\label{one_eigenspace_projComp}
+  \lean{Oseledets.one_eigenspace_projComp}\leanok
+  \((P_K\,P_L\,P_K)\,v = v\) if and only if \(v \in K \sqcap L\).
+\end{lemma}
+\begin{proof}\leanok
+  The "if" direction is immediate since both projectors fix vectors in \(K \sqcap L\). For "only if", \(\langle Sv, v\rangle = \norm{P_L P_K v}^2\); the Cauchy--Schwarz equality chain \(\norm{v}^2 = \langle Sv, v\rangle \le \norm{v}^2\) forces \(v \in K\) and \(P_K v \in L\), whence \(v \in K \sqcap L\).
+\end{proof}
+
+\begin{proposition}[Measurable intersection of measurable subspaces]\label{inf}
+  \lean{Oseledets.MeasurableSubspace.inf}\leanok
+  If \(x \mapsto V(x)\) and \(x \mapsto W(x)\) are measurable subspace families, then so is \(x \mapsto V(x) \sqcap W(x)\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{tendsto_pow_orthProj_inf}
+  Each \(x \mapsto (P_{V(x)} P_{W(x)} P_{V(x)})^{n}\) is measurable (matrix powers of measurable matrices). By \cref{tendsto_pow_orthProj_inf} these converge pointwise to \(P_{V(x)\sqcap W(x)}\), so the limiting projector is measurable entrywise as a limit of measurable functions; this exhibits the intersection family as measurable.
+\end{proof}
+
+\section{Assembling the splitting}
+
+With the aligned reflection, the crux disjointness, and the dimension formulas in hand, the splitting is assembled by intersecting each forward level with the matching backward level and telescoping a flag into a direct sum.
+
+\begin{lemma}[Telescoping-flag lattice lemma]\label{flag_iSupIndep_and_iSup}
+  A descending flag \(V_0 \supseteq \cdots \supseteq V_k = \bot\) in a modular lattice, with complements \(E_i\) satisfying \(V_i = E_i \sqcup V_{i+1}\) and \(E_i \sqcap V_{i+1} = \bot\), telescopes into an independent family \((E_i)\) with \(\bigsqcup_i E_i = V_0\).
+\end{lemma}
+\begin{proof}\leanok
+  Induct on \(k\). The cons step shows that prepending a head \(E_0\) disjoint from the supremum of an already-independent tail preserves independence, using modularity to peel \(E_0\) off the join \(E_0 \sqcup C\) intersected with the tail bound. The supremum identity unfolds \(\bigsqcup_{i} E_i = E_0 \sqcup \bigsqcup_i E_{i+1} = E_0 \sqcup V_1 = V_0\) via the first telescoping identity.
+\end{proof}
+
+\begin{proposition}[Splitting at a point]\label{esplitAt}
+  \lean{Oseledets.esplitAt}\leanok
+  Define \(E_i = V_i \sqcap W_{\mathrm{sidx}\,i}\). Then \(\mathrm{finrank}\,E_i \ge 1\), the telescoping identities \(V_i = E_i \sqcup V_{i+1}\) and \(E_i \sqcap V_{i+1} = \bot\) hold, and consequently \((E_i)\) is independent with \(\bigsqcup_i E_i = V_0 = \top\).
+\end{proposition}
+\begin{proof}\leanok
+  \uses{flag_iSupIndep_and_iSup,ae_crux,sidx_exp,oseledets_filtration_dims}
+  The crux \cref{ae_crux} at the negated-exponent pair gives \(V_{i+1} \sqcap W_{\mathrm{sidx}\,i} = \bot\), so by Grassmann \(V_{i+1} \sqcup W_{\mathrm{sidx}\,i} = \top\), and the reflection \cref{sidx_exp} fixes \(\mathrm{finrank}\,W_{\mathrm{sidx}\,i} = d - \#\{\mathrm{lam0} < \lambda_i\}\). Combining with the dimension formula of \cref{oseledets_filtration_dims} yields \(\mathrm{finrank}\,E_i = \#\{\mathrm{lam0} \le \lambda_i\} - \#\{\mathrm{lam0} < \lambda_i\} \ge 1\), the telescoping totality \(V_i = E_i \sqcup V_{i+1}\) by equal finrank, and disjointness from a second crux instance. \cref{flag_iSupIndep_and_iSup} then telescopes to independence and total supremum.
+\end{proof}
+
+\begin{theorem}[The two-sided Oseledets splitting]\label{oseledets_splitting}
+  \lean{Oseledets.oseledets_splitting}\leanok
+  Let \(T : X \simeq_m X\) be an invertible ergodic measure-preserving transformation of a probability space, and let \(A : X \to \mathrm{Matrix}\,(\mathrm{Fin}\,d)\,(\mathrm{Fin}\,d)\,\R\) be measurable with \(\det A(x) \neq 0\) for all \(x\) and \(\log^+\norm{A}, \log^+\norm{A^{-1}} \in L^1(\mu)\). Then there exist \(k \in \N\), a strictly decreasing \(\lambda : \mathrm{Fin}\,k \to \R\), and measurable subspace families \(E : \mathrm{Fin}\,k \to X \to \mathrm{Submodule}\,\R\,(\R^d)\) such that for \(\mu\)-a.e.\ \(x\):
+  \begin{itemize}
+    \item \(\R^d = \bigoplus_{i} E_i(x)\) is an internal direct sum with every \(E_i(x) \neq \bot\);
+    \item each \(E_i\) is \(A\)-equivariant: \(\bigl(A(x)\bigr)\bigl(E_i(x)\bigr) = E_i(Tx)\);
+    \item for every nonzero \(v \in E_i(x)\),
+    \[
+      \tfrac{1}{n}\log\bignorm{A^{(n)}(x)\,v} \to \lambda_i \qquad\text{and}\qquad \tfrac{1}{n}\log\bignorm{\bigl(A^{(n)}(T^{-n}x)\bigr)^{-1}\,v} \to -\lambda_i.
+    \]
+  \end{itemize}
+\end{theorem}
+\begin{proof}\leanok
+  \uses{esplitAt,oseledets_filtration_dims,backwardData_of,ae_crux,ae_counting,sum_mu0_eq_neg_sum_lam0,reflect_of_counting_and_sum,sidx_exp,inf,cocycle_backwardGen}
+  For \(d = 0\) take \(k = 0\) (the empty internal sum of the zero module). For \(d > 0\), apply \cref{oseledets_filtration_dims} forward to obtain \(\mathrm{lam0}, V\) and, via \cref{backwardData_of}, to the backward system \((T^{-1}, B)\) to obtain \(\mathrm{mu0}, W\), each with its dimension formula. Run the crux \cref{ae_crux} and counting bound \cref{ae_counting}; combine with \cref{sum_mu0_eq_neg_sum_lam0} through \cref{reflect_of_counting_and_sum} to get the reflection \(\mathrm{mu0}\,j = -\mathrm{lam0}\,(d-1-j)\), hence \(l = k\) and the index alignment \cref{sidx_exp}. Set \(\lambda = \mathrm{expEnum}\,\mathrm{lam0}\,d\) and \(E_i(x) = V_i x \sqcap W_{\mathrm{sidx}\,i}\,x\); measurability is \cref{inf}. On a conull set, \cref{esplitAt} provides the internal direct sum and nonzeroness. Equivariance is \(\mathrm{Submodule.map}\) over \(\sqcap\) (injective \(A(x)\)): the forward factor is the one-sided equivariance, and the backward factor is transported through \(\mathrm{backwardGen}\,A\,T\,(Tx) = (A(x))^{-1}\) by \cref{cocycle_backwardGen}. For growth, a nonzero \(v \in E_i(x)\) lies in the \(i\)-th forward stratum and the \(\mathrm{rev}\,i\)-th backward stratum (two crux instances exclude deeper levels), so the two one-sided growth limits apply; the backward limit is rewritten as \(-\lambda_i\) through \cref{cocycle_backwardGen} and \cref{sidx_exp}.
+\end{proof}

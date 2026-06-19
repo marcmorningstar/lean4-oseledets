@@ -1,0 +1,535 @@
+\chapter{The one-sided multiplicative ergodic theorem}
+\label{chap:met}
+
+This is the crux of the development. We work over a probability space \((X,\mu)\) with an
+ergodic measure-preserving transformation \(T\) and a measurable cocycle generator
+\(A : X \to \mathrm{Mat}_{d\times d}(\R)\) with \(\det(A x)\neq 0\), subject to the one-sided
+integrability \(\log^{+}\norm{A},\,\log^{+}\norm{A^{-1}}\in L^1(\mu)\). The matrices act on
+\(\R^d\) (the Euclidean space) through the operator \(v\mapsto A v\), so that the relevant norm
+is the \(L^2\) operator norm, which is submultiplicative; we write \(A^{(n)}(x)\) for the cocycle
+\(A(T^{n-1}x)\cdots A(x)\). The whole chapter is organized around a single positive semidefinite
+limiting matrix, the \emph{Oseledets limit}
+\[
+  \Lambda(x) \;=\; \lim_{n\to\infty} \bigl((A^{(n)}(x))^{\top} A^{(n)}(x)\bigr)^{1/2n},
+\]
+whose eigenspaces, once their growth rates are matched to the deterministic singular-value
+exponents, yield the filtration of the target theorem.
+
+\section{The Oseledets limit}
+
+The candidate approximants are the symmetric positive roots
+\(q_n(x) := \bigl((A^{(n)}(x))^{\top} A^{(n)}(x)\bigr)^{1/2n}\), realized through the continuous
+functional calculus on the Gram matrix. The eigenvalues of \(q_n(x)\) are the \(1/n\)-th roots of
+the singular values of \(A^{(n)}(x)\); the heart of this section is that they converge a.e.\ to
+the exponentials of the deterministic Lyapunov exponents.
+
+\begin{theorem}[Deterministic singular-value exponents]\label{exists_lam_tendsto_singularValue}
+  \lean{Oseledets.exists_lam_tendsto_singularValue}\leanok
+  There is an antitone sequence \(\lambda^0 : \N\to\R\) (antitone on \([0,d)\)) such that, for
+  every \(i<d\) and \(\mu\)-a.e.\ \(x\),
+  \[
+    \tfrac1n \log\bigl(\sigma_i(A^{(n)}(x))\bigr) \longrightarrow \lambda^0_i,
+  \]
+  where \(\sigma_i\) is the \(i\)-th sorted singular value.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{tendsto_kingman, isSubadditiveCocycle_logNorm}
+  Package the ergodic limits \(\Gamma_k = \lim \tfrac1n \log s_k(A^{(n)}(x))\) of the products of
+  the top \(k\) singular values, \(0\le k\le d\), obtained from Kingman's subadditive ergodic
+  theorem applied to the subadditive cocycle \(\log\norm{\ext^{k}A^{(n)}}\) (the exterior-power
+  functor turns submultiplicativity of the \(\ext^{k}\) operator norms into subadditivity). Then
+  \(\lambda^0_i := \Gamma_{i+1}-\Gamma_i\); the difference of the two a.e.\ \(\Gamma\)-limits gives
+  the \(i\)-th singular-value exponent. Antitonicity of consecutive \(\lambda^0_i\) descends from
+  the antitone ordering of the singular values inside each \(n\), and chaining yields full
+  antitonicity on \([0,d)\).
+\end{proof}
+
+\begin{lemma}[Block-value step function reproduces the spectrum]\label{stepVal_exp_lam}
+  \lean{Oseledets.stepVal_exp_lam}\leanok
+  Let \(\mathrm{stepVal}\,\lambda^0\,D\) be the step function
+  \(e^{\lambda^0_{D-1}} + \sum_{k=1}^{D-1}(e^{\lambda^0_{k-1}}-e^{\lambda^0_k})\,
+  \mathbf 1_{(c_k,\infty)}\) with thresholds \(c_k = e^{(\lambda^0_k+\lambda^0_{k-1})/2}\) strictly
+  inside the \(k\)-th gap. If \(\lambda^0\) is antitone on \([0,D)\) and \(j<D\), then
+  \(\mathrm{stepVal}\,\lambda^0\,D\,(e^{\lambda^0_j}) = e^{\lambda^0_j}\).
+\end{lemma}
+\begin{proof}\leanok
+  At the argument \(e^{\lambda^0_j}\) the threshold indicator \(\mathbf 1_{(c_k,\infty)}\) is
+  \(1\) exactly when \(k>j\) (since \(\lambda^0\) is antitone and \(c_k\) lies strictly between
+  \(\lambda^0_k\) and \(\lambda^0_{k-1}\)), so only the increments above index \(j\) survive.
+  Those increments \(e^{\lambda^0_{k-1}}-e^{\lambda^0_k}\) telescope to
+  \(e^{\lambda^0_j}-e^{\lambda^0_{D-1}}\), which added to the constant base \(e^{\lambda^0_{D-1}}\)
+  returns \(e^{\lambda^0_j}\).
+\end{proof}
+
+\begin{lemma}[Spectral deviation bound]\label{norm_sub_cfc_le_sum_eigenvalue_dev}
+  \lean{Oseledets.norm_sub_cfc_le_sum_eigenvalue_dev}\leanok
+  For a self-adjoint matrix \(M\) and any function \(g\),
+  \[
+    \norm{M - g(M)} \;\le\; \sum_j \abs{\mu_j - g(\mu_j)},
+  \]
+  where \(\mu_j\) ranges over the sorted eigenvalues of \(M\).
+\end{lemma}
+\begin{proof}\leanok
+  Writing \(M = \mathrm{id}(M)\) gives \(M - g(M) = (\mathrm{id}-g)(M)\) by linearity of the
+  continuous functional calculus, and the operator norm of a self-adjoint matrix functional
+  calculus is the largest absolute eigenvalue \(\max_j\abs{\mu_j-g(\mu_j)}\), which is bounded by
+  the full nonnegative sum.
+\end{proof}
+
+\begin{lemma}[Per-term band-projector convergence]\label{ae_forall_tendsto_block_term}
+  \lean{Oseledets.ae_forall_tendsto_block_term}\leanok
+  For \(\mu\)-a.e.\ \(x\) and every threshold index \(k\in[1,d)\), the block term
+  \((e^{\lambda^0_{k-1}}-e^{\lambda^0_k})\cdot P^{c_k}_n(x)\) converges, where \(P^{c}_n\) is the
+  band projector \(\mathbf 1_{(c,\infty)}(q_n(x))\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{exists_lam_tendsto_singularValue}
+  At a genuine gap \(\lambda^0_k < \lambda^0_{k-1}\) the threshold \(c_k\) is strictly separated
+  from the two limiting eigenvalue clusters, so once the sorted eigenvalues of \(q_n(x)\) have
+  converged the count of eigenvalues above \(c_k\) stabilizes and the corresponding spectral
+  projector is Cauchy in operator norm. At a non-gap (\(\lambda^0_{k-1}=\lambda^0_k\)) the
+  coefficient \(e^{\lambda^0_{k-1}}-e^{\lambda^0_k}\) vanishes, so the term is constantly \(0\).
+\end{proof}
+
+\begin{theorem}[Existence of the Oseledets limit]\label{tendsto_qpow}
+  \lean{Oseledets.tendsto_qpow}\leanok
+  For \(\mu\)-a.e.\ \(x\) the approximants \(q_n(x)\) converge in the matrix metric to a single
+  matrix \(\Lambda(x)\).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{exists_lam_tendsto_singularValue,stepVal_exp_lam,norm_sub_cfc_le_sum_eigenvalue_dev,ae_forall_tendsto_block_term}
+  The eigenvalues \(\mu_{j,n}=\sigma_j^{1/n}\) of \(q_n(x)\) converge a.e.\ to the exponentials
+  \(e^{\lambda^0_j}\) (Theorem~\ref{exists_lam_tendsto_singularValue}). Form the block approximant
+  \(\Lambda_n(x) := \mathrm{stepVal}\,\lambda^0\,d\,(q_n(x))\), a finite linear combination of band
+  projectors. By Lemma~\ref{norm_sub_cfc_le_sum_eigenvalue_dev},
+  \(\norm{q_n(x)-\Lambda_n(x)}\le\sum_j\abs{\mu_{j,n}-\mathrm{stepVal}(\mu_{j,n})}\); each summand
+  is eventually \(\abs{\mu_{j,n}-e^{\lambda^0_j}}\to 0\) because the step function reproduces the
+  exponentials on the spectrum (Lemma~\ref{stepVal_exp_lam}). Meanwhile \(\Lambda_n(x)\) converges
+  as a finite sum of convergent band-projector terms
+  (Lemma~\ref{ae_forall_tendsto_block_term}). Adding the two convergences gives
+  \(q_n(x)\to\Lambda(x)\), and the limit is selected pointwise.
+\end{proof}
+
+\begin{definition}[The named Oseledets limit]\label{oseledetsLimit}
+  \lean{Oseledets.oseledetsLimit}\leanok
+  \(\Lambda(x) := (\,\lim_n (q_n(x))_{ij}\,)_{ij}\) is the entrywise real \(\limsup\)/limit of the
+  matrix entries of \(q_n(x)\); it is a total, measurable function of \(x\).
+\end{definition}
+
+\begin{theorem}[The limit is the a.e.\ limit of the approximants]\label{tendsto_oseledetsLimit}
+  \lean{Oseledets.tendsto_oseledetsLimit}\leanok
+  For \(\mu\)-a.e.\ \(x\), \(q_n(x)\to \Lambda(x)\) in the matrix metric, and \(\Lambda\) is
+  measurable.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{tendsto_qpow,oseledetsLimit}
+  On the a.e.\ full convergence set of Theorem~\ref{tendsto_qpow} the entrywise limit recovers the
+  matrix limit (matrix convergence in finite dimensions is entrywise), so the entrywise
+  \(\liminf\) defining \(\Lambda\) equals the genuine limit. Measurability is entrywise: each
+  entry is a limit of measurable functions of \(x\), and a \(\liminf\) of measurable
+  \(\R\)-valued functions is measurable.
+\end{proof}
+
+\begin{proposition}[Structure of the limit]\label{oseledetsLimit_posSemidef}
+  \lean{Oseledets.oseledetsLimit_posSemidef}\leanok
+  For \(\mu\)-a.e.\ \(x\), \(\Lambda(x)\) is self-adjoint and positive semidefinite.
+\end{proposition}
+\begin{proof}\leanok
+  \uses{tendsto_oseledetsLimit}
+  Self-adjointness \(M^{\top}=M\) is an entrywise closed condition preserved under the matrix
+  limit of the self-adjoint approximants \(q_n(x)\). For positive semidefiniteness, the quadratic
+  form \(M\mapsto v^{\top}Mv\) is continuous, so
+  \(v^{\top}\Lambda(x)v = \lim_n v^{\top} q_n(x) v \ge 0\) as a limit of nonnegatives.
+\end{proof}
+
+\section{The per-vector lower bound}
+
+The lower half of the exact growth law isolates one band of the spectrum of \(q_n(x)\) and shows
+that a vector with nonzero projection onto the band grows at least at the band rate.
+
+\begin{lemma}[Gram quadratic-form band bound]\label{inner_cfc_ge_band}
+  \lean{Oseledets.inner_cfc_ge_band}\leanok
+  For self-adjoint \(Q\), a band indicator \(\chi=\mathbf 1_{(c,\infty)}\), and a continuous
+  \(f\ge 0\) on \(\mathrm{spec}(Q)\) with \(a\le f(t)\) whenever \(c<t\),
+  \[
+    a\,\norm{\chi(Q)\,v}^2 \;\le\; \langle f(Q)\,v,\,v\rangle .
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  The band projector \(\chi(Q)\) is a self-adjoint idempotent, so
+  \(\norm{\chi(Q)v}^2 = \langle \chi(Q)v,v\rangle\). The gap operator
+  \((f-a\chi)(Q)\) is positive semidefinite because \(f-a\chi\ge 0\) on the spectrum (above \(c\),
+  \(f\ge a=a\chi\); below, \(\chi=0\) and \(f\ge0\)). Expanding
+  \(\langle(f-a\chi)(Q)v,v\rangle\ge0\) gives the claim.
+\end{proof}
+
+\begin{lemma}[Band lower bound for the cocycle]\label{cocycle_apply_sq_ge_band}
+  \lean{Oseledets.cocycle_apply_sq_ge_band}\leanok
+  For \(c\ge0\) and \(n\ge1\),
+  \[
+    c^{2n}\,\norm{P^{c}_n(x)\,v}^2 \;\le\; \norm{A^{(n)}(x)\,v}^2 .
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  \uses{inner_cfc_ge_band}
+  Raising \(q_n(x)=(\mathrm{gram}_n)^{1/2n}\) to the \(2n\)-th power via the functional calculus
+  recovers the Gram matrix \(\mathrm{gram}_n=(A^{(n)})^{\top}A^{(n)}\) (the composed powers compose
+  to the identity on the nonnegative spectrum). Apply
+  Lemma~\ref{inner_cfc_ge_band} with \(f(t)=t^{2n}\) and \(a=c^{2n}\): above \(c\) one has
+  \(t^{2n}\ge c^{2n}\). The right-hand inner product is then
+  \(\langle \mathrm{gram}_n v,v\rangle = \norm{A^{(n)}(x)v}^2\).
+\end{proof}
+
+\begin{lemma}[The band correction vanishes]\label{tendsto_inv_mul_log_norm_bandProjector_apply}
+  \lean{Oseledets.tendsto_inv_mul_log_norm_bandProjector_apply}\leanok
+  If \(P^{c}_n(x)\to P\) with \(Pv\neq0\), then
+  \(\tfrac1n\log\norm{P^{c}_n(x)\,v}\to 0\).
+\end{lemma}
+\begin{proof}\leanok
+  The evaluation \(M\mapsto Mv\) is continuous in finite dimensions, so \(P^{c}_n(x)v\to Pv\neq0\)
+  and \(\norm{P^{c}_n(x)v}\to\norm{Pv}>0\). Hence the log converges to the finite number
+  \(\log\norm{Pv}\), and dividing by \(n\to\infty\) sends it to \(0\).
+\end{proof}
+
+\begin{proposition}[Per-vector liminf lower bound]\label{log_le_liminf_log_cocycle_apply}
+  \lean{Oseledets.log_le_liminf_log_cocycle_apply}\leanok
+  If \(P^{c}_n(x)\to P\) with \(c>0\) and \(Pv\neq0\), and the cocycle growth sequence is
+  cobounded, then
+  \[
+    \log c \;\le\; \liminf_{n}\ \tfrac1n\log\norm{A^{(n)}(x)\,v}.
+  \]
+\end{proposition}
+\begin{proof}\leanok
+  \uses{cocycle_apply_sq_ge_band,tendsto_inv_mul_log_norm_bandProjector_apply}
+  Taking logs in Lemma~\ref{cocycle_apply_sq_ge_band} and dividing by \(2n\) gives, eventually,
+  \[
+    \log c + \tfrac1n\log\norm{P^{c}_n(x)v} \;\le\; \tfrac1n\log\norm{A^{(n)}(x)v}.
+  \]
+  The left side converges to \(\log c\) since the band-correction term vanishes
+  (Lemma~\ref{tendsto_inv_mul_log_norm_bandProjector_apply}). Passing to the \(\liminf\) along the
+  inequality, using its boundedness and the coboundedness of the right side (supplied by the
+  Furstenberg--Kesten integrability of the top exponent), yields the bound.
+\end{proof}
+
+\begin{lemma}[Band-projector nesting, kernel propagation]\label{limitBandProjector_apply_eq_zero_of_le}
+  \lean{Oseledets.limitBandProjector_apply_eq_zero_of_le}\leanok
+  For thresholds \(c\le c'\) with limit band projectors \(P,P'\), if \(Pv=0\) then \(P'v=0\).
+\end{lemma}
+\begin{proof}\leanok
+  The finite-\(n\) bands are nested: \(\mathbf 1_{(c,\infty)}\cdot\mathbf 1_{(c',\infty)}=
+  \mathbf 1_{(c',\infty)}\) on the spectrum since \((c',\infty)\subseteq(c,\infty)\), so
+  \(P^{c}_n P^{c'}_n = P^{c'}_n\); passing to the limit gives \(PP'=P'\). Both limit projectors are
+  symmetric (limits of self-adjoint matrices), so transposing gives \(P'P=P'\), whence
+  \(P'v = P'(Pv) = 0\).
+\end{proof}
+
+\section{The spectral upper bound and the determinant squeeze}
+
+The upper half is the genuinely non-elementary step. For a vector \(v\) in the slow subspace of
+\(\Lambda\) at level \(e^t\), one bounds \(\norm{A^{(n)}(x)v}\) by the restricted operator norm of
+\(A^{(n)}\) on the slow subspace, whose growth exponent is pinned --- non-circularly --- by a
+determinant/volume squeeze.
+
+\begin{lemma}[Tempering]\label{tempering_posLog}
+  \lean{Oseledets.tempering_posLog}\leanok
+  If \(T\) is measure-preserving and \(g\ge0\) with \(g\in L^1(\mu)\), then for \(\mu\)-a.e.\ \(x\),
+  \(\tfrac1n\,g(T^n x)\to 0\).
+\end{lemma}
+\begin{proof}\leanok
+  The series \(\sum_n g(T^n x)/n^{2}\) is a.e.\ finite by integrability and invariance of \(\mu\),
+  so its terms \(g(T^n x)/n^2\to0\); the Borel--Cantelli/sublinear-growth argument then gives
+  \(g(T^n x)=o(n)\), i.e.\ \(\tfrac1n g(T^n x)\to0\).
+\end{proof}
+
+\begin{lemma}[Slow-volume exponent squeeze]\label{limsup_topSlow_le_of_squeeze}
+  \lean{Oseledets.limsup_topSlow_le_of_squeeze}\leanok
+  Given a volume cocycle whose top, slow and remaining log-exponent sequences satisfy a sum law
+  \(\mathrm{vol} = \mathrm{slow} + \mathrm{rest}\) with the appropriate limits, the slow
+  restricted-operator-norm exponent obeys
+  \(\limsup_n \tfrac1n\log(\mathrm{slow}_n) \le \lambda_i\).
+\end{lemma}
+\begin{proof}\leanok
+  The total volume exponent is the Furstenberg--Kesten determinant limit \(\sum_j\lambda^0_j\); the
+  fast-block volume is the exterior-power Kingman limit; their difference forces the slow-block
+  volume exponent. The squeeze converts a sum identity of limits into an upper bound for the slow
+  factor once the fast and remaining factors are pinned, the angle/tilt between fast and slow
+  blocks tempering to zero so no cross term inflates the slow volume.
+\end{proof}
+
+\begin{theorem}[Spectral upper bound via the determinant squeeze]\label{spectral_upper_bound_of_squeeze}
+  \lean{Oseledets.spectral_upper_bound_of_squeeze}\leanok
+  Let \(v\neq0\) lie in the slow subspace. Given the slow restricted-norm exponent bound
+  \(\limsup_n \tfrac1n\log r_n\le \lambda_i\) and the restriction estimate
+  \(\norm{A^{(n)}(x)v}\le r_n\norm v\) (valid for \(v\) slow), one has
+  \[
+    \limsup_{n}\ \tfrac1n\log\norm{A^{(n)}(x)\,v} \;\le\; \lambda_i.
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{limsup_topSlow_le_of_squeeze,tempering_posLog}
+  Take logs in \(\norm{A^{(n)}(x)v}\le r_n\norm v\), divide by \(n\), and pass to the \(\limsup\):
+  the \(\norm v\) factor contributes \(0\) and \(r_n\) contributes
+  \(\limsup_n\tfrac1n\log r_n\le\lambda_i\) (Lemma~\ref{limsup_topSlow_le_of_squeeze}). The
+  restricted-norm exponent \(r_n\) depends only on the \emph{global} volume cocycle and the
+  tempered slow--fast angle, never on the growth of \(v\) itself, so the argument is
+  non-circular.
+\end{proof}
+
+\begin{theorem}[Upper bound on the slow space]\label{vslow_subset_lambdaSublevel_of_upper}
+  \lean{Oseledets.vslow_subset_lambdaSublevel_of_upper}\leanok
+  On the ultrametric-growth good set, every vector \(v\) of the \(\Lambda\)-slow band
+  \(\mathrm{vslow}(e^t)\) with \(\limsup_n\tfrac1n\log\norm{A^{(n)}v}\le t\) lies in the growth
+  sublevel \(\{v:\overline\lambda(x,v)\le t\}\).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{spectral_upper_bound_of_squeeze,lambdaSublevel}
+  The \(\limsup\) of \(\tfrac1n\log\norm{A^{(n)}v}\) is by definition the upper growth function
+  \(\overline\lambda(x,v)\); the hypothesis says it is \(\le t\), which is exactly membership in
+  the sublevel \(\mathrm{lambdaSublevel}\,t\). The zero vector lies in every submodule.
+\end{proof}
+
+\section{Spectral identification of the filtration}
+
+The two bounds match the spectral filtration of \(\Lambda\) with the analytic limsup filtration.
+The bridge is that the finite-\(n\) band projectors converge a.e.\ to the functional calculus
+indicator of \(\Lambda\).
+
+\begin{theorem}[Band projectors converge to the CFC indicator]\label{ae_tendsto_bandProjector_cfc_indicator}
+  \lean{Oseledets.ae_tendsto_bandProjector_cfc_indicator}\leanok
+  For \(\mu\)-a.e.\ \(x\), every \(c>0\) that is not one of the limiting eigenvalues
+  \(e^{\lambda_{\mathrm{sing}}(x,i)}\) of \(\Lambda(x)\) satisfies
+  \[
+    P^{c}_n(x) \longrightarrow \mathbf 1_{(c,\infty)}(\Lambda(x)).
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{tendsto_oseledetsLimit,oseledetsLimit_posSemidef}
+  Since \(c\) avoids the spectrum of \(\Lambda(x)\), there is a gap \(\delta>0\) between \(c\) and
+  every eigenvalue. Replace the discontinuous indicator by a continuous \(\delta/2\)-clamp
+  surrogate \(\chi\) that is Lipschitz and agrees with \(\mathbf 1_{(c,\infty)}\) at distance
+  \(\ge\delta/2\) from \(c\). Once the sorted eigenvalues of \(q_n(x)\) are within \(\delta/2\) of
+  their limits, \(\chi\) and \(\mathbf 1_{(c,\infty)}\) agree on both spectra, so
+  \(P^{c}_n(x)=\chi(q_n(x))\) eventually; by Lipschitz continuity of the functional calculus and
+  \(q_n(x)\to\Lambda(x)\) (Theorem~\ref{tendsto_oseledetsLimit}),
+  \(\chi(q_n(x))\to\chi(\Lambda(x))=\mathbf 1_{(c,\infty)}(\Lambda(x))\).
+\end{proof}
+
+\begin{theorem}[Reverse slow-flag inclusion]\label{ae_lambdaSublevel_le_vslow}
+  \lean{Oseledets.ae_lambdaSublevel_le_vslow}\leanok
+  For \(\mu\)-a.e.\ \(x\) and every \(t\),
+  \(\mathrm{lambdaSublevel}(x,t) \le \mathrm{vslow}(x,e^t)\).
+\end{theorem}
+\begin{proof}\leanok
+  \uses{ae_tendsto_bandProjector_cfc_indicator,log_le_liminf_log_cocycle_apply,limitBandProjector_apply_eq_zero_of_le}
+  Contrapositively, a vector \(v\notin\mathrm{vslow}(e^t)\) has nonzero component in the band of
+  \(\Lambda(x)\) above \(e^t\); by Theorem~\ref{ae_tendsto_bandProjector_cfc_indicator} the finite
+  band projectors converge to the corresponding CFC indicator with \(Pv\neq0\), so the per-vector
+  lower bound (Proposition~\ref{log_le_liminf_log_cocycle_apply}) forces
+  \(\liminf\tfrac1n\log\norm{A^{(n)}v} > t\), hence \(\overline\lambda(x,v)>t\) and
+  \(v\notin\mathrm{lambdaSublevel}\,t\). Kernel propagation across nested thresholds
+  (Lemma~\ref{limitBandProjector_apply_eq_zero_of_le}) makes this consistent for all \(t\).
+\end{proof}
+
+\begin{theorem}[The slow flag equals the limsup sublevel]\label{vslow_eq_lambdaSublevel_of_upper}
+  \lean{Oseledets.vslow_eq_lambdaSublevel_of_upper}\leanok
+  Under the spectral upper bound and the reverse inclusion, for \(\mu\)-a.e.\ \(x\) and every
+  \(t\),
+  \[
+    \mathrm{vslow}(x,e^t) \;=\; \mathrm{lambdaSublevel}(x,t).
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{vslow_subset_lambdaSublevel_of_upper,ae_lambdaSublevel_le_vslow}
+  Two inclusions: the forward one
+  (Theorem~\ref{vslow_subset_lambdaSublevel_of_upper}, from the upper bound) shows slow vectors
+  grow slowly, hence lie in the sublevel; the reverse one
+  (Theorem~\ref{ae_lambdaSublevel_le_vslow}, from the lower bound) shows slowly-growing vectors lie
+  in the slow space. Antisymmetry gives the identity, simultaneously for all \(t\) on the a.e.\
+  ultrametric-growth good set.
+\end{proof}
+
+\section{Ruelle's reverse cofactor bound and the top-gap envelope}
+
+The upper bound on an individual vector reduces, after diagonalizing the limit, to controlling the
+overlap matrix between the sorted Gram eigenbasis at level \(n\) and the limiting eigenbasis. The
+graded overlap is controlled by a leakage induction; Ruelle's cofactor estimate then converts a
+one-sided forward decay into the full pairwise rate.
+
+\begin{lemma}[Ruelle reverse cofactor bound]\label{entry_reverse_bound_of_orthogonal}
+  \lean{Oseledets.RuelleCofactor.entry_reverse_bound_of_orthogonal}\leanok
+  Let \(S\) be orthogonal (\(S S^{\top}=1\)) with the graded forward decay
+  \(\abs{S_{ab}}\le c\cdot e^{-\max(g_b-g_a,0)}\). Then every entry obeys the reverse bound at the
+  full pairwise rate:
+  \[
+    \abs{S_{ij}} \;\le\; (d-1)!\,c^{\,d-1}\,e^{-(g_i-g_j)} .
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  Since \(S^{-1}=S^{\top}\), the entry \(S_{ij}\) is \((\det S)^{-1}\) times the cofactor
+  \(\mathrm{adj}(S)_{ji}\), and \(\abs{\det S}=1\) because \(SS^{\top}=1\). Expanding the minor by
+  the Leibniz formula, every surviving permutation term collects the level imbalance \(g_i-g_j\)
+  by telescoping the forward factors, each forward factor contributing at most
+  \(c\,e^{-\max(\cdot,0)}\); there are at most \((d-1)!\) such terms.
+\end{proof}
+
+\begin{definition}[Top-gap fast-band-mass envelope]\label{TopGapMassEnvelope}
+  \lean{Oseledets.TopGapMassEnvelope}\leanok
+  \(\mathrm{TopGapMassEnvelope}\,A\,T\,\lambda^0\,x\) asserts the uniform geometric leakage of
+  fast-band mass across each genuine gap: for every cut tolerance \(\delta\) there is a constant
+  \(C\) controlling, eventually and uniformly, the band mass that crosses the top gap of each
+  stratum.
+\end{definition}
+
+\begin{lemma}[Multi-source geometric envelope]\label{multi_source_envelope}
+  \lean{Oseledets.ChainCore.multi_source_envelope}\leanok
+  If a nonnegative sequence \(a\) obeys a one-step recursion fed by finitely many source sequences
+  each decaying geometrically with ratio \(\rho<1\), then \(a_n\) is bounded by a fixed multiple of
+  the summed source envelopes for all \(n\).
+\end{lemma}
+\begin{proof}\leanok
+  Each single source contributes a geometric partial sum bounded by \(K/(1-\rho)\); summing the
+  finitely many per-source envelopes and folding them through the linear one-step recursion gives a
+  uniform bound on the chained quantity \(a_n\).
+\end{proof}
+
+\begin{lemma}[Per-stratum envelope step]\label{perStratumEnvelope_step}
+  \lean{Oseledets.perStratumEnvelope_step}\leanok
+  At a fixed cut strictly inside a gap of width \(\ge G\), the one-step band-mass increment is the
+  current mass damped by \(e^{-G}\) plus a tempered source term; iterating produces the per-stratum
+  leakage envelope.
+\end{lemma}
+\begin{proof}\leanok
+  \uses{multi_source_envelope}
+  In the sorted-Gram-eigenbasis block decomposition, the band mass above the cut at step \(n+1\)
+  is the mass at step \(n\) attenuated by the singular-value ratio across the gap (bounded by
+  \(e^{-nG}\)-type damping after \(n\) iterates) plus the contribution injected by the one-step
+  generator \(A(T^n x)\), whose log-norm is tempered to \(o(n)\). This is exactly the geometric
+  one-step recursion fed by tempered sources of Lemma~\ref{multi_source_envelope}.
+\end{proof}
+
+\begin{theorem}[The top-gap envelope, a.e.]\label{topGapMassEnvelope_ae}
+  \lean{Oseledets.topGapMassEnvelope_ae}\leanok
+  For \(\mu\)-a.e.\ \(x\), the top-gap fast-band-mass envelope
+  \(\mathrm{TopGapMassEnvelope}\,A\,T\,\lambda^0\,x\) holds.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{TopGapMassEnvelope,perStratumEnvelope_step,exists_lam_tendsto_singularValue,tempering_posLog}
+  Fix the deterministic distinct gap \(G>0\) separating distinct exponents. On the a.e.\ set where
+  every singular-value exponent converges (Theorem~\ref{exists_lam_tendsto_singularValue}) and the
+  one-step generator log-norm is tempered (Lemma~\ref{tempering_posLog}), build the per-stratum
+  leakage envelope for each gap pair (Lemma~\ref{perStratumEnvelope_step}) and assemble them into
+  the top-gap envelope: each stratum's fast-band mass crossing its top gap is geometrically
+  damped, uniformly in the cut, by a single per-pair constant maximized over the finitely many
+  pairs.
+\end{proof}
+
+\section{Constancy of the spectrum}
+
+The deterministic exponent set is constant in \(x\) by construction, so once the per-point spectrum
+is identified with it, ergodic constancy is automatic.
+
+\begin{lemma}[Spectrum identity from two inclusions]\label{lyapunovSpectrum_eq_of_subsets}
+  \lean{Oseledets.lyapunovSpectrum_eq_of_subsets}\leanok
+  If at \(x\) every realized exponent is a deterministic one and every deterministic exponent is
+  attained, then \(\mathrm{lyapunovSpectrum}(x) = \mathrm{distinctExp}\,\lambda^0\,d\).
+\end{lemma}
+\begin{proof}\leanok
+  \uses{lyapunovSpectrum}
+  Both directions are finite-set inclusions; antisymmetry of \(\subseteq\) gives the equality of
+  the two finite subsets of \(\R\).
+\end{proof}
+
+\begin{theorem}[Ergodic constancy of the spectrum]\label{lyapunovSpectrum_eq_distinctExp_of_lambdaBar}
+  \lean{Oseledets.lyapunovSpectrum_eq_distinctExp_of_lambdaBar}\leanok
+  Given a.e.\ that every realized value of the upper growth function is a deterministic exponent
+  (upper inclusion) and every deterministic exponent is attained (lower inclusion), for
+  \(\mu\)-a.e.\ \(x\),
+  \[
+    \mathrm{lyapunovSpectrum}(x) \;=\; \mathrm{distinctExp}\,\lambda^0\,d .
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{lyapunovSpectrum_eq_of_subsets,vslow_eq_lambdaSublevel_of_upper,lyapunovSpectrum}
+  On the ultrametric-growth good set the two Finset inclusions are equivalent to native statements
+  about the upper growth function \(\overline\lambda(x,\cdot)\): the upper inclusion is the
+  spectral-upper-bound output (each stratum value is a deterministic exponent), the lower inclusion
+  is attainment from the lower bound. Lemma~\ref{lyapunovSpectrum_eq_of_subsets} then gives the
+  identity with the deterministic constant set; since that set does not depend on \(x\), the
+  identification is \(T\)-invariant and the spectrum is a.e.\ constant --- ergodicity adds nothing
+  beyond the deterministic value already in hand.
+\end{proof}
+
+\section{Assembling the target theorem}
+
+The forward graded-overlap bound (built from the top-gap envelope and Ruelle's reverse bound) gives
+the spectral upper bound \(\mathrm{hupper}\); combined with the reverse inclusion it yields the slow
+flag, and the lower bound supplies attainment. Together they discharge the three a.e.\ interfaces
+(spectrum, slow flag, exact growth) of the filtration assembly.
+
+\begin{theorem}[Filtration from the spectral upper bound]\label{oseledets_filtration_of_upper}
+  \lean{Oseledets.oseledets_filtration_of_upper}\leanok
+  Assume the per-vector spectral upper bound on the slow flag, the reverse slow-flag inclusion, the
+  two spectrum inclusions, and the band-projector convergence datum. Then there exist
+  \(k\), strictly decreasing \(\lambda:\mathrm{Fin}\,k\to\R\), and a measurable family
+  \(V\) forming a.e.\ a strictly decreasing \(A\)-equivariant flag along which
+  \(\tfrac1n\log\norm{A^{(n)}(x)v}\to\lambda_i\) on each stratum.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{vslow_eq_lambdaSublevel_of_upper,lyapunovSpectrum_eq_distinctExp_of_lambdaBar,log_le_liminf_log_cocycle_apply,vflag,lambdaBar}
+  The deterministic exponents \(\lambda^0\) come from
+  Theorem~\ref{exists_lam_tendsto_singularValue}. The spectrum interface is discharged by the two
+  inclusions (constancy, Theorem~\ref{lyapunovSpectrum_eq_distinctExp_of_lambdaBar}); the slow-flag
+  interface by \(\mathrm{vslow}=\mathrm{lambdaSublevel}\)
+  (Theorem~\ref{vslow_eq_lambdaSublevel_of_upper}); the exact-growth interface by combining the
+  unconditional upper half (the stratum value \(\overline\lambda=\lambda_i\) on
+  \(\mathrm{vflag}\)), the lower half (Proposition~\ref{log_le_liminf_log_cocycle_apply} fed the
+  band datum), and Furstenberg--Kesten boundedness into a two-sided limit. These three interfaces
+  feed the generic slow-flag assembly.
+\end{proof}
+
+\begin{theorem}[Filtration from the top-gap envelope]\label{oseledets_filtration_of_topgap}
+  \lean{Oseledets.oseledets_filtration_of_topgap}\leanok
+  Under the standing ergodic, invertible, log-integrable hypotheses, and assuming the top-gap
+  envelope \(\mathrm{TopGapMassEnvelope}\) quantified over \(\lambda^0\), the full Oseledets
+  filtration conclusion holds.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration_of_upper,topGapMassEnvelope_ae,entry_reverse_bound_of_orthogonal,vslow_eq_lambdaSublevel_of_upper,ae_tendsto_bandProjector_cfc_indicator,TopGapMassEnvelope}
+  Diagonalize \(\Lambda(x)\) by its limit eigenbasis with eigenvalues \(e^{\lambda_{\mathrm{sing}}}\)
+  and slow-orthogonality. The forward graded-overlap bound, consuming the envelope
+  (Definition~\ref{TopGapMassEnvelope}), yields the one-sided forward decay of the overlap matrix
+  between the sorted Gram eigenbasis and the limit eigenbasis; Ruelle's reverse cofactor estimate
+  (Lemma~\ref{entry_reverse_bound_of_orthogonal}) upgrades this to the full pairwise rate, which is
+  exactly the slow-restriction bound feeding the spectral upper bound \(\mathrm{hupper}\) on the
+  limit slow space. The band-projector convergence
+  (Theorem~\ref{ae_tendsto_bandProjector_cfc_indicator}) supplies the reverse slow-flag inclusion
+  and the lower-bound datum, and the spectrum inclusions follow from the slow-flag identity. These
+  discharge all hypotheses of Theorem~\ref{oseledets_filtration_of_upper}.
+\end{proof}
+
+\begin{theorem}[One-sided Oseledets multiplicative ergodic theorem]\label{oseledets_filtration}
+  \lean{Oseledets.oseledets_filtration}\leanok
+  Let \(\mu\) be a probability measure, \(T:X\to X\) ergodic measure-preserving, and
+  \(A:X\to\mathrm{Mat}_{d\times d}(\R)\) measurable with \(\det(A x)\neq 0\) and
+  \(\log^{+}\norm{A},\,\log^{+}\norm{A^{-1}}\in L^1(\mu)\). Then there are \(k\) distinct Lyapunov
+  exponents \(\lambda:\mathrm{Fin}\,k\to\R\), strictly decreasing, and a measurable family of
+  subspaces
+  \[
+    V : \mathrm{Fin}(k+1)\to X\to \mathrm{Submodule}_{\R}\bigl(\R^d\bigr)
+  \]
+  with each \(x\mapsto V_i\,x\) measurable, such that for \(\mu\)-a.e.\ \(x\):
+  \(V_0\,x=\top\), \(V_k\,x=\bot\); the flag is strictly decreasing,
+  \(V_{i+1}\,x < V_i\,x\); it is \(A\)-equivariant,
+  \(A(x)\,V_i\,x = V_i\,(Tx)\); and along it the cocycle grows at the exact rate \(\lambda_i\):
+  \[
+    \tfrac1n\log\norm{A^{(n)}(x)\,v}\ \longrightarrow\ \lambda_i
+    \qquad\text{for every } v\in V_i\,x\setminus V_{i+1}\,x .
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  \uses{oseledets_filtration_of_topgap,topGapMassEnvelope_ae}
+  If \(d=0\) the trivial flag \(\top=\bot\) with no exponents discharges the statement. For
+  \(d>0\), the top-gap envelope holds a.e.\ (Theorem~\ref{topGapMassEnvelope_ae}), so the
+  conditional assembly Theorem~\ref{oseledets_filtration_of_topgap} applies directly and produces
+  the exponents, the measurable equivariant flag, and the exact per-stratum growth limits.
+\end{proof}
