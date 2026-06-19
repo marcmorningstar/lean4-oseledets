@@ -40,6 +40,7 @@ import Oseledets.Examples.Elementary
 import Oseledets.Entropy.Partition
 import Oseledets.Entropy.Join
 import Oseledets.Entropy.Subadditive
+import Oseledets.Entropy.Subadditive2
 
 /-!
 # Axiom audit
@@ -567,6 +568,20 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.Entropy.entropy_comp_preimage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.Entropy.entropy_comp_preimage
+
+-- Issue #4 (entropy subadditivity): H(α∨β) ≤ H(α)+H(β) — the gate to the Fekete h(α,T) limit.
+
+/-- info: 'Oseledets.Entropy.MeasurePartition.measure_eq_sum_inter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.MeasurePartition.measure_eq_sum_inter
+
+/-- info: 'Oseledets.Entropy.sum_negMulLog_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.sum_negMulLog_le
+
+/-- info: 'Oseledets.Entropy.entropy_join_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.entropy_join_le
 
 -- Issue #5 (quotient layer): the suspension space and its invariant probability measure.
 
