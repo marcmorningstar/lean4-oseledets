@@ -41,6 +41,7 @@ import Oseledets.Entropy.Partition
 import Oseledets.Entropy.Join
 import Oseledets.Entropy.Subadditive
 import Oseledets.Entropy.Subadditive2
+import Oseledets.Entropy.Fekete
 
 /-!
 # Axiom audit
@@ -582,6 +583,24 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.Entropy.entropy_join_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.Entropy.entropy_join_le
+
+-- Issue #4 (Fekete prep): pullback partition + iterated-join entropy sequence and its bounds.
+
+/-- info: 'Oseledets.Entropy.entropy_pullback' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.entropy_pullback
+
+/-- info: 'Oseledets.Entropy.entropySeq_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.entropySeq_nonneg
+
+/-- info: 'Oseledets.Entropy.entropySeq_succ_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.entropySeq_succ_le
+
+/-- info: 'Oseledets.Entropy.entropySeq_le_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.entropySeq_le_nsmul
 
 -- Issue #5 (quotient layer): the suspension space and its invariant probability measure.
 

@@ -78,6 +78,7 @@ import Oseledets.Entropy.Partition
 import Oseledets.Entropy.Join
 import Oseledets.Entropy.Subadditive
 import Oseledets.Entropy.Subadditive2
+import Oseledets.Entropy.Fekete
 
 /-!
 # Oseledets
