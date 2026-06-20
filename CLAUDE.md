@@ -57,6 +57,21 @@ whose `lake serve` daemon **aborts with a loud warning** rather than start such 
 only by choice with `LEANCHECK_ALLOW_MATHLIB_REBUILD=1`). A direct `lake build` is *not* guarded and
 is the authoritative gate — make sure the Mathlib cache is in place before building.
 
+**Parallel agents — one worktree each.** Many agents grinding proofs at once must NOT share a
+checkout: they race git's working tree and `.lake/build`. Give each its own git worktree with
+`.claude/scripts/lwt` (a thin launcher over the `lwt` tool in the leancheck plugin):
+
+```bash
+WT=$(.claude/scripts/lwt add my-branch | tail -1)   # symlinks the shared Mathlib cache, copies the
+                                                     # compiled .lake/build (first build = no-op),
+                                                     # starts a per-worktree warm lake serve
+# ... run an agent with cwd = $WT; it gets warm feedback + incremental builds, conflict-free ...
+.claude/scripts/lwt remove my-branch --delete-branch # clean teardown (shared cache untouched)
+```
+
+Worktrees land under `/home/vscode` (overlay) because the checkout is on a slow 9p mount. `lwt list`
+shows which trees are provisioned/warm. Merge the good branches back from the main checkout.
+
 ## Conventions
 
 - `autoImplicit` is **off** (set in `lakefile.toml`) — declare implicit
