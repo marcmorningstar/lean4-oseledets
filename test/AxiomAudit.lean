@@ -52,6 +52,7 @@ import Oseledets.Entropy.Subadditive2
 import Oseledets.Entropy.Fekete
 import Oseledets.Entropy.KSEntropy
 import Oseledets.Entropy.KSEntropyBounds
+import Oseledets.Entropy.KSEntropySystem
 
 /-!
 # Axiom audit
@@ -730,6 +731,20 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.Entropy.ksEntropyPartition_le_entropy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.Entropy.ksEntropyPartition_le_entropy
+
+-- Issue #4 (KS entropy of the system): h(T) = ⨆_α h(α,T) as an EReal supremum.
+
+/-- info: 'Oseledets.Entropy.ksEntropy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.ksEntropy
+
+/-- info: 'Oseledets.Entropy.le_ksEntropy' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.le_ksEntropy
+
+/-- info: 'Oseledets.Entropy.ksEntropy_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.ksEntropy_nonneg
 
 -- Issue #5 (quotient layer): the suspension space and its invariant probability measure.
 
