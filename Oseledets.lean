@@ -71,6 +71,8 @@ import Oseledets.Lyapunov.Extensions.SingularKernelProjector
 import Oseledets.Lyapunov.Extensions.SingularEventualKernelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelEventual
+import Oseledets.Lyapunov.Extensions.SingularSubspaceDist
+import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -114,6 +116,10 @@ import Oseledets.Continuous.SuspensionSpaceExponent
 import Oseledets.Continuous.SuspensionSpaceExponentValue
 import Oseledets.Continuous.SuspensionQuotientImage
 import Oseledets.Continuous.SuspensionFlowExponentValue
+import Oseledets.Continuous.SuspensionReturnTimeMeasurable
+import Oseledets.Continuous.SuspensionExponentSetEquiv
+import Oseledets.Continuous.SuspensionExponentSetMeasurable
+import Oseledets.Continuous.SuspensionFlowExponentFinal
 import Oseledets.Smooth.DerivativeCocycle
 import Oseledets.Examples.Elementary
 import Oseledets.Entropy.Partition
@@ -128,6 +134,7 @@ import Oseledets.Entropy.KSEntropyProps
 import Oseledets.Entropy.KSEntropyJoin
 import Oseledets.Entropy.KSEntropyMono
 import Oseledets.Entropy.MargulisRuelleAbstract
+import Oseledets.Entropy.MargulisRuelleSharpened
 
 /-!
 # Oseledets

@@ -34,6 +34,8 @@ import Oseledets.Lyapunov.Extensions.SingularKernelProjector
 import Oseledets.Lyapunov.Extensions.SingularEventualKernelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelEventual
+import Oseledets.Lyapunov.Extensions.SingularSubspaceDist
+import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -77,6 +79,10 @@ import Oseledets.Continuous.SuspensionSpaceExponent
 import Oseledets.Continuous.SuspensionSpaceExponentValue
 import Oseledets.Continuous.SuspensionQuotientImage
 import Oseledets.Continuous.SuspensionFlowExponentValue
+import Oseledets.Continuous.SuspensionReturnTimeMeasurable
+import Oseledets.Continuous.SuspensionExponentSetEquiv
+import Oseledets.Continuous.SuspensionExponentSetMeasurable
+import Oseledets.Continuous.SuspensionFlowExponentFinal
 import Oseledets.Smooth.DerivativeCocycle
 import Oseledets.Examples.Elementary
 import Oseledets.Entropy.Partition
@@ -91,6 +97,7 @@ import Oseledets.Entropy.KSEntropyProps
 import Oseledets.Entropy.KSEntropyJoin
 import Oseledets.Entropy.KSEntropyMono
 import Oseledets.Entropy.MargulisRuelleAbstract
+import Oseledets.Entropy.MargulisRuelleSharpened
 
 /-!
 # Axiom audit
@@ -1358,3 +1365,54 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.ae_suspensionMeasure_hasFlowExponent_flowOrbit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.ae_suspensionMeasure_hasFlowExponent_flowOrbit
+
+-- Issue #5 (hPmeas discharged): cover-cocycle convergence-set measurability ⇒ fully unconditional
+-- space-level special-flow exponent (only `Measurable A` assumed, no convergence-set hypothesis).
+
+/-- info: 'Oseledets.measurableSet_coverCocycle_exponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSet_coverCocycle_exponent
+
+/-- info: 'Oseledets.ae_suspensionMeasure_hasFlowExponent_of_measurable' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_suspensionMeasure_hasFlowExponent_of_measurable
+
+/-- info: 'Oseledets.ae_suspensionMeasure_hasFlowExponent_flowOrbit_of_measurable' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_suspensionMeasure_hasFlowExponent_flowOrbit_of_measurable
+
+-- Issue #6 (det-free singular infra): subspace-convergence tool + per-direction EReal exponent.
+
+/-- info: 'Oseledets.cauchySeq_of_summable_subspaceDist' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.cauchySeq_of_summable_subspaceDist
+
+/-- info: 'Oseledets.exists_tendsto_orthProjMatrix_of_summable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exists_tendsto_orthProjMatrix_of_summable
+
+/-- info: 'Oseledets.measurable_singularDirExponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurable_singularDirExponent
+
+/-- info: 'Oseledets.ae_singularDirExponent_eq_coe' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_singularDirExponent_eq_coe
+
+-- Issue #4 (honest sharpening): positive-part singular-value product identity + minimal atom-count
+-- restatement of the Margulis–Ruelle reduction. The geometric `hgeo`/`hcount` input stays an explicit
+-- open hypothesis (smooth-ergodic-theory wall); nothing axiomatized.
+
+/-- info: 'Oseledets.Entropy.sum_posLog_singularValues_toEuclideanLin_eq' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Entropy.sum_posLog_singularValues_toEuclideanLin_eq
+
+/-- info: 'Oseledets.margulisRuelle_le_sumPosExp'' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.margulisRuelle_le_sumPosExp'
