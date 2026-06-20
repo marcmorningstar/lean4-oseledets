@@ -36,6 +36,7 @@ import Oseledets.Lyapunov.Extensions.SingularSublevelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelEventual
 import Oseledets.Lyapunov.Extensions.SingularSubspaceDist
 import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
+import Oseledets.Lyapunov.Extensions.SingularSpectralValues
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -1416,3 +1417,22 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.margulisRuelle_le_sumPosExp'' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.margulisRuelle_le_sumPosExp'
+
+-- Issue #6 (det-free genuine singular Lyapunov spectrum): the −∞-aware per-direction exponent is
+-- deterministically antitone + measurable + a.e. finite; cut-threshold ladder for the slow-space flag.
+
+/-- info: 'Oseledets.singularSpectralValue_antitone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.singularSpectralValue_antitone
+
+/-- info: 'Oseledets.measurable_singularSpectralValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurable_singularSpectralValue
+
+/-- info: 'Oseledets.ae_singularSpectralValue_lt_top' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_singularSpectralValue_lt_top
+
+/-- info: 'Oseledets.exists_cutThresholds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exists_cutThresholds

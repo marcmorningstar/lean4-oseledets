@@ -96,6 +96,32 @@ gated hard on sorry-free; they land only if they genuinely compile.
   covering-count lemma (a C¹ map sends an ε-ball into ≤ C·∏ᵢ max(1,σᵢ(D_xT)) ε-balls, lifted along orbits
   through Lyapunov charts to exp(n(Σλᵢ⁺+ε))) — multi-month Mathlib-scale, correctly left as the open input.
 
+### ✅ WAVE 2 LANDED + #6 WALL PRECISELY CHARACTERIZED (`lake build` green, 3110 jobs)
+
+- **#6 genuine spectrum LANDED:** `Oseledets/Lyapunov/Extensions/SingularSpectralValues.lean` (green,
+  sorry-free, axiom-clean). `singularSpectralValue` = the −∞-aware (ENNReal.log) genuine per-direction
+  exponent whose increments ARE antitone — `singularSpectralValue_antitone` is **deterministic** (no
+  det≠0/integrability/ergodicity), plus `measurable_singularSpectralValue`, `ae_singularSpectralValue_lt_top`,
+  the telescoping bridge `log_singularValue_eq_sub_sprod` (holds even on the collapse set), and the
+  cut-threshold ladder `exists_cutThresholds` (`exp(2λ_{j+1}) < t_j < exp(2λ_j)`, Gram scale) feeding
+  `cocycleSublevelEuclid`.
+- **#6 wall, now cold-build-characterized (two independent obstructions):**
+  1. **a.e.-constancy of the genuine spectrum** (to extract the distinct-finite-values vector) is blocked via
+     Kingman (needs bounded-below; genuine log σ_k → −∞ on collapse). Possible det-free route NOT yet tried:
+     sub-invariance `g ≤ g∘T` + measure-preservation + integrability on the finite stratum ⇒ a.e.-invariance
+     ⇒ ergodic a.e.-constant. (Subtle: integrability of the −∞-valued limsup.)
+  2. **`V_j` limit existence**: the Track-B de-risk PROVED the feared small-σ leakage bound is a non-issue
+     (slow projector = `1 − fast` by a cfc-complement identity ⇒ increments equal in norm, all green); the
+     REAL wall is a **threshold-scale mismatch** — at a fixed raw-Gram threshold the sublevel family is
+     provably NOT Cauchy. The Lyapunov-scale (qpow) fix reuses the existing band engine but needs qpow
+     normalized convergence, which itself requires invertibility / a det-free normalized-convergence theory
+     (the deep singular-MET obstruction; no metric-Grassmannian Cauchy theory in Mathlib).
+  Net: the reachable det-free pieces (kernel stratum + subspace metric + per-direction infra + genuine
+  spectrum) are LANDED; the full flag's two remaining atoms are genuine multi-session Mathlib-scale infra,
+  the same class as #4's geometric wall. Track-B's reusable structural lemmas
+  (`SingularSlowSpaceCauchyScratch`, sorry-free) are kept in the `wave2-i6-cauchy` worktree as the seed for
+  any future flag-assembly wave.
+
 ### #5 — suspension / special flow (substantially closed)
 - **Space-level headline proved:** `ae_suspensionMeasure_hasFlowExponent` — for μ̂-a.e.
   `q ∈ SuspensionSpace`, the representative-free flow exponent `HasFlowExponent q (λ_base/∫τ)`.

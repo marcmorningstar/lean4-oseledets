@@ -73,6 +73,7 @@ import Oseledets.Lyapunov.Extensions.SingularSublevelProjector
 import Oseledets.Lyapunov.Extensions.SingularSublevelEventual
 import Oseledets.Lyapunov.Extensions.SingularSubspaceDist
 import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
+import Oseledets.Lyapunov.Extensions.SingularSpectralValues
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
