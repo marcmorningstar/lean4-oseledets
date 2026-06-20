@@ -4,6 +4,29 @@ This repository is a **Lean 4 + Mathlib formalization of the Oseledets
 multiplicative ergodic theorem (MET)**. It is a single-purpose Lean project
 (not a monorepo).
 
+## ⚠️ Orchestration rules for the goal loop (DO NOT FORGET)
+
+When grinding the open issues (#4/#5/#6) as an autonomous orchestrator, these are **invariants**,
+not preferences. They must survive context summarization:
+
+1. **Warm Lean checker is MANDATORY for every Lean worker.** Each agent that writes/iterates Lean
+   gets its OWN warm `lwt` worktree — `.claude/scripts/lwt add <branch>` (default, **NEVER**
+   `--no-warm`). The per-worktree `lake serve` daemon (leancheck PostToolUse hook) gives near-instant
+   incremental re-checks. Cold-building after every edit takes ~30–60 s and makes iteration crawl —
+   that is forbidden as the inner loop.
+2. **One cold `lake build <Module>` per agent = the FINAL authoritative gate**, not the iteration
+   loop. Warm leancheck is for iterating; the single cold build validates before reporting.
+3. **One worktree per agent. Always.** Isolated `.lake/build` per tree ⇒ daemon + final build can't
+   race siblings (the `setup.json` corruption mode is structurally excluded across trees).
+4. **Parallel agents are encouraged** — multiple workers per issue, run in **waves of ~6–8 concurrent**
+   warm worktrees to stay under the RAM line (~0.5 GB per serve daemon + ~2–4 GB per coincident build,
+   ~31 GB usable on a 32-core box). CPU is not the bottleneck; RAM during simultaneous elaboration is.
+5. **Never `sorry`, never axiomatize.** `warningAsError` makes any `sorry` a build failure; partial
+   work stays OUT of the imported build until it compiles honestly. Every headline theorem keeps a
+   `#guard_msgs in #print axioms` audit = `[propext, Classical.choice, Quot.sound]`.
+6. **Workers never run git** (a worker reset once wiped siblings' edits). The orchestrator does all
+   merges/commits/pushes and runs the authoritative builds.
+
 ## Status
 
 **COMPLETE.** The target theorem `Oseledets.oseledets_filtration`

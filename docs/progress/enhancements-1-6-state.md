@@ -4,6 +4,20 @@
 > the counterpart to `STATE.md` (which records the completed main-branch MET). Records current
 > target, what is done, what remains, and the next steps. Resumable from alone.
 
+## ⚠️ Orchestration invariants for the goal loop (DO NOT FORGET — survives summarization)
+
+1. **Warm Lean checker is MANDATORY for every Lean worker.** Each Lean-writing agent gets its OWN
+   warm `lwt` worktree (`.claude/scripts/lwt add <branch>`, **never** `--no-warm`). Warm leancheck
+   (`lake serve` daemon) = the iteration loop; cold-building after every edit is forbidden (too slow).
+2. **One cold `lake build <Module>` per agent = the final authoritative gate**, not the inner loop.
+3. **One worktree per agent, always** — isolated `.lake/build` ⇒ no `setup.json` race across trees.
+4. **Parallel agents encouraged**; run in waves of ~6–8 concurrent warm worktrees (RAM is the binding
+   constraint: ~0.5 GB/daemon + ~2–4 GB/coincident build; ~31 GB usable; 32 cores, CPU is not the cap).
+5. **Never `sorry`, never axiomatize** (`warningAsError` ⇒ `sorry` fails the build). Partial work stays
+   out of the build until it compiles. Every headline keeps a `#print axioms` audit = `[propext,
+   Classical.choice, Quot.sound]`.
+6. **Workers never run git**; the orchestrator does all merges/commits/pushes + authoritative builds.
+
 Branch `issues/met-enhancements-1-6` @ `613b47a` (pushed, in sync with origin).
 Worktrees i4/i5/i6 all synced to `613b47a`. Nothing running; tree clean.
 
