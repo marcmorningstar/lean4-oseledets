@@ -23,6 +23,7 @@ import Oseledets.Lyapunov.Extensions.SingularExponentGenLog
 import Oseledets.Lyapunov.Extensions.SingularKernelStratum
 import Oseledets.Lyapunov.Extensions.SingularRank
 import Oseledets.Lyapunov.Extensions.SingularKernelSubmodule
+import Oseledets.Lyapunov.Extensions.SingularEventualKernel
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -470,6 +471,20 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.mem_cocycleKer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.mem_cocycleKer
+
+-- Issue #6 (filtration flag bottom): the eventual (stabilized) cocycle kernel.
+
+/-- info: 'Oseledets.cocycleKer_mono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.cocycleKer_mono
+
+/-- info: 'Oseledets.eventualKer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.eventualKer
+
+/-- info: 'Oseledets.finrank_eventualKer_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.finrank_eventualKer_le
 
 -- Two-sided splitting, Phase 0 (backward generator / cocycle infrastructure).
 
