@@ -37,6 +37,8 @@ import Oseledets.Lyapunov.Extensions.SingularSublevelEventual
 import Oseledets.Lyapunov.Extensions.SingularSubspaceDist
 import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
 import Oseledets.Lyapunov.Extensions.SingularSpectralValues
+import Oseledets.Lyapunov.Extensions.SingularSpectrumConstant
+import Oseledets.Lyapunov.Extensions.SingularSlowSpace
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -1436,3 +1438,34 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.exists_cutThresholds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.exists_cutThresholds
+
+-- Issue #6 (genuine singular spectrum is a.e. CONSTANT, det-free) + the missing Horn singular-value
+-- inequality σ_k(g∘f) ≤ σ_k(g)·‖f‖ built en route.
+
+/-- info: 'Oseledets.singularValues_comp_le_opNorm' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.singularValues_comp_le_opNorm
+
+/-- info: 'Oseledets.singularSpectralValue_invariant_ae' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.singularSpectralValue_invariant_ae
+
+/-- info: 'Oseledets.ae_singularSpectralValue_eq_const' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_singularSpectralValue_eq_const
+
+-- Issue #6 (singular slow-space step + structural reduction of V_j convergence to one summability input).
+
+/-- info: 'Oseledets.measurableSubspace_vSlowSingularStep' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSubspace_vSlowSingularStep
+
+/-- info: 'Oseledets.vSlowSingularStep_antitone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.vSlowSingularStep_antitone
+
+/-- info: 'Oseledets.tendsto_orthProjMatrix_vSlowSingularStep_of_tendsto_bandProjector' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_orthProjMatrix_vSlowSingularStep_of_tendsto_bandProjector

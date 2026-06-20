@@ -119,8 +119,28 @@ gated hard on sorry-free; they land only if they genuinely compile.
   Net: the reachable det-free pieces (kernel stratum + subspace metric + per-direction infra + genuine
   spectrum) are LANDED; the full flag's two remaining atoms are genuine multi-session Mathlib-scale infra,
   the same class as #4's geometric wall. Track-B's reusable structural lemmas
-  (`SingularSlowSpaceCauchyScratch`, sorry-free) are kept in the `wave2-i6-cauchy` worktree as the seed for
-  any future flag-assembly wave.
+  (`SingularSlowSpaceCauchyScratch`, sorry-free) are kept as the seed for any future flag-assembly wave.
+
+### ✅ WAVE 3 LANDED — spectrum a.e.-constant + V_j structural reduction; wall pinned to ONE lemma
+
+- **#6 spectrum a.e. CONSTANT (det-free) LANDED:** `SingularSpectrumConstant.lean` (green, sorry-free,
+  axiom-clean). `ae_singularSpectralValue_eq_const`: for ergodic measure-preserving `T`, the genuine singular
+  Lyapunov exponent is a.e. constant (value may be `⊥` on the kernel stratum). The Wave-2 Kingman obstruction
+  is bypassed by **sub-invariance + a bounded-monotone transform** (no integrability needed). En route it
+  builds genuine new Mathlib-grade infra: `singularValues_comp_le_opNorm` — the **Horn inequality**
+  `σ_k(g∘f) ≤ σ_k(g)·‖f‖` (absent from Mathlib, via Courant–Fischer on the repo's `Weyl` machinery) — and
+  `limsup_inv_succ_mul_add_le` (the unbounded-below `(n+1)⁻¹→n⁻¹` limsup reindexing).
+- **#6 V_j STRUCTURAL REDUCTION (det-free) LANDED:** `SingularSlowSpace.lean` (green, sorry-free). Defines
+  the slow-space step `vSlowSingularStep`, proves `measurableSubspace_vSlowSingularStep` + `_antitone`, and
+  `tendsto_orthProjMatrix_vSlowSingularStep_of_tendsto_bandProjector`: the slow-space projector CONVERGES
+  (⇒ `V_j` exists, measurable) **given** band-projector convergence — reducing the whole flag to one input.
+- **#6 WALL pinned to ONE missing det-free lemma:** that input (`Summable ‖bandProj(n+1)−bandProj(n)‖`) is
+  supplied unconditionally only by `exists_tendsto_bandProjector_cocycle`, which carries `det ≠ 0`; the det
+  enters via a **lower bound on the perturbed top compound eigenvalue** (`norm_sq_compound_mul_ge`,
+  Plucker.lean) using the compound **inverse**. The det-free RuelleCore engine supplies only the one-sided
+  UPPER leakage envelope, never this lower (aperture/Davis–Kahan gap) bound. Candidate det-free route (genuine
+  new math): turn the reverse SVD sandwich `orthogonal_block_mass_symm` into a two-sided aperture bound without
+  `‖B⁻¹‖`. This is the fundamental non-invertible-MET obstruction.
 
 ### #5 — suspension / special flow (substantially closed)
 - **Space-level headline proved:** `ae_suspensionMeasure_hasFlowExponent` — for μ̂-a.e.
