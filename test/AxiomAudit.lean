@@ -61,6 +61,7 @@ import Oseledets.Continuous.SuspensionDescent
 import Oseledets.Continuous.SuspensionNlap
 import Oseledets.Continuous.SuspensionFlowExponent
 import Oseledets.Continuous.SuspensionBetweenReturns
+import Oseledets.Continuous.SuspensionFullTimeExponent
 import Oseledets.Smooth.DerivativeCocycle
 import Oseledets.Examples.Elementary
 import Oseledets.Entropy.Partition
@@ -1108,3 +1109,13 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.coverCocycle_const_between_returns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.coverCocycle_const_between_returns
+
+-- Issue #5 (full-time reduction): flow-cocycle norm = base norm at the lap count + the sandwich.
+
+/-- info: 'Oseledets.coverCocycle_norm_eq_lapCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.coverCocycle_norm_eq_lapCount
+
+/-- info: 'Oseledets.log_coverCocycle_div_eq_lapCount' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.log_coverCocycle_div_eq_lapCount
