@@ -11,7 +11,7 @@ and a broad layer of companion results.
 **[Dependency graph](https://marcmorningstar.github.io/lean4-oseledets/blueprint/dep_graph_document.html)** ·
 **[API documentation](https://marcmorningstar.github.io/lean4-oseledets/docs/)**
 
-(The documentation site is published once the repository is public and GitHub Pages is enabled.)
+(The documentation site is published once the repository is public and GitHub Pages is enabled with source set to **GitHub Actions**.)
 
 ## Status: complete
 
