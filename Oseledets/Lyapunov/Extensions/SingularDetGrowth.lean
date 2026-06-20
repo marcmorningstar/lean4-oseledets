@@ -14,7 +14,7 @@ family `γ_k` (`Oseledets.forwardSingularExponent`): it ties the top cumulative 
 `(1/n) log|det(A⁽ⁿ⁾ x)|`, staying entirely inside the **singular** (forward-only) track.
 
 The crux is that, at the top index, the singular-value product collapses to the absolute
-determinant, `sprod A T d n x = |det(A⁽ⁿ⁾ x)|` (`Oseledets.sprod_full_eq_abs_det`). Rewriting the
+determinant, `sprod A T d n x = |det(A⁽ⁿ⁾ x)|` (`Oseledets.sprod_d_eq_abs_det`). Rewriting the
 top-`k` results of `Oseledets/Lyapunov/Extensions/Singular.lean` through this identity converts
 their `log sprod_d` statements into statements about `log|det(A⁽ⁿ⁾)|`:
 
@@ -22,7 +22,7 @@ their `log sprod_d` statements into statements about `log|det(A⁽ⁿ⁾)|`:
   `Oseledets.ae_forwardSingularExponent_eq_coe`);
 * the genuine growth, when `Γ_d⁺ > 0`: `limsup ((1/n) log|det(A⁽ⁿ⁾)| : EReal) = (Γ_d⁺ : EReal)`
   `μ`-a.e. (`k = d` instance of `Oseledets.limsup_logSprod_eq_top_of_pos`, rewritten by
-  `sprod_full_eq_abs_det`).
+  `sprod_d_eq_abs_det`).
 
 ## Main results
 
@@ -44,7 +44,7 @@ their `log sprod_d` statements into statements about `log|det(A⁽ⁿ⁾)|`:
   `log|det|` identification: only then does the convergent `log⁺` form agree eventually with the
   genuine `log`. When `Γ_d⁺ = 0` (volume contraction, `|det(A⁽ⁿ⁾)| → 0`, genuine growth `→ −∞`)
   the `EReal`-`limsup` of the genuine `log|det|` can fall strictly below `Γ_d⁺`, so only the `≤`
-  form (`Oseledets.limsup_logSprod_le_top` rewritten through `sprod_full_eq_abs_det`) survives
+  form (`Oseledets.limsup_logSprod_le_top` rewritten through `sprod_d_eq_abs_det`) survives
   there; it is not folded in here.
 
 ## References
@@ -85,7 +85,7 @@ Proof: instantiate `Oseledets.limsup_logSprod_eq_top_of_pos` at `k = d`, which p
 constant `Γ_d⁺` together with the a.e. limit of `(1/n) log⁺ sprod_d` and the positive-regime
 genuine `limsup` identity for `log sprod_d`. The value clause comes from that limit through
 `forwardSingularExponent` (mirroring `ae_forwardSingularExponent_eq_coe`); the growth clause is
-the genuine `limsup` rewritten by `sprod_full_eq_abs_det` (`sprod_d = |det|`). The positivity
+the genuine `limsup` rewritten by `sprod_d_eq_abs_det` (`sprod_d = |det|`). The positivity
 hypothesis is essential — in the contracting case `Γ_d⁺ = 0` the genuine `log|det|` may tend to
 `−∞`, so its `limsup` can be strictly below `Γ_d⁺`. -/
 theorem ae_forwardSingularExponent_full_eq_det_growth [IsProbabilityMeasure μ] [NeZero d]
@@ -111,7 +111,7 @@ theorem ae_forwardSingularExponent_full_eq_det_growth [IsProbabilityMeasure μ] 
     have hrw : (fun n : ℕ => (((n : ℝ)⁻¹ * Real.log |(cocycle A T n x).det| : ℝ) : EReal))
         = fun n : ℕ => (((n : ℝ)⁻¹ * Real.log (sprod A T d n x) : ℝ) : EReal) := by
       funext n
-      rw [sprod_full_eq_abs_det A n x]
+      rw [sprod_d_eq_abs_det n x]
     rw [hrw]
     exact hx
 

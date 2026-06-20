@@ -29,7 +29,7 @@ counterpart of `γ_k ≤ k λ₁`.
 
 * `Oseledets.forwardPosLogNormLimsup` — the `EReal` `limsup` of the normalized `log⁺`-operator
   norms `(1/n) log⁺‖A⁽ⁿ⁾(x)‖`; the `k = 1` ceiling for `γ_k`.
-* `Oseledets.forwardSingularExponent_le_nsmul` — the deterministic bound
+* `Oseledets.forwardSingularExponent_le_natCast_mul` — the deterministic bound
   `γ_k(x) ≤ (k : EReal) · forwardPosLogNormLimsup A T x` for every `x`.
 
 ## Implementation notes
@@ -58,7 +58,7 @@ variable {X : Type*} [MeasurableSpace X] {T : X → X} {d : ℕ}
 
 /-- **The forward `log⁺`-operator-norm `limsup`.** The `EReal`-valued
 `limsup_n ((1/n) log⁺‖A⁽ⁿ⁾(x)‖ : EReal)`, the top operator-norm growth ceiling that bounds the
-cumulative forward singular exponent `γ_k` (see `forwardSingularExponent_le_nsmul`). On the
+cumulative forward singular exponent `γ_k` (see `forwardSingularExponent_le_natCast_mul`). On the
 `μ`-a.e. convergence set (`tendsto_top_posLogNorm`) it is the forward top value `λ₁⁺`. -/
 noncomputable def forwardPosLogNormLimsup (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (x : X) : EReal :=
@@ -75,7 +75,7 @@ Each top-`k` singular-value product satisfies `sprod_k ≤ ‖A⁽ⁿ⁾‖^k` (
 (`Real.posLog_pow`). Multiplying by `(n : ℝ)⁻¹ ≥ 0` and passing to the `EReal`-`limsup`
 (monotone), the constant `k` is pulled out by `EReal.limsup_const_mul_of_nonneg_of_ne_top`. No
 ergodicity, integrability, or invertibility is used. -/
-theorem forwardSingularExponent_le_nsmul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
+theorem forwardSingularExponent_le_natCast_mul (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (k : ℕ) (x : X) :
     forwardSingularExponent A T k x ≤ (k : EReal) * forwardPosLogNormLimsup A T x := by
   -- Termwise real bound: `(1/n) log⁺ sprod_k ≤ k · ((1/n) log⁺‖A⁽ⁿ⁾‖)`.

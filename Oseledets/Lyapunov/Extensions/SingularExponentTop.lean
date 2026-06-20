@@ -33,7 +33,7 @@ forward `log⁺`-operator-norm `limsup` (`forwardPosLogNormLimsup`); this is the
 * `Oseledets.sprod_one_eq_opNorm` — `sprod A T 1 n x = ‖A⁽ⁿ⁾(x)‖`.
 * `Oseledets.forwardSingularExponent_one_eq` — `γ₁(x) = forwardPosLogNormLimsup A T x`
   (deterministic, every `x`).
-* `Oseledets.ae_forwardSingularExponent_one_eq_top` — under ergodicity, `γ₁ = (λ₁⁺ : EReal)`
+* `Oseledets.ae_forwardSingularExponent_one_eq_topExponent` — under ergodicity, `γ₁ = (λ₁⁺ : EReal)`
   `μ`-a.e. for a real constant `λ₁⁺` (the headline tie-in).
 
 ## References
@@ -140,7 +140,7 @@ omit [MeasurableSpace X] in
 /-- **`γ₁` is exactly the forward `log⁺`-operator-norm `limsup`** (deterministic, every `x`).
 Rewriting the defining `limsup` of `γ₁` through `sprod_one_eq_opNorm` (`sprod_1 = ‖A⁽ⁿ⁾‖`) turns
 it into the `limsup` of `(1/n) log⁺‖A⁽ⁿ⁾‖`, i.e. `forwardPosLogNormLimsup A T x`. This sharpens
-the one-sided ceiling `forwardSingularExponent_le_nsmul` (at `k = 1`) to an equality. -/
+the one-sided ceiling `forwardSingularExponent_le_natCast_mul` (at `k = 1`) to an equality. -/
 theorem forwardSingularExponent_one_eq [NeZero d] (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     (x : X) : forwardSingularExponent A T 1 x = forwardPosLogNormLimsup A T x := by
   rw [forwardSingularExponent, forwardPosLogNormLimsup]
@@ -154,8 +154,8 @@ forward top value of `tendsto_top_posLogNorm`) such that the cumulative forward 
 `limsup` of the `EReal`-coerced `(1/n) log⁺‖A⁽ⁿ⁾‖`; on the a.e. convergence set this sequence
 tends to `(λ₁⁺ : EReal)` (`continuous_coe_real_ereal`), so its `limsup` is `(λ₁⁺ : EReal)`
 (`Tendsto.limsup_eq`). -/
-theorem ae_forwardSingularExponent_one_eq_top {μ : Measure X} [IsProbabilityMeasure μ] [NeZero d]
-    (hT : Ergodic T μ) {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A)
+theorem ae_forwardSingularExponent_one_eq_topExponent {μ : Measure X} [IsProbabilityMeasure μ]
+    [NeZero d] (hT : Ergodic T μ) {A : X → Matrix (Fin d) (Fin d) ℝ} (hAmeas : Measurable A)
     (hint : IntegrableLogNorm A μ) :
     ∃ lam : ℝ, ∀ᵐ x ∂μ, forwardSingularExponent A T 1 x = (lam : EReal) := by
   obtain ⟨lam, hlam⟩ := tendsto_top_posLogNorm hT hAmeas hint

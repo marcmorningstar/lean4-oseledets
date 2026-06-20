@@ -355,9 +355,9 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.forwardPosLogNormLimsup
 
-/-- info: 'Oseledets.forwardSingularExponent_le_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.forwardSingularExponent_le_natCast_mul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.forwardSingularExponent_le_nsmul
+#print axioms Oseledets.forwardSingularExponent_le_natCast_mul
 
 -- Issue #6 (EReal exponent tie-in): top singular value = L2 opNorm, hence γ_1 = top exponent.
 
@@ -373,19 +373,11 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.forwardSingularExponent_one_eq
 
-/-- info: 'Oseledets.ae_forwardSingularExponent_one_eq_top' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Oseledets.ae_forwardSingularExponent_one_eq_topExponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms Oseledets.ae_forwardSingularExponent_one_eq_top
+#print axioms Oseledets.ae_forwardSingularExponent_one_eq_topExponent
 
 -- Issue #6 (top cumulative exponent): the full singular product is |det|, hence γ_d via log⁺|det|.
-
-/-- info: 'Oseledets.prod_singularValues_eq_abs_det' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.prod_singularValues_eq_abs_det
-
-/-- info: 'Oseledets.sprod_full_eq_abs_det' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.sprod_full_eq_abs_det
 
 /-- info: 'Oseledets.forwardSingularExponent_full_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -631,10 +623,6 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 #guard_msgs in
 #print axioms Oseledets.Entropy.entropy_le_log_card_partition
 
-/-- info: 'Oseledets.Entropy.chainRule' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.Entropy.chainRule
-
 /-- info: 'Oseledets.isAddFundamentalDomain_suspensionDomain' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -689,23 +677,11 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 #guard_msgs in
 #print axioms Oseledets.Entropy.entropy_join_le
 
--- Issue #4 (Fekete prep): pullback partition + iterated-join entropy sequence and its bounds.
+-- Issue #4 (pullback partition): the T⁻¹ partition and the T-invariance of its entropy.
 
 /-- info: 'Oseledets.Entropy.entropy_pullback' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.Entropy.entropy_pullback
-
-/-- info: 'Oseledets.Entropy.entropySeq_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.Entropy.entropySeq_nonneg
-
-/-- info: 'Oseledets.Entropy.entropySeq_succ_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.Entropy.entropySeq_succ_le
-
-/-- info: 'Oseledets.Entropy.entropySeq_le_nsmul' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Oseledets.Entropy.entropySeq_le_nsmul
 
 -- Issue #4 (Fekete limit): the flat Fin-indexed KS join, its subadditive entropy sequence, and
 -- the Kolmogorov–Sinai entropy as the Fekete limit.
