@@ -25,6 +25,7 @@ import Oseledets.Lyapunov.Extensions.SingularRank
 import Oseledets.Lyapunov.Extensions.SingularKernelSubmodule
 import Oseledets.Lyapunov.Extensions.SingularEventualKernel
 import Oseledets.Lyapunov.Extensions.SingularKernelEquivariant
+import Oseledets.Lyapunov.Extensions.SingularRankMeasurable
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -498,6 +499,20 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.eventualKer_equivariant' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.eventualKer_equivariant
+
+-- Issue #6 (measurable flag): determinantal rank measurability — the full-rank stratum.
+
+/-- info: 'Matrix.rank_eq_card_iff_det_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Matrix.rank_eq_card_iff_det_ne_zero
+
+/-- info: 'Oseledets.measurable_minor_det' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurable_minor_det
+
+/-- info: 'Oseledets.measurableSet_cocycleRank_eq_full' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSet_cocycleRank_eq_full
 
 -- Two-sided splitting, Phase 0 (backward generator / cocycle infrastructure).
 

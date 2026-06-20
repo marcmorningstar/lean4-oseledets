@@ -62,6 +62,7 @@ import Oseledets.Lyapunov.Extensions.SingularRank
 import Oseledets.Lyapunov.Extensions.SingularKernelSubmodule
 import Oseledets.Lyapunov.Extensions.SingularEventualKernel
 import Oseledets.Lyapunov.Extensions.SingularKernelEquivariant
+import Oseledets.Lyapunov.Extensions.SingularRankMeasurable
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
