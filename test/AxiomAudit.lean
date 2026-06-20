@@ -27,6 +27,7 @@ import Oseledets.Lyapunov.Extensions.SingularEventualKernel
 import Oseledets.Lyapunov.Extensions.SingularKernelEquivariant
 import Oseledets.Lyapunov.Extensions.SingularRankMeasurable
 import Oseledets.Lyapunov.Extensions.SingularRankMeasurable2
+import Oseledets.Lyapunov.Extensions.SingularRankMinor
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -526,6 +527,20 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.measurableSet_minors_subset_le_cocycleRank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.measurableSet_minors_subset_le_cocycleRank
+
+-- Issue #6 (measurable flag CLOSURE): rank = max nonsingular minor ⟹ the rank function is measurable.
+
+/-- info: 'Matrix.le_rank_iff_exists_submatrix_det_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Matrix.le_rank_iff_exists_submatrix_det_ne_zero
+
+/-- info: 'Oseledets.measurableSet_le_cocycleRank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSet_le_cocycleRank
+
+/-- info: 'Oseledets.measurable_cocycleRank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurable_cocycleRank
 
 -- Two-sided splitting, Phase 0 (backward generator / cocycle infrastructure).
 
