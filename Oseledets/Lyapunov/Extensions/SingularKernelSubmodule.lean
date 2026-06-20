@@ -73,6 +73,12 @@ noncomputable def cocycleKer (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X
     (x : X) : Submodule ℝ (Fin d → ℝ) :=
   LinearMap.ker (cocycle A T n x).mulVecLin
 
+/-- **Vector-level membership** in the cocycle kernel: `v` is collapsed iff the matrix-vector
+product `A⁽ⁿ⁾(x) ·ᵥ v` vanishes. The bridge from the submodule to a usable pointwise condition. -/
+theorem mem_cocycleKer {A : X → Matrix (Fin d) (Fin d) ℝ} {T : X → X} {n : ℕ} {x : X}
+    {v : Fin d → ℝ} : v ∈ cocycleKer A T n x ↔ (cocycle A T n x).mulVec v = 0 := by
+  rw [cocycleKer, LinearMap.mem_ker, Matrix.mulVecLin_apply]
+
 /-- The zero-step cocycle is the identity, so its kernel is trivial. -/
 @[simp] theorem cocycleKer_zero (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (x : X) :
     cocycleKer A T 0 x = ⊥ := by

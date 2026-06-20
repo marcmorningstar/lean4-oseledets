@@ -430,6 +430,14 @@ informational dump (it produces no output on success).
 #guard_msgs in
 #print axioms Oseledets.measurableSet_finiteSingularExponent
 
+/-- info: 'Oseledets.sprod_zero_imp_logTerm_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.sprod_zero_imp_logTerm_zero
+
+/-- info: 'Oseledets.singularKernelSet_compl_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.singularKernelSet_compl_eq
+
 -- Issue #6 (rank filtration data): the cocycle rank and its non-increasing rank-drop.
 
 /-- info: 'Oseledets.cocycleRank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -457,6 +465,10 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.finrank_cocycleKer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.finrank_cocycleKer
+
+/-- info: 'Oseledets.mem_cocycleKer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.mem_cocycleKer
 
 -- Two-sided splitting, Phase 0 (backward generator / cocycle infrastructure).
 

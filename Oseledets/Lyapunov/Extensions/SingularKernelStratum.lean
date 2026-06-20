@@ -76,10 +76,13 @@ value `⊥` of `EReal`,
 
 `singularKernelSet A T k = {x | γ_k^log(x) = ⊥}`,
 
-with `γ_k^log = Oseledets.forwardSingularExponentLog A T k`. These are the points whose top-`k`
-singular-value product decays super-exponentially (`sprod_k → 0`), the `−∞` exponent invisible to
-the `log⁺` packaging. This is the kernel stratum of the Raghunathan / Quas non-invertible
-multiplicative ergodic theorem (filtration form). -/
+with `γ_k^log = Oseledets.forwardSingularExponentLog A T k`. The `−∞` value records that the
+normalized genuine `log` of the top-`k` singular-value product tends to `−∞`, the rate invisible to
+the `log⁺` packaging. **Caveat** (`sprod_zero_imp_logTerm_zero`): this requires `sprod_k n x` to be
+*strictly positive* and to decay super-exponentially; an *exact* eventual collapse `sprod_k n x = 0`
+gives `Real.log 0 = 0` (Mathlib's junk value), so the term is `0`, not `−∞` — such points are NOT
+in `singularKernelSet`. So this set is the *super-exponential-decay* stratum of the
+Raghunathan / Quas non-invertible MET, not the exact-rank-collapse set. -/
 def singularKernelSet (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (k : ℕ) : Set X :=
   {x | forwardSingularExponentLog A T k x = ⊥}
 
@@ -113,5 +116,24 @@ theorem measurableSet_finiteSingularExponent [NeZero d] {A : X → Matrix (Fin d
     (hAmeas : Measurable A) (hTmeas : Measurable T) (k : ℕ) :
     MeasurableSet {x | ⊥ < forwardSingularExponentLog A T k x} :=
   measurableSet_Ioi.preimage (measurable_forwardSingularExponentLog hAmeas hTmeas k)
+
+omit [MeasurableSpace X] in
+/-- **Exact `k`-volume collapse does not give `−∞`.** If the top-`k` singular-value product is
+*exactly* `0` at step `n` (a genuine rank drop below `k`), Mathlib's `Real.log 0 = 0` pins the
+normalized term to `0`, not `−∞`. Hence such points are NOT in `singularKernelSet`, which records
+only super-exponential decay of a *strictly positive* `sprod_k`. -/
+theorem sprod_zero_imp_logTerm_zero (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (k n : ℕ)
+    (x : X) (h : sprod A T k n x = 0) :
+    (n : ℝ)⁻¹ * Real.log (sprod A T k n x) = 0 := by
+  rw [h, Real.log_zero, mul_zero]
+
+omit [MeasurableSpace X] in
+/-- **The kernel stratum's complement is the finite-exponent set.** The set
+`{x | ⊥ < γ_k^log(x)}` (`measurableSet_finiteSingularExponent`) is exactly the complement of
+`singularKernelSet A T k`, the relation its docstring asserts (`bot_lt_iff_ne_bot`). -/
+theorem singularKernelSet_compl_eq (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X) (k : ℕ) :
+    (singularKernelSet A T k)ᶜ = {x | ⊥ < forwardSingularExponentLog A T k x} := by
+  ext x
+  simp only [Set.mem_compl_iff, mem_singularKernelSet, Set.mem_setOf_eq, bot_lt_iff_ne_bot]
 
 end Oseledets

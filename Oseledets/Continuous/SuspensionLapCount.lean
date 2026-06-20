@@ -106,7 +106,9 @@ theorem returnTime_latch_gt (hc : ∀ x, c ≤ τ x) (hcpos : 0 < c) (t : ℝ) (
 /-- **The special-flow lap counter** `N(t, x)`: the number of base returns the cross-section orbit
 of `x` has completed by flow time `t`. It is the greatest `n ≤ latch` with `returnTime n x ≤ t`,
 i.e. the first-passage index of the strictly increasing, divergent return-time sequence. This is the
-standard ceiling/first-return construction of special flows (Cornfeld–Fomin–Sinai, Ch. 11). -/
+standard ceiling/first-return construction of special flows (Cornfeld–Fomin–Sinai, Ch. 11). For
+`t < 0` the predicate `returnTime n x ≤ t` fails for every `n` (return times are `≥ 0`), so
+`Nat.findGreatest` returns its default `0`; all results below assume `0 ≤ t`. -/
 noncomputable def lapCount (hc : ∀ x, c ≤ τ x) (hcpos : 0 < c) (t : ℝ) (x : X) : ℕ :=
   Nat.findGreatest (fun n => returnTime T hτ n x ≤ t) (latch T hτ hc hcpos t x)
 
