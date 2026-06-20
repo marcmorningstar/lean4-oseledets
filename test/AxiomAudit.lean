@@ -20,6 +20,7 @@ import Oseledets.Lyapunov.Extensions.SingularExponentTop
 import Oseledets.Lyapunov.Extensions.SingularDet
 import Oseledets.Lyapunov.Extensions.SingularDetGrowth
 import Oseledets.Lyapunov.Extensions.SingularExponentGenLog
+import Oseledets.Lyapunov.Extensions.SingularKernelStratum
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -406,6 +407,20 @@ informational dump (it produces no output on success).
 /-- info: 'Oseledets.forwardSingularExponentLog_eq_bot_of_tendsto' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.forwardSingularExponentLog_eq_bot_of_tendsto
+
+-- Issue #6 (kernel stratum): the measurable −∞ volume-collapse set {x | γ_d^log = ⊥}.
+
+/-- info: 'Oseledets.singularKernelSet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.singularKernelSet
+
+/-- info: 'Oseledets.measurableSet_singularKernelSet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSet_singularKernelSet
+
+/-- info: 'Oseledets.measurableSet_finiteSingularExponent' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSet_finiteSingularExponent
 
 -- Two-sided splitting, Phase 0 (backward generator / cocycle infrastructure).
 
