@@ -105,6 +105,12 @@ import Oseledets.Entropy.KSEntropyJoin
 import Oseledets.Entropy.KSEntropyMono
 import Oseledets.Entropy.MargulisRuelleAbstract
 import Oseledets.Entropy.MargulisRuelleSharpened
+import Oseledets.MeasureTheory.CoveringFromVolume
+import Oseledets.MeasureTheory.AnalyticUniversallyMeasurable
+import Oseledets.Entropy.Ruelle.Count
+import Oseledets.Entropy.Ruelle.SharpCovering
+import Oseledets.Entropy.Ruelle.MargulisRuelleSharp
+import Oseledets.Singular.SingularFiltrationMeasurable
 
 /-!
 # Axiom audit
@@ -1523,3 +1529,44 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.measurableSubspace_lambdaSublevel_of_tendsto' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.measurableSubspace_lambdaSublevel_of_tendsto
+
+-- Issue #6 (migrated headline): the a.e.-measurable forward Lyapunov projector of the singular
+-- MET, from the measurable graph via universal measurability of analytic sets (Lusin/Choquet).
+
+/-- info: 'Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel
+
+-- Issue #6 upstream candidate: every analytic set in a standard Borel space is universally
+-- measurable (NullMeasurableSet for every s-finite measure), via Choquet capacitability.
+
+/-- info: 'MeasureTheory.AnalyticSet.nullMeasurableSet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms MeasureTheory.AnalyticSet.nullMeasurableSet
+
+-- Issue #4 (migrated headline): the sharp Margulis–Ruelle inequality h(T) ≤ ∑ λᵢ⁺ for a smooth
+-- ergodic self-map of Euclidean space (modulo the honest non-compactness atom-count input).
+
+/-- info: 'Oseledets.margulisRuelle_sharp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.margulisRuelle_sharp
+
+-- Issue #4 upstream candidate: Mañé's Lemma 12.5, the covering number bounded by Haar volume of
+-- the closed thickening on Euclidean space.
+
+/-- info: 'Metric.coveringNumber_le_addHaar_div_of_addHaar_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Metric.coveringNumber_le_addHaar_div_of_addHaar_le
+
+-- Issue #4: the sharp anisotropic one-step covering count of a linear image of a ball, by the
+-- positive-part singular-value product (the geometric heart of the sharp track).
+
+/-- info: 'Oseledets.coveringCount_image_ball_le_volProd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.coveringCount_image_ball_le_volProd
+
+-- Issue #4: the orbit growth rate (1/n) log (volProd …) → ∑ λᵢ⁺, a.e., driving the count.
+
+/-- info: 'Oseledets.tendsto_log_volProd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_log_volProd
