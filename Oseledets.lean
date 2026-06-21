@@ -77,6 +77,7 @@ import Oseledets.Lyapunov.Extensions.SingularSpectralValues
 import Oseledets.Lyapunov.Extensions.SingularSpectrumConstant
 import Oseledets.Lyapunov.Extensions.SingularSlowSpace
 import Oseledets.Lyapunov.Extensions.SingularBandConverge
+import Oseledets.Lyapunov.Extensions.SingularSlowSpaceUnconditional
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank

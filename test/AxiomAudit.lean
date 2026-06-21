@@ -40,6 +40,7 @@ import Oseledets.Lyapunov.Extensions.SingularSpectralValues
 import Oseledets.Lyapunov.Extensions.SingularSpectrumConstant
 import Oseledets.Lyapunov.Extensions.SingularSlowSpace
 import Oseledets.Lyapunov.Extensions.SingularBandConverge
+import Oseledets.Lyapunov.Extensions.SingularSlowSpaceUnconditional
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -1483,3 +1484,18 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
  Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.tendsto_vSlowSingularStep_of_bandProjector_detfree
+
+-- Issue #6 (tempered-class V_j + the wall identity): unconditional soft-analysis core (any summable band
+-- increment ⇒ V_j converges), the tempered-non-degeneracy V_j, and the proof the increment IS an aperture.
+
+/-- info: 'Oseledets.tendsto_vSlowSingularStep_of_summable_increment' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_vSlowSingularStep_of_summable_increment
+
+/-- info: 'Oseledets.tendsto_vSlowSingularStep_of_tempered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_vSlowSingularStep_of_tempered
+
+/-- info: 'Oseledets.bandProjector_increment_eq_aperture' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.bandProjector_increment_eq_aperture

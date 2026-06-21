@@ -162,6 +162,31 @@ mass envelope** — the genuine mathematical core of the non-invertible MET filt
 inverses), where the cut-above-kernel structure + ergodicity control the bad collapse set over a window. That
 is Wave 5's target; the per-step route is now a closed, characterized wall.
 
+### ✅ WAVE 5 LANDED — tempered-class V_j + the amortized route PROVED walled too
+
+`SingularSlowSpaceUnconditional.lean` (green, sorry-free, axiom-clean):
+- **Unconditional soft-analysis core** `tendsto_vSlowSingularStep_of_summable_increment`: ANY per-step band
+  increment bound `b` with `(1/n)log b → L<0` ⇒ `V_j` converges to the explicit complement `1−Pfast` (no det,
+  no tempering — pure root test + the landed structural reduction).
+- **Tempered-class V_j** `tendsto_vSlowSingularStep_of_tempered`: `V_j` converges (measurable + antitone) on
+  the tempered-non-degeneracy class `∀ᶠ n, σ_min(compound k A(Tⁿx)) ≥ exp(−εn)` — **strictly weaker than
+  `det≠0`** (allows `σ_{k+1}=…=σ_d=0`), via the a.e.-constant spectrum for the strict gap.
+- **The wall, PROVED as a sorry-free identity** `bandProjector_increment_eq_aperture`: the band increment
+  EQUALS the aperture `‖VVᵀ−UUᵀ‖` between consecutive top-k right-singular frames — a between-step ROTATION
+  governed by `cond(B)` (the inverse), NOT the within-step forward ratio `σ_{k+1}/σ_k`. So the forward-ratio
+  crack is mathematically FALSE; the amortized/windowed variant inherits the same window-condition-number, also
+  walled. The per-step AND amortized band routes are both closed.
+
+**The ONLY remaining route to the unconditional general-singular `V_j` (Wave 6 target):** abandon the
+Cauchy/aperture construction entirely and define `V_j := {v : lambdaBar A T x v ≤ c}` directly from the
+pointwise forward exponent (det-free), then prove that sublevel set is a MEASURABLE subspace + antitone +
+equivariant. The existing `vslow`/`measurableSubspace_vslow` (ForwardV.lean) is NOT reusable — it is built on
+`lambdaHat = sanitized oseledetsLimit`, whose convergence needs invertibility (junk for singular). So the open
+problem is precisely the **measurable selection of the limsup-sublevel subspace `{v : λ̄ ≤ c}` for singular
+cocycles** — which the kernel stratum dodged via monotonicity (`eventualKer` = monotone ⨆), but the finite
+strata are non-monotone. This is the classical non-invertible measurable-Oseledets-filtration problem (KRN
+selection, absent from Mathlib). Wave 6 either cracks it via the CFC/spectral-projector technique or pins it.
+
 ### #5 — suspension / special flow (substantially closed)
 - **Space-level headline proved:** `ae_suspensionMeasure_hasFlowExponent` — for μ̂-a.e.
   `q ∈ SuspensionSpace`, the representative-free flow exponent `HasFlowExponent q (λ_base/∫τ)`.
