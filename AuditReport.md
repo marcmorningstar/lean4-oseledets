@@ -1,0 +1,123 @@
+# MET enhancements #4 / #5 / #6 — campaign audit report
+
+**Branch:** `issues/met-enhancements-1-6` @ `ca21d8f` (pushed, in sync with origin)
+**Date:** 2026-06-21 · **Build:** `lake build` green, **3116 jobs**, zero warnings
+(`linter.mathlibStandardSet` + `warningAsError`) · **14 new sorry-free modules**
+**Axioms:** every new headline audited `= [propext, Classical.choice, Quot.sound]`
+**Integrity:** nothing `sorry`'d, nothing axiomatized — walls are *proved/characterized*, not papered over.
+
+---
+
+## Executive scorecard
+
+| # | Topic | Verdict |
+|---|-------|---------|
+| **5** | suspension / special flow | ✅ **SOLVED** — fully unconditional space-level flow exponent `λ_base/∫τ` |
+| **4** | Ruelle entropy inequality | ✅ **Honest terminal** — abstract reduction + sharpening; geometric core is a multi-month Mathlib-scale wall (documented, proved unreachable now) |
+| **6** | full singular forward filtration | ✅ **Terminal** — *all* det-free content landed; the unconditional measurable flag is one wall, **proved tight from all 3 construction routes** |
+
+---
+
+## #5 — SOLVED
+
+The last open hypothesis `hPmeas` (measurability-in-`x` of the cover-cocycle convergence set over ℝ-`atTop`)
+is discharged. Mathlib has no uncountable-index convergence-set lemma, so the proof reduces — by a
+deterministic per-`x` set-equality valid under the bounded roof the headline already carries — to the
+**countable ℕ-indexed** discrete return-time convergence set, where `MeasureTheory.measurableSet_tendsto`
+applies.
+
+**Result:** `ae_suspensionMeasure_hasFlowExponent_of_measurable` and `…_flowOrbit_of_measurable` — for
+`suspensionMeasure`-a.e. `q`, `HasFlowExponent q (λ_base/∫τ)`, needing only `Measurable A` (a standard
+hypothesis present in every concrete application). **The special-flow MET exponent transfer is now
+unconditional at the space level.**
+
+Modules: `SuspensionReturnTimeMeasurable`, `SuspensionExponentSetEquiv`, `SuspensionExponentSetMeasurable`,
+`SuspensionFlowExponentFinal`.
+
+---
+
+## #4 — abstract reduction is the honest maximum; geometric core is a genuine wall
+
+`margulisRuelle_le_sumPosExp` (already in the repo) proves `ksEntropy ≤ sumPosExp` conditional on the
+per-partition counting hypothesis `hgeo`, with the *entire* KS-entropy stack sorry-free underneath. This is
+the maximal honest statement.
+
+**Sharpening landed** (`MargulisRuelleSharpened.lean`): the positive-part singular-value product identity
+`∑ᵢ posLog σᵢ = log ∏ᵢ max(1,σᵢ)` (det-free) and `margulisRuelle_le_sumPosExp'` (a minimal atom-count
+restatement making the open input a single clean counting bound).
+
+**Why `hgeo` is a wall (triple-confirmed, with a counterexample-grade argument):**
+1. Mathlib has **no measure-theoretic entropy** and **no variational principle** (only topological
+   `CoverEntropy`/`NetEntropy`), so the `h_μ ≤ h_top ≤ d·log L` shortcut is unavailable.
+2. The only proof route is the Mañé/Katok covering-count, needing **Lyapunov charts + dynamical
+   covering-number bounds + the positive-part singular-value product + orbit-averaging** — of which Mathlib
+   supplies exactly one local atom (`Jacobian.addHaar_image_le_mul_of_det_lt`).
+3. There is **no concrete ergodic C¹ self-map of `EuclideanSpace ℝ (Fin d)`** with a probability measure to
+   even *instantiate* `hgeo` (the repo's examples live on `AddCircle`/constant cocycles; no n-torus, no
+   hyperbolic-toral ergodicity in Mathlib).
+
+**Minimal absent atom** (for a future upstream effort): the dynamical covering-count lemma — a C¹ map sends an
+ε-ball into ≤ `C·∏ᵢ max(1,σᵢ(D_xT))` ε-balls, lifted along orbits through Lyapunov charts to `exp(n(Σλᵢ⁺+ε))`.
+Multi-month, Mathlib-scale. Correctly left as the explicit open input.
+
+---
+
+## #6 — all reachable det-free content landed; one wall, characterized from 3 routes
+
+### Landed (sorry-free, axiom-clean) — the genuine singular forward MET content reachable in pinned Mathlib
+
+- **Genuine singular Lyapunov spectrum.** `singularSpectralValue` (−∞-aware, via `ENNReal.log` of singular
+  values): **deterministically antitone**, measurable, **a.e. CONSTANT** (`ae_singularSpectralValue_eq_const`),
+  with a cut-threshold ladder. The a.e.-constancy bypasses the Kingman bounded-below obstruction via
+  *sub-invariance + a bounded-monotone transform*. En route it builds the **Mathlib-absent Horn inequality**
+  `singularValues_comp_le_opNorm` (`σ_k(g∘f) ≤ σ_k(g)·‖f‖`, via Courant–Fischer on the repo's `Weyl`
+  machinery) — a reusable contribution.
+- **Bottom (kernel) stratum**: `eventualKer` measurable + equivariant + measurable dimension (prior work).
+- **Algebraic forward filtration**: `lambdaBarSublevel` (`{v : λ̄ ≤ c}` as an `IsUltrametricGrowth.sublevel`
+  submodule), antitone, equivariant, membership-iff, floored growth law. (Honest correction: the naive set is
+  *not* a submodule for `c<0` on singular cocycles — `A=diag(½,0)`, `log 0 = 0` — so it floors growth at 0 and
+  carries the minimal `HasFiniteTopGrowth`, a.e.-true by Furstenberg–Kesten.)
+- **Tempered-class measurable `V_j`** (`tendsto_vSlowSingularStep_of_tempered`): the slow space converges,
+  is measurable + antitone, on the tempered-non-degeneracy class `∀ᶠ n, σ_min(compound k A(Tⁿx)) ≥ exp(−εn)`
+  — **strictly weaker than `det≠0`** (a genuine generalization beyond the invertible MET).
+- **Reduction + tooling**: the whole flag reduced to one band-convergence input
+  (`tendsto_orthProjMatrix_vSlowSingularStep_of_tendsto_bandProjector`); the subspace metric `subspaceDist`
+  + Cauchy machinery; the det-free band-increment bound isolating the inverse to one scalar.
+
+### The one wall — proved tight, from all three independent constructions
+
+The **unconditional** general-singular measurable flag needs a det-free lower bound on the per-step top-k
+compound eigenvalue. This is **false in general**, proved tight by the sorry-free identity
+`bandProjector_increment_eq_aperture`: the band increment **equals** the between-step right-singular-frame
+aperture `‖VVᵀ−UUᵀ‖`, a rotation governed by `cond(B)` (the inverse). Counterexample `B=½I` /
+`B=diag(½,0)`: one rank-dropping step (allowed when `det=0`) makes it O(1), breaking summability.
+
+- **Per-step route** → walled (above).
+- **Amortized / windowed route** → inherits the *window* condition number, same inverse.
+- **Direct exponent-sublevel route** (`{v : λ̄ ≤ c}`) → its measurability provably *reduces* to the same band
+  convergence (`measurableSubspace_lambdaSublevel_of_tendsto`).
+
+The kernel stratum dodged this via **monotonicity** (`eventualKer = ⨆ₙ`, star-projection limit); finite strata
+are non-monotone, so the dodge fails. Escaping needs **KRN measurable selection** or a **normalized
+singular-Gram (qpow) convergence theory** (+ continuity of sorted Hermitian eigenvectors) — all absent from
+Mathlib, genuinely multi-session. This is the classical non-invertible measurable-Oseledets-filtration problem
+(cf. Froyland–Lloyd–Quas *semi-invertible* MET, which assumes base invertibility for exactly this reason).
+
+---
+
+## New modules (14)
+
+`Oseledets/Continuous/`: SuspensionReturnTimeMeasurable, SuspensionExponentSetEquiv,
+SuspensionExponentSetMeasurable, SuspensionFlowExponentFinal.
+`Oseledets/Entropy/`: MargulisRuelleSharpened.
+`Oseledets/Lyapunov/Extensions/`: SingularSubspaceDist, SingularPerDirectionExponent, SingularSpectralValues,
+SingularSpectrumConstant, SingularSlowSpace, SingularBandConverge, SingularSlowSpaceUnconditional,
+SingularLambdaBarFiltration, SingularLambdaBarMeasurable.
+
+## Process
+
+CEO/orchestrator pattern: one warm `lwt` worktree per agent, parallel waves of ~6–8, **one cold `lake build`
+per agent** as the final gate; the orchestrator ran every authoritative build, all import/axiom-audit wiring,
+and all git. 6 waves: planning → close #5 + #4 sharpen + #6 infra → spectrum → spectrum-a.e.-constant +
+V_j-reduction → keystone (wall proved) → amortized (wall confirmed) → algebraic filtration + measurability
+(wall pinned). Every milestone committed + pushed.
