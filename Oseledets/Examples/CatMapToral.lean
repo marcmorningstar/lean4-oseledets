@@ -69,10 +69,12 @@ abbrev T2 : Type := UnitAddTorus (Fin 2)
 /-- The inverse cat-map matrix `M⁻¹ = !![1,-1;-1,2]` (note `det M = 1`). -/
 def catℤinv : Matrix (Fin 2) (Fin 2) ℤ := !![1, -1; -1, 2]
 
+/-- `M · M⁻¹ = 1`. -/
 lemma catℤ_mul_inv : catℤ * catℤinv = 1 := by
   rw [catℤ, catℤinv]
   ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
 
+/-- `M⁻¹ · M = 1`. -/
 lemma catℤinv_mul : catℤinv * catℤ = 1 := by
   rw [catℤ, catℤinv]
   ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
@@ -125,9 +127,11 @@ lemma catTorus_rightInverse : Function.RightInverse (torusMap catℤinv) catToru
   rw [catTorus, ← Function.comp_apply (f := torusMap catℤ), ← torusMap_mul, catℤ_mul_inv,
     torusMap_one, id]
 
+/-- `catTorus` is a bijection (it has the two-sided inverse `torusMap catℤinv`). -/
 lemma catTorus_bijective : Function.Bijective catTorus :=
   ⟨catTorus_leftInverse.injective, catTorus_rightInverse.surjective⟩
 
+/-- `catTorus` is surjective. -/
 lemma catTorus_surjective : Function.Surjective catTorus := catTorus_bijective.2
 
 /-- `catTorus` packaged as an additive monoid homomorphism of `𝕋²` (each component is a finite
@@ -178,6 +182,7 @@ def catTorusEquiv : T2 ≃ᵐ T2 :=
 
 @[simp] lemma catTorusEquiv_apply (y : T2) : catTorusEquiv y = catTorus y := rfl
 
+/-- The measurable-equivalence packaging `catTorusEquiv` also preserves Haar (`volume`). -/
 lemma measurePreserving_catTorusEquiv :
     MeasurePreserving catTorusEquiv (volume : Measure T2) (volume : Measure T2) :=
   measurePreserving_catTorus

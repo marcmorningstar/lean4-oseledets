@@ -233,7 +233,7 @@ theorem tendsto_log_opNorm_pow_log_spectralRadius [NeZero d] {M : Matrix (Fin d)
     (hdet : M.det ≠ 0) :
     Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖M ^ n‖) atTop
       (𝓝 (Real.log (spectralRadius ℂ (M.map (algebraMap ℝ ℂ))).toReal)) := by
-  set ρ := (spectralRadius ℂ (M.map (algebraMap ℝ ℂ))).toReal with hρ
+  set ρ := (spectralRadius ℂ (M.map (algebraMap ℝ ℂ))).toReal
   have hρpos : 0 < ρ := spectralRadius_map_ofReal_pos hdet
   -- `log (‖Mⁿ‖^{1/n}) → log ρ` by continuity of `log` at `ρ > 0`.
   have hlog := (Real.continuousAt_log hρpos.ne').tendsto.comp
@@ -241,9 +241,8 @@ theorem tendsto_log_opNorm_pow_log_spectralRadius [NeZero d] {M : Matrix (Fin d)
   simp only [Function.comp_def] at hlog
   -- `log (‖Mⁿ‖^{1/n}) = (1/n) log ‖Mⁿ‖` for `n ≥ 1`.
   refine hlog.congr' ?_
-  filter_upwards [eventually_ge_atTop 1] with n hn
+  filter_upwards [eventually_ge_atTop 1] with n _
   have hpos : 0 < ‖M ^ n‖ := by
-    haveI : NeZero d := inferInstance
     have := norm_cocycle_pos (A := fun _ : Unit => M) (T := id) (fun _ => hdet) n ()
     rwa [cocycle_const] at this
   rw [Real.log_rpow hpos, one_div, mul_comm]
@@ -271,7 +270,7 @@ theorem topExponent_constantCocycle_eq_log_spectralRadius
     topExponent hT (const_det_ne_zero hdet) (const_measurable M) (const_integrableLogNorm M)
         (const_integrableLogNorm_inv M)
       = Real.log (spectralRadius ℂ (M.map (algebraMap ℝ ℂ))).toReal := by
-  set hA := const_det_ne_zero (X := X) hdet with hAdef
+  set hA := const_det_ne_zero (X := X) hdet
   -- the deterministic Gelfand limit.
   have hgelfand : Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * Real.log ‖M ^ n‖) atTop
       (𝓝 (Real.log (spectralRadius ℂ (M.map (algebraMap ℝ ℂ))).toReal)) :=

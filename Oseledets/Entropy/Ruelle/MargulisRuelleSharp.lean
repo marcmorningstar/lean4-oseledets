@@ -53,9 +53,11 @@ covering–distortion count into the atom-count growth bound, producing the ineq
   `atomCount ≤ C' · volProd T n x` consumed by the orbit assembly.
 * `Oseledets.hatom_of_sharpCovering` — discharges the existential `hatom` of the capstone for a
   fixed partition: at the a.e. orbit-rate base point the atom bound holds.
-* `Oseledets.margulisRuelle_sharp` — the **sharp unconditional (modulo the honest distortion
-  regime) Margulis–Ruelle inequality** `ksEntropy hT ≤ ∑ λᵢ⁺`; the sharp covering count is
-  discharged internally from `SharpCovering`, leaving only the honest geometric atom count.
+* `Oseledets.margulisRuelle_sharp` — the **sharp Margulis–Ruelle inequality**
+  `ksEntropy hT ≤ ∑ λᵢ⁺`, **conditional** on the honest geometric atom-count hypothesis
+  `hgeo` (the Riquelme-necessary distortion datum on non-compact phase space); the sharp
+  covering count is discharged internally from `SharpCovering`, so `hgeo` is the sole
+  geometric input.
 
 ## References
 

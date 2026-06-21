@@ -76,7 +76,7 @@ open scoped Matrix.Norms.L2Operator
 
 namespace Oseledets
 
-variable {X : Type*} [MeasurableSpace X] {T : X → X} {d : ℕ}
+variable {X : Type*} [MeasurableSpace X] {d : ℕ}
 
 /-! ### The det-free per-vector liminf lower bound
 
@@ -121,12 +121,10 @@ theorem log_add_correction_le_inv_mul_log_cocycle_apply_detfree [NeZero d]
     filter_upwards [this] with n hn
     linarith [hn, half_pos hL]
   filter_upwards [eventually_ge_atTop 1, hbandpos] with n hn1 hbpos
-  have hnpos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one hn1
   -- the det-free band bound `cᵘⁿ ‖Pᶜₙ v‖² ≤ ‖A⁽ⁿ⁾ v‖²`.
   have hband := cocycle_apply_sq_ge_band A T hn1 x (le_of_lt hc) v
   set b := ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
-    with hb
-  set M := ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ with hM
+  set M := ‖Matrix.toEuclideanLin (cocycle A T n x) v‖
   -- positivity of `M` is forced by the band bound (det-free): `cᵘⁿ b² ≤ M²` with `cᵘⁿ b² > 0`.
   have hlhs_pos : 0 < c ^ (2 * (n : ℝ)) * b ^ 2 := by
     have : 0 < c ^ (2 * (n : ℝ)) := Real.rpow_pos_of_pos hc _
@@ -169,7 +167,7 @@ theorem log_le_liminf_log_cocycle_apply_detfree [NeZero d]
       ‖Matrix.toEuclideanLin (bandProjector A T (Set.indicator (Set.Ioi c) 1) n x) v‖
     with hLHS
   set RHS : ℕ → ℝ := fun n =>
-      (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖ with hRHS
+      (n : ℝ)⁻¹ * Real.log ‖Matrix.toEuclideanLin (cocycle A T n x) v‖
   have hLHStend : Tendsto LHS atTop (𝓝 (Real.log c)) := by
     have := (tendsto_const_nhds (x := Real.log c) (f := atTop (α := ℕ))).add hcorr
     simpa [hLHS] using this
@@ -182,23 +180,36 @@ theorem log_le_liminf_log_cocycle_apply_detfree [NeZero d]
 /-! ### The exact per-stratum per-direction exponent -/
 
 /-- **The exact per-stratum per-direction singular Lyapunov exponent.** Let `A` be a (possibly
-**singular**) cocycle generator over `T`, `c ≥ 0` a stratum cut, and `v ≠ 0` a vector lying on the
-`c`-stratum of the singular sublevel filtration, i.e. `v ∈ lambdaBarSublevel A T c x` (so its upper
-exponent `lambdaBar A T x v ≤ c`) with the fast band projectors at the cut `e^c` converging to a
-limit `P` for which `P v ≠ 0` (the spectral identification that `v` has a genuine component above
-the cut — equivalently `v ∉` the strictly lower stratum). Then the normalized log-growth sequence
-converges **exactly** to the stratum exponent:
+**singular**) cocycle generator over `T`, `c` a stratum cut **gated to be nonnegative** (`0 ≤ c` —
+the lower-half band bound below uses `Real.exp c` at threshold `c`, valid only for `c ≥ 0`), and
+`v ≠ 0` a vector lying on the `c`-stratum of the singular sublevel filtration, i.e.
+`v ∈ lambdaBarSublevel A T c x` (so its upper exponent `lambdaBar A T x v ≤ c`) with the fast band
+projectors at the cut `e^c` converging to a limit `P` for which `P v ≠ 0` (the spectral
+identification that `v` has a genuine component above the cut — equivalently `v ∉` the strictly
+lower stratum). Then the normalized log-growth sequence converges **exactly** to the stratum
+exponent:
 
 `Tendsto (fun n => (1/n)·log‖A⁽ⁿ⁾(x)·v‖) atTop (𝓝 c)`.
+
+The **achievement is the exactness**: this is a genuine two-sided `Tendsto` to `c`, not a one-sided
+`≤`/`≥` bound. The limit value is the caller-supplied cut `c` itself, which **is** the exact
+per-direction exponent `lambdaBar A T x v` of `v` on that stratum (the user-facing corollary
+`Oseledets.lambdaBar_eq_of_mem_stratum` reads off `lambdaBar A T x v = c`).
+
+**Scope of the statement.** This is **pointwise at the single `x`** and **conditional** on the
+band-projector datum (`hP`, `hPv`) and the two-sided boundedness hypotheses (`hbddabove`,
+`hbddbelow`): there is **no measure and no `∀ᵐ x`** in the statement. The customary "a.e."
+qualifier is not part of this lemma — it enters only because the conditional band datum is
+*guaranteed on the tempered class* by `Oseledets.tendsto_vSlowSingularStep_of_tempered`, and the
+boundedness is supplied a.e. by Furstenberg–Kesten for an integrable generator.
 
 The upper half `limsup ≤ c` is the membership `v ∈ lambdaBarSublevel A T c x` itself
 (`Oseledets.mem_lambdaBarSublevel_iff`, det-free). The lower half `c ≤ liminf` is the det-free band
 bound `Oseledets.log_le_liminf_log_cocycle_apply_detfree` at threshold `e^c`. The two-sided
-Furstenberg–Kesten boundedness `hbdd` (a.e. for an integrable generator) squeezes the two into a
-genuine limit (`Oseledets.tendsto_inv_mul_log_norm_cocycle_apply`). **No `det A ≠ 0`, no inverse
-integrability.** The band-projector convergence `hP, hPv` is the genuine residual of the singular
-forward filtration, guaranteed on the tempered class
-(`Oseledets.tendsto_vSlowSingularStep_of_tempered`). -/
+boundedness hypotheses squeeze the two into a genuine limit
+(`Oseledets.tendsto_inv_mul_log_norm_cocycle_apply`). **No `det A ≠ 0`, no inverse integrability.**
+The band-projector convergence `hP, hPv` is the genuine residual of the singular forward filtration,
+guaranteed on the tempered class (`Oseledets.tendsto_vSlowSingularStep_of_tempered`). -/
 theorem singular_perDirection_exponent_eq_lambda_of_mem_stratum [NeZero d]
     (A : X → Matrix (Fin d) (Fin d) ℝ) (T : X → X)
     {c : ℝ} (hc : 0 ≤ c) {x : X} (hx : HasFiniteTopGrowth A T x)

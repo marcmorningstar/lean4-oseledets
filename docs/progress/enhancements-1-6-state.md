@@ -39,14 +39,71 @@ then migrated). Two independent QA layers (adversarial soundness audit + a 7-len
 
 ## Per-issue status
 
-| # | Topic | Status |
+| # | Topic | Status (after the 2026-06-21 extended campaign) |
 |---|---|---|
-| 1 | constant-cocycle exponents | **DONE** |
-| 2 | derivative (tangent) cocycle | **DONE** |
-| 3 | worked examples | **DONE** |
-| 4 | Ruelle entropy inequality | **FORMALIZED** — `Oseledets.margulisRuelle_sharp : ksEntropy ≤ Σλᵢ⁺` (full Mañé covering pipeline; honest Riquelme-necessary distortion hyps) |
-| 5 | suspension / special flow | **DONE** — fully unconditional space-level flow exponent (`hPmeas` discharged) |
-| 6 | full singular forward filtration | **FORMALIZED** — `Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel` (a.e. measurable singular filtration; new infra `AnalyticSet.nullMeasurableSet`) |
+| 1 | constant-cocycle exponents | **DONE** — symmetric spectrum + general (non-symmetric, **invertible**) top exponent `topExponent_constantCocycle_eq_log_spectralRadius`. Full general spectrum (`exponents i = log\|λᵢ\|`) staged in `Frontier` (one leaf: Yamamoto's singular-value limit). |
+| 2 | derivative (tangent) cocycle | **DONE** (normed space). Manifold version staged in `Frontier`: `mfderiv` chain-rule cocycle + the given-a-framing matrix reduction are sorry-free; one leaf (measurability of `x ↦ mfderiv T x` / a measurable frame field — absent from Mathlib). |
+| 3 | worked examples | **DONE** — doubling map, irrational rotation, and now the **genuine Arnold cat map**: the toral automorphism on 𝕋² proved measure-preserving **and ergodic** (`CatMapToral.ergodic_catTorus`, Fourier-character argument), plus a reusable 2-torus Fourier Hilbert-basis API. |
+| 4 | Ruelle entropy inequality | **FORMALIZED** — `margulisRuelle_sharp : ksEntropy ≤ Σλᵢ⁺` (full Mañé covering pipeline, **conditional** on the Riquelme-necessary `hgeo` atom-count). Concrete content added: a non-vacuous **per-partition** doubling-map instance (`h(α,T) ≤ Σλᵢ⁺ = log 2`) and the **Rokhlin equality** `h(α,T) = ∫ log\|det DT\| = log 2`. The full Pesin SRB *formula* (reverse inequality) is staged in `Frontier` (one Ledrappier–Young leaf). |
+| 5 | suspension / special flow | **DONE** — `hPmeas` discharged to `Measurable A`; **full per-exponent** flow scaling `λ_i^flow = λ_i^base/∫τ` (`suspension_perExponent_scaling`, a.e. over `suspensionMeasure`, via the exterior-cocycle route). The headline still assumes the base-a.e. Birkhoff limits (`hgrow`/`hroof`) and a bounded roof — supplied by the discrete MET in any concrete application. |
+| 6 | full singular forward filtration | **FORMALIZED (a.e.)** — `aemeasurable_orthProjMatrix_lambdaSublevel` (carries the everywhere-`IsUltrametricGrowth` gate `hUM`, standard-Borel + s-finite `μ`) + the **exact per-stratum growth law** `singular_perDirection_exponent_eq_lambda_of_mem_stratum` (limit to the stratum cut, pointwise-conditional on the band datum, nonnegative strata). The strictly-stronger **everywhere-Borel** flag is staged in `Frontier` (both routes bottom out on the Arsenin–Kunugui projection theorem). |
+
+## ⟢ EXTENDED CAMPAIGN (2026-06-21) — 7 reachable closures + 4 honest research skeletons
+
+Branch `issues/met-enhancements-extended`. Two parallel waves (13 Lean agents, one warm `lwt` worktree each,
+RAM-bounded), a consultant fork, a delegated integration agent, and a two-pass QA workflow (adversarial
+soundness skeptics + 6-lens quality reviewers + an honesty critic) whose findings were all fixed before push.
+Full `lake build Oseledets` + `AxiomAudit` **green**; every new headline `#print axioms = [propext,
+Classical.choice, Quot.sound]`.
+
+**Closed sorry-free in the linted `Oseledets` library (7):**
+- **#1 top general spectrum** — `topExponent_constantCocycle_eq_log_spectralRadius`: for any **invertible**
+  real `M`, the top exponent of the constant cocycle `= log (spectralRadius ℂ M)` (ℝ→ℂ complexification +
+  Gelfand). *Honest scope:* invertibility is structurally required (the spectrum object needs `IntegrableLogNorm
+  A⁻¹`); "general" = not-necessarily-symmetric, the standard MET setting.
+- **#3 genuine cat map** — `CatMapToral.{ergodic_catTorus, measurePreserving_catTorus, orbit_infinite}`: the
+  real Arnold automorphism on 𝕋² = (ℝ/ℤ)², measure-preserving + **ergodic** via the Koopman/Fourier-character
+  argument (Mathlib's multivariate `mFourierBasis`). Replaces the old constant-cocycle stand-in. **A documented
+  Phase-1 wall, fully closed.**
+- **#3 2-torus Fourier** — `Oseledets/Fourier/Torus2.lean`: characters as an orthonormal + **complete** Hilbert
+  basis, Parseval, the orthogonal-to-all-characters ⇒ 0 interface (completeness free from `AddCircleMulti`).
+- **#4 non-vacuous Ruelle instance** — `doublingMap_ksEntropyPartition_le_sumPosExp`: the **per-partition**
+  bound `h(α,T) ≤ Σλᵢ⁺ = log 2` for the doubling map (a genuine `log2 ≤ log2`, not `0 ≤ 0`). *Honest scope:*
+  per-partition, not the system `h(T)`; the atom-count hypothesis is automatic for the binary partition (the
+  bridge `h(T)=h(α,T)` for a generating partition is a named, un-formalized input).
+- **#4 Rokhlin equality** — `Rokhlin.rokhlin_equality_doublingMap`: `h(α,T) = ∫ log|det DT| = log 2`, with the
+  integrand the genuine log-determinant of the derivative generator `!![2]` (`det_doublingGen`). Pesin's
+  *equality* on a real expanding system; the Jacobian is the constant 2 (uniform expansion), which is correct.
+- **#5 per-exponent flow scaling** — `suspension_perExponent_scaling`: a.e. over `suspensionMeasure`, each flow
+  exponent `λ_i^flow = λ_i^base/∫τ` (telescoping the proved partial-sum flow exponents `Γ_k^flow = Γ_k^base/∫τ`
+  from the exterior-cocycle route). Genuinely references the flow and `∫τ` (not a free scalar).
+- **#6 exact per-stratum growth** — `singular_perDirection_exponent_eq_lambda_of_mem_stratum`: for `v` on the
+  `c`-stratum, `(1/n)log‖A⁽ⁿ⁾v‖ → c` **exactly** (new det-free liminf engine). *Honest scope:* the limit is the
+  stratum cut `c` (= the exact per-direction exponent of `v`); pointwise-conditional on the band-projector datum
+  (the singular wall, a.e.-true on the tempered class) and nonnegative strata.
+
+**Staged in `Frontier` (sorry-tolerant, non-default target — honest top-down skeletons, one documented BLOCKED
+leaf each):**
+- **#1** `Frontier/Issue1/Yamamoto.lean` — full spectrum `exponents i = log|λᵢ(M)|` sorry-free *given* Yamamoto's
+  singular-value limit `σᵢ(Mⁿ)^{1/n} → |λᵢ|` (the one leaf; needs Jordan–Chevalley + polar/fractional-Hermitian
+  machinery absent from Mathlib).
+- **#2** `Frontier/Issue2/{DerivativeCocycleManifold, Framing, Existence}.lean` — `mfderiv` chain-rule cocycle +
+  the given-a-framing matrix reduction sorry-free; one leaf (measurability of `mfderiv` / existence of a
+  measurable frame field). Surprise: Mathlib's `TangentSpace` is a definitional type-synonym, so the only real
+  obstruction is `mfderiv` measurability, not a bundle trivialization.
+- **#4** `Frontier/Issue4Pesin/{SRBData, ManeLowerBound, PesinFormula}.lean` — the Pesin equality assembled from
+  the proved Ruelle `≤` (cites `margulisRuelle_sharp`) plus one BLOCKED leaf: the SRB reverse inequality
+  `Σλᵢ⁺ ≤ h` (Ledrappier–Young: unstable foliation + absolute continuity, multi-year Mathlib-scale).
+- **#6** `Frontier/Issue6/ArseninKunugui.lean` — the everywhere-Borel flag; **both** the Arsenin–Kunugui and the
+  Castaing/KRN routes were shown to bottom out on the *same* theorem (Borel set with σ-compact sections has Borel
+  projection; the KRN route merely *consumes* the wall as a hypothesis). The proper/compact-fibre case is
+  sorry-free; the general case needs the Effros Borel hyperspace + Π¹₁-boundedness (research-scale DST). A
+  recorded counterexample proves the tempting topological shortcut is false.
+
+**Honest "what remains":** the four `Frontier` leaves above (Yamamoto's limit; measurable `mfderiv`; the Pesin
+SRB reverse inequality; Arsenin–Kunugui) are each a single genuinely-missing Mathlib-scale theorem, correctly
+left as an explicit `sorry`/hypothesis **outside** the authoritative build. Nothing in the green `Oseledets`
+library is faked or axiomatized. The a.e. formulations are the standard MET notions and are closed.
 
 > The detailed Phase-1 narrative below records the *journey* (the wall characterization that motivated the
 > eventual routes). The Phase-2 closure is summarized at the top and in `AuditReport.md`.

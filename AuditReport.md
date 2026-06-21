@@ -12,7 +12,7 @@
 
 | # | Topic | Verdict |
 |---|-------|---------|
-| **5** | suspension / special flow | ✅ **SOLVED** — fully unconditional space-level flow exponent `λ_base/∫τ` |
+| **5** | suspension / special flow | ✅ **SOLVED** — `hPmeas` measurability datum discharged to `Measurable A`; full **per-exponent** flow scaling `λ_i^flow = λ_i^base/∫τ`. (The headline still assumes the base-a.e. Birkhoff limits `hgrow`/`hroof` and a bounded roof — supplied by the discrete MET in any concrete application; "unconditional" refers only to the cover-cocycle measurability datum.) |
 | **4** | Ruelle entropy inequality | ✅ **FORMALIZED (Phase 2)** — `Oseledets.margulisRuelle_sharp : ksEntropy ≤ Σλᵢ⁺` in the linted, axiom-audited lib, via the full Mañé covering-count pipeline; carries the Riquelme-necessary distortion hyps. (Phase 1 had characterized the geometric core as a wall; Phase 2 built the missing Mathlib-scale infra to close it.) |
 | **6** | full singular forward filtration | ✅ **FORMALIZED (Phase 2)** — `Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel` (a.e. measurable singular filtration) in the linted lib, via the polarization route + new infra `MeasureTheory.AnalyticSet.nullMeasurableSet` (a Mathlib gap). (Phase 1 had proved the *everywhere* flag's per-step wall tight; Phase 2 closed the correct *a.e.* formulation.) |
 
@@ -172,9 +172,43 @@ AEMeasurable, the correct a.e. MET formulation), proved **modulo one classical t
 orbit-iteration `(1/n)log∏max(1,σᵢ)→Σλᵢ⁺` a.e. + capstone `margulisRuelle_sharp_of_atomVolProd`
 (`ksEntropy ≤ sumPosExp` modulo the atom-count hyp `hatom`).
 
-**Frontier Wave 4 (in flight):** the two remaining genuine pieces — formalizing `AnalyticSet.nullMeasurableSet`
-(closes #6 completely) and the sharp anisotropic covering count `∏max(1,σᵢ)` + `hatom` discharge (closes #4's
-geometric core to the honest non-compactness hypotheses).
+**Frontier Wave 4 (landed):** both pieces closed — `AnalyticSet.nullMeasurableSet` (Choquet capacitability,
+migrated to the linted lib) closes the #6 **a.e.** projector node (the *everywhere*-Borel filtration still needs
+the Arsenin–Kunugui projection theorem, a `sorry` in `Frontier/Issue6/ArseninKunugui.lean`); and the sharp
+anisotropic covering count `∏max(1,σᵢ)` discharges #4's covering bound internally, leaving `hgeo` (the
+Riquelme-necessary non-compactness/distortion atom-count) as the **sole** explicit geometric hypothesis of
+`margulisRuelle_sharp` — `hatom` is *not* discharged unconditionally; it became `hgeo`.
+
+---
+
+## EXTENDED CAMPAIGN (2026-06-21) — 7 reachable closures + 4 research skeletons
+
+Branch `issues/met-enhancements-extended`. After the Phase-2 closure above, two parallel waves (13 Lean agents,
+warm `lwt` worktrees) closed the remaining *reachable* gaps and staged honest skeletons for the genuine walls;
+a delegated integration agent produced the combined green build and a two-pass QA workflow (adversarial
+soundness + 6-lens quality + honesty critic) drove a fix pass before push. Full `lake build` green; every new
+headline axiom-audited `[propext, Classical.choice, Quot.sound]`.
+
+**Closed sorry-free in `Oseledets/` (with honest scope, exactly as QA verified):**
+
+| Result | What it genuinely proves | Honest scope note |
+|---|---|---|
+| `topExponent_constantCocycle_eq_log_spectralRadius` (#1) | top exponent of a non-symmetric **invertible** constant cocycle `= log spectralRadius` | invertibility is structurally required by the spectrum object |
+| `CatMapToral.ergodic_catTorus` (#3) | the **genuine** Arnold cat map on 𝕋² is measure-preserving + ergodic | real toral dynamics (Fourier characters), not a cocycle stand-in |
+| `Fourier.Torus2` (#3) | 2-torus characters = orthonormal + complete Hilbert basis, Parseval | reusable API; completeness from `AddCircleMulti` |
+| `doublingMap_ksEntropyPartition_le_sumPosExp` (#4) | **per-partition** Ruelle bound `h(α,T) ≤ Σλᵢ⁺ = log 2` | per-partition, not system `h(T)`; binary-partition atom-count is automatic |
+| `Rokhlin.rokhlin_equality_doublingMap` (#4) | Pesin/Rokhlin **equality** `h(α,T) = ∫ log\|det DT\| = log 2` | integrand = genuine `log\|det` of generator `!![2]`; constant Jacobian 2 |
+| `suspension_perExponent_scaling` (#5) | **per-exponent** flow scaling `λ_i^flow = λ_i^base/∫τ` a.e. | base-a.e. Birkhoff limits + bounded roof assumed |
+| `singular_perDirection_exponent_eq_lambda_of_mem_stratum` (#6) | **exact** per-stratum growth `(1/n)log‖A⁽ⁿ⁾v‖ → c` | limit to the stratum cut; pointwise-conditional (band datum), nonneg strata |
+
+**Staged in `Frontier` (one documented BLOCKED leaf each — honest roadmaps, outside the build):** #1 Yamamoto's
+singular-value limit; #2 measurability of `mfderiv` (the chain-rule + framing reduction are sorry-free); #4 the
+Pesin SRB reverse inequality (Ledrappier–Young); #6 the everywhere-Borel flag (both routes reduce to the
+Arsenin–Kunugui projection theorem — the proper/compact-fibre case is sorry-free).
+
+A QA honesty pass strengthened two results to match their names (the Rokhlin integrand became a genuine
+log-determinant; `suspension_perExponent_scaling` became a genuine flow statement) and corrected docstring
+overstatements; nothing was faked or axiomatized.
 
 ### Frontier scorecard
 

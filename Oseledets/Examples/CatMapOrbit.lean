@@ -51,18 +51,22 @@ noncomputable def catℝ : Matrix (Fin 2) (Fin 2) ℝ := !![2, 1; 1, 1]
 /-- The dominant eigenvalue `λ = (3 + √5)/2 > 1`. -/
 noncomputable def lam : ℝ := (3 + Real.sqrt 5) / 2
 
+/-- `√5 < 3` (since `5 < 9`). -/
 lemma sqrt5_lt_three : Real.sqrt 5 < 3 := by
   have : Real.sqrt 5 < Real.sqrt 9 := by
     apply Real.sqrt_lt_sqrt <;> norm_num
   rwa [show (9 : ℝ) = 3 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)] at this
 
+/-- `2 < √5` (since `4 < 5`). -/
 lemma two_lt_sqrt5 : 2 < Real.sqrt 5 := by
   have : Real.sqrt 4 < Real.sqrt 5 := by
     apply Real.sqrt_lt_sqrt <;> norm_num
   rwa [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.sqrt_sq (by norm_num)] at this
 
+/-- `(√5)² = 5`. -/
 lemma sqrt5_sq : Real.sqrt 5 ^ 2 = 5 := Real.sq_sqrt (by norm_num)
 
+/-- The dominant eigenvalue is hyperbolic: `1 < λ`. -/
 lemma one_lt_lam : 1 < lam := by
   unfold lam
   have := two_lt_sqrt5
@@ -86,12 +90,6 @@ lemma mu_sq : mu ^ 2 = 3 * mu - 1 := by
 /-- The two eigenvalues are distinct: `λ - μ = √5 ≠ 0`. -/
 lemma lam_sub_mu : lam - mu = Real.sqrt 5 := by
   unfold lam mu; ring
-
-lemma lam_ne_mu : lam ≠ mu := by
-  intro h
-  have : Real.sqrt 5 = 0 := by rw [← lam_sub_mu, h, sub_self]
-  have := two_lt_sqrt5
-  linarith
 
 /-! ## The growth functionals coming from the two eigen-covectors
 
@@ -157,7 +155,7 @@ collapses both coordinates: the `λ`-pairing gives `λᵏ ⟨w,v⟩ = ⟨w,v⟩`
 `⟨w,v⟩ = 0`; likewise `⟨u,v⟩ = 0`; the two covectors are independent, so `v = 0`. -/
 lemma eq_zero_of_pow_mulVec_eq {k : ℕ} (hk : 1 ≤ k) {v : Fin 2 → ℝ}
     (hv : catℝ ^ k *ᵥ v = v) : v = 0 := by
-  -- `λᵏ ≠ 1` and `μᵏ ≠ 1` (the latter because `μ ≠ λ` and the eigen-covectors are independent).
+  -- `λᵏ ≠ 1` because `λ > 1`; later `μᵏ ≠ 1` because `0 < μ < 1` forces `μᵏ < 1`.
   have hlam_pow : lam ^ k ≠ 1 := by
     have : 1 < lam ^ k := one_lt_pow₀ one_lt_lam (by omega)
     linarith

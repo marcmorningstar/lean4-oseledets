@@ -8,24 +8,32 @@ import Oseledets.Lyapunov.Extensions.ExponentSums
 import Oseledets.Entropy.Ruelle.Crude
 
 /-!
-# A non-vacuous instance of the Margulis–Ruelle inequality: the doubling map
+# A non-vacuous instance of the per-partition Ruelle bound: the doubling map
 
-The abstract Margulis–Ruelle inequality `h(T) ≤ ∑ λᵢ⁺` (`Oseledets.margulisRuelle_le_sumPosExp`,
-`Oseledets.margulisRuelle_sharp`) isolates the genuinely geometric content as an explicit
-atom-counting hypothesis and proves everything around it. This module **instantiates that content
-concretely** on the classical worked example for which the inequality is a sharp, *non-trivial*
-equality: the **doubling map** `T : y ↦ 2 • y` on the unit circle (`Oseledets.doublingMap`,
+The abstract per-partition Ruelle inequality `h(α, T) ≤ ∑ λᵢ⁺` — entropy relative to **one**
+partition `α` — has as its unconditional arithmetic backbone
+`Oseledets.Entropy.ksEntropyPartition_le_of_atomCount_growth`, which isolates the genuinely
+geometric content as an explicit atom-counting hypothesis and proves everything around it. This
+module **instantiates that content concretely** on the classical worked example: the **doubling
+map** `T : y ↦ 2 • y` on the unit circle (`Oseledets.doublingMap`,
 `Oseledets/Examples/Elementary.lean`).
 
-For the doubling map both sides of the inequality equal `log 2`:
+The headline `Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp` proves the **per-partition**
+bound `ksEntropyPartition hT P ≤ sumPosExp`, i.e. `h(α, T) ≤ ∑ λᵢ⁺`, for a *single* partition `α` —
+it is **not** the system Margulis–Ruelle inequality `h(T) ≤ ∑ λᵢ⁺`. The bridge from the
+per-partition bound to the system entropy is the Kolmogorov–Sinai identity `h(T) = h(α, T)` for a
+**generating** partition `α`, which is an un-formalized named input (see below).
+
+For the doubling map the right-hand side equals `log 2`:
 
 * the **right-hand side** — the sum of the strictly positive Lyapunov exponents of the (constant)
-  derivative cocycle, generator `M = !![2]` — is `log 2` (the single exponent is `log 2 > 0`); and
-* the **left-hand side** — the Kolmogorov–Sinai entropy — is `log 2` as well, by the binary
-  generating partition (the topological-entropy / variational content).
+  derivative cocycle, generator `M = !![2]` — is `log 2` (the single exponent is `log 2 > 0`).
 
-So `h(T) ≤ ∑ λᵢ⁺` reads `log 2 ≤ log 2`: a *non-vacuous* instance, in contrast to a trivial
-isometry where it would be `0 ≤ 0`.
+For the binary generating partition the left-hand side is also `log 2`, so the per-partition bound
+`h(α, T) ≤ log 2` is *attained* — but that equality is **not** proved in this file; it is the
+sibling theorem `Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two`
+(`h(α, T) = log 2`). Cross-referencing that lemma is what backs the "attained" claim with a real
+proof rather than prose.
 
 ## What is discharged here, and what stays an honest input
 
@@ -35,38 +43,43 @@ isometry where it would be `0 ≤ 0`.
   constant-cocycle API (`const_det_ne_zero`, `const_measurable`, `const_integrableLogNorm`,
   `const_integrableLogNorm_inv`). It reuses the proven single exponent
   `Oseledets.doublingMap_topExponent_eq_log_two` (`= log 2`). This is the genuine positive-exponent
-  *sum* side of Margulis–Ruelle, fully sorry-free.
+  *sum* side, fully sorry-free.
 
-* **The per-partition Ruelle inequality is instantiated at the sharp rate `log 2`.**
+* **The per-partition Ruelle inequality is instantiated at the rate `log 2`.**
   `Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp` specializes the unconditional arithmetic
   backbone `Oseledets.Entropy.ksEntropyPartition_le_of_atomCount_growth` to the doubling map at the
   exponential rate `R = log 2`, and then *identifies that rate with the computed positive-exponent
-  sum*: from the honest atom-count growth `atomCount ≤ C · 2ⁿ` of a partition's `n`-refinement, the
+  sum*: from the atom-count growth `atomCount ≤ C · 2ⁿ` of a partition's `n`-refinement, the
   partition entropy `h(α, T)` is bounded by `sumPosExp = log 2`. The rate here is not an assumed
-  abstract constant — it is the actual Lyapunov datum `log 2`, so this is a *sharp, named* instance.
+  abstract constant — it is the actual Lyapunov datum `log 2`.
 
-The atom-count growth at rate `log 2` is the genuine geometric input (the doubling map is exactly
-`2`-to-`1`, so the `n`-refinement of a partition into intervals has `≈ 2ⁿ` non-empty atoms); it has
-exactly the status it carries in `Oseledets.Entropy.Ruelle.Crude` and
-`Oseledets.margulisRuelle_sharp` (the Mañé/Katok count), here with the *rate pinned to the true
-exponent*. The remaining bridge to a
-fully unconditional `h(T) ≤ log 2` over **all** partitions is the Kolmogorov–Sinai theorem
-`h(T) = h(α, T)` for a generating partition (Le Maître's notes, Thm. 5), multi-month-scale ergodic
-infrastructure not present in Mathlib, hence deliberately left as the named input.
+The atom-count hypothesis `hgrow` (`atomCount ≤ C · 2ⁿ`) is **automatic for the binary partition**:
+the `n`-fold refinement of a 2-element partition has at most `card(ι)ⁿ = 2ⁿ` atoms by the generic
+bound `atomCount ≤ card(ι)ⁿ` (the count of formal `n`-tuples of cells), with no use of any
+doubling-map-specific geometry. So the natural binary instance exercises **no** sharp geometric
+input. The geometric content of `hgrow` only *bites* for partitions of cardinality `> 2`, where
+`card(ι)ⁿ` exceeds `2ⁿ` and the exact `2`-to-`1` structure of the doubling map (a partition into
+intervals refines under `T^[n]` into `≈ 2ⁿ` atoms, not `card(ι)ⁿ`) is what pins the rate down. The
+hypothesis has exactly the status the Mañé/Katok count carries in `Oseledets.Entropy.Ruelle.Crude`,
+here with the rate `log 2` matching the true exponent.
+
+The remaining bridge to a fully unconditional `h(T) ≤ log 2` over the **system** entropy is the
+Kolmogorov–Sinai theorem `h(T) = h(α, T)` for a generating partition `α` (Le Maître's notes, §1),
+multi-month-scale ergodic infrastructure not present in Mathlib, hence deliberately left as the
+named input.
 
 ## Main results
 
 * `Oseledets.doublingMap_sumPosExp_eq_log_two` — the positive-exponent sum of the doubling-map
   constant cocycle is `log 2` (unconditional, all hypotheses discharged).
-* `Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp` — the **non-vacuous Ruelle inequality**
-  `h(α, T) ≤ ∑ λᵢ⁺ = log 2` for the doubling map, from the honest atom-count growth at the sharp
-  rate `log 2`.
+* `Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp` — the **per-partition** Ruelle bound
+  `h(α, T) ≤ ∑ λᵢ⁺ = log 2` for the doubling map, from the atom-count growth at rate `log 2`.
 
 ## References
 
 * M. Viana, *Lectures on Lyapunov Exponents*, Cambridge Studies in Adv. Math. **145** (2014).
 * Maryam Contractor, *The Pesin Entropy Formula*, UChicago REU 2023, §7.
-* François Le Maître, *Notes on the Kolmogorov–Sinai theorem* (2017), §2 (Thm. 5).
+* François Le Maître, *Notes on the Kolmogorov–Sinai theorem* (2017), §1.
 -/
 
 open MeasureTheory Filter Topology
@@ -128,24 +141,31 @@ theorem doublingMap_sumPosExp_eq_log_two :
 
 /-! ## The non-vacuous per-partition Ruelle inequality for the doubling map -/
 
-/-- **The non-vacuous Margulis–Ruelle inequality for the doubling map.**
+/-- **The per-partition Ruelle bound for the doubling map.**
 
 For any finite measurable partition `P` of the unit circle whose `n`-fold refinement
 `⋁ₖ₌₀ⁿ⁻¹ T⁻ᵏ P` under the doubling map has eventually at most `C · 2ⁿ` non-empty atoms
-(`hgrow`, with `C ≥ 1`), the Kolmogorov–Sinai partition entropy is bounded by the sum of the
-strictly positive Lyapunov exponents of the (constant) derivative cocycle:
+(`hgrow`, with `C ≥ 1`), the Kolmogorov–Sinai entropy *relative to that single partition* is bounded
+by the sum of the strictly positive Lyapunov exponents of the (constant) derivative cocycle:
 
 `h(α, T) ≤ ∑ λᵢ⁺ = log 2`.
 
-This is a **sharp, non-vacuous** instance of the Margulis–Ruelle inequality: the right-hand side is
-the *computed* exponent sum `log 2` (`doublingMap_sumPosExp_eq_log_two`), not an abstract constant,
-and for the binary generating partition equality `h(α, T) = log 2` holds, so the bound is attained.
+This is the **per-partition** Ruelle bound `h(α, T) ≤ ∑ λᵢ⁺`, **not** the system inequality
+`h(T) ≤ ∑ λᵢ⁺` (which additionally needs the Kolmogorov–Sinai identity `h(T) = h(α, T)` for a
+generating partition — an un-formalized named input; see the module docstring). The right-hand side
+is the *computed* exponent sum `log 2` (`doublingMap_sumPosExp_eq_log_two`), not an abstract
+constant.
 
-The atom-count growth `hgrow` is the genuine geometric input — the doubling map is exactly
-`2`-to-`1`, so a partition into intervals refines under `T^[n]` into `≈ 2ⁿ` atoms — pinned here to
-the **sharp**
-rate `log 2 = ∑ λᵢ⁺` (note `2ⁿ = exp(n · log 2)`). The reduction itself is the unconditional
-arithmetic backbone `Oseledets.Entropy.ksEntropyPartition_le_of_atomCount_growth`. -/
+The bound is **attained** for the binary generating partition, where `h(α, T) = log 2` — but that
+equality is proved in the sibling theorem
+`Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two`, not here.
+
+The atom-count growth `hgrow` is **automatic for the binary partition** (its `n`-refinement has at
+most `card(ι)ⁿ = 2ⁿ` atoms by the generic tuple bound, no doubling-map geometry); the geometric
+content of `hgrow` only bites for partitions of cardinality `> 2`, where the exact `2`-to-`1`
+structure of the doubling map (`≈ 2ⁿ` interval atoms, not `card(ι)ⁿ`) is what pins the rate `log 2`
+down (note `2ⁿ = exp(n · log 2)`). The reduction itself is the unconditional arithmetic backbone
+`Oseledets.Entropy.ksEntropyPartition_le_of_atomCount_growth`. -/
 theorem doublingMap_ksEntropyPartition_le_sumPosExp {ι : Type*} [Fintype ι] [Nonempty ι]
     (P : Entropy.MeasurePartition (volume : Measure UnitAddCircle) ι) {C : ℝ} (hC : 1 ≤ C)
     (hgrow : ∀ᶠ n : ℕ in atTop,

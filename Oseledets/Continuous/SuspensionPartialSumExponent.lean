@@ -29,16 +29,24 @@ headline yields the **partial-sum (exterior-power) flow scaling**
 read as `HasFlowExponent (extGen k A) … q (Γ_k / ∫τ)`: the top exponent of the `k`-fold exterior
 suspension flow — i.e. the sum of the top-`k` *flow* exponents — equals `Γ_k^base / ∫τ`.
 
-Telescoping the partial sums gives the **per-exponent / full-spectrum scaling**: for every sorted
-index `i : Fin d`,
+Telescoping the partial-sum *flow* exponents gives the **per-exponent / full-spectrum scaling**: for
+every sorted index `i : Fin d`,
 
-`λ_i^flow = λ_i^base / ∫τ`     (`suspension_perExponent_scaling`),
+`λ_i^flow = λ_i^base / ∫τ`     (`suspension_perExponent_scaling`).
 
-phrased as the identity `(gammaK_{i+1} − gammaK_i) / ∫τ = exponents i / ∫τ` between the discrete
-base spectrum (divided by the mean roof) and the per-band flow-exponent increments
-`Γ_{i+1}^flow − Γ_i^flow`. This is the full-spectrum statement requested for Issue #5: the *entire*
-suspension/flow Lyapunov spectrum is the base spectrum divided by `∫τ`, not merely the top
-exponent.
+This is a genuine flow statement, not a base-only identity. The `i`-th flow exponent is read as the
+increment of the partial-sum flow exponents, `λ_i^flow = Γ_{i+1}^flow − Γ_i^flow`; the partial-sum
+flow exponents are the *proved* values `Γ_k^flow = Γ_k^base / ∫τ` carried by the `k`-fold exterior
+suspension flow at `μ̂ = suspensionMeasure`-a.e. orbit class `q`
+(`ae_suspensionMeasure_hasFlowExponent_extGen`). So `suspension_perExponent_scaling` asserts, for
+`μ̂`-a.e. `q`, that both consecutive exterior flow exponents are realized at `q` —
+`HasFlowExponent (extGen (i+1) A) … q (Γ_{i+1}^base / ∫τ)` and
+`HasFlowExponent (extGen i A) … q (Γ_i^base / ∫τ)` — and that their difference equals
+`exponents i / ∫τ`. The increment identity is the base telescoping
+`Γ_{i+1}^base − Γ_i^base = exponents i` (`gammaK_succ_sub_gammaK`) divided through by the *actual*
+mean roof `∫τ` (a positive constant under the bounded-roof hypothesis), never a free scalar. This
+is the full-spectrum statement requested for Issue #5: the *entire* suspension/flow Lyapunov
+spectrum is the base spectrum divided by `∫τ`, exponent by exponent, not merely the top exponent.
 
 ## Main results
 
@@ -50,16 +58,22 @@ exponent.
   top-exponent headline; for `k = d` it is the determinant / volume growth.)
 * `Oseledets.suspension_gammaK_flow_scaling` — the partial-sum scaling read as a value identity:
   the flow growth rate `Γ_k^flow = HasFlowExponent`-value is `Γ_k^base / ∫τ`.
-* `Oseledets.suspension_perExponent_scaling` — the **per-exponent / full-spectrum scaling**:
-  `(Γ_{i+1}^base − Γ_i^base) / ∫τ = exponents i / ∫τ` for every `i : Fin d`, i.e. each individual
-  flow exponent is the corresponding base exponent divided by `∫τ`.
+* `Oseledets.gammaK_succ_sub_gammaK` — the base-spectrum telescoping increment
+  `Γ_{i+1}^base − Γ_i^base = exponents i`.
+* `Oseledets.suspension_perExponent_scaling` — the **per-exponent / full-spectrum flow scaling**:
+  for `μ̂`-a.e. orbit class `q`, both consecutive exterior flow exponents are realized
+  (`HasFlowExponent (extGen (i+1) A) … q (Γ_{i+1}^base / ∫τ)` and
+  `HasFlowExponent (extGen i A) … q (Γ_i^base / ∫τ)`) and their difference — the `i`-th *flow*
+  exponent — equals `exponents i / ∫τ`. Each individual flow exponent is the corresponding base
+  exponent divided by the actual mean roof `∫τ`.
 
 ## References
 
 * L. M. Abramov, *On the entropy of a flow*, Dokl. Akad. Nauk SSSR **128** (1959) 873–875.
 * I. P. Cornfeld, S. V. Fomin, Ya. G. Sinai, *Ergodic Theory*, Springer 1982, Ch. 11
   (special / suspension flows; Ambrose–Kakutani).
-* M. Bessa, P. Varandas, *On the Lyapunov spectrum of suspension flows* (exponent transfer).
+* M. Bessa, P. Varandas, *Positive Lyapunov exponents for Hamiltonian linear differential systems*,
+  arXiv:1304.3794 (2014) (Lyapunov exponents of cocycles over a suspension flow with bounded roof).
 * M. Viana, *Lectures on Lyapunov Exponents*, Cambridge Studies in Adv. Math. **145** (2014)
   (the exterior-power characterization of the partial sums).
 -/
@@ -189,51 +203,88 @@ end PartialSumScaling
 
 section PerExponentScaling
 
-variable {μ : Measure X} {T : X → X} [IsProbabilityMeasure μ] [NeZero d]
-    {A : X → Matrix (Fin d) (Fin d) ℝ} (hT : Ergodic T μ) (hA : ∀ x, (A x).det ≠ 0)
+variable {μ : Measure X} {T : X ≃ᵐ X} {τ : X → ℝ} {c C : ℝ}
+    [IsProbabilityMeasure μ] [NeZero d]
+    {A : X → Matrix (Fin d) (Fin d) ℝ} (hT : Ergodic (⇑T) μ) (hA : ∀ x, (A x).det ≠ 0)
     (hAmeas : Measurable A) (hint : IntegrableLogNorm A μ)
-    (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ)
+    (hint' : IntegrableLogNorm (fun x => (A x)⁻¹) μ) (hτ : Measurable τ)
 
-include hT hA hint hint' in
-/-- **The per-exponent (full-spectrum) special-flow scaling.** For every sorted index `i : Fin d`,
-the `i`-th flow exponent equals the `i`-th base exponent divided by the mean roof `∫τ`:
-
-`(Γ_{i+1}^base − Γ_i^base) / R = exponents i / R`.
-
-The left side is the `i`-th *flow*-exponent increment `Γ_{i+1}^flow − Γ_i^flow` (each partial sum
-scaled by `1/R = 1/∫τ` via `ae_suspensionMeasure_hasFlowExponent_extGen`); the right side is the
-`i`-th base exponent scaled by `1/R`. The identity follows by telescoping the partial sums
-`Γ_k = ∑_{j<k} exponents j` (`gammaK_eq_sum_top_exponents`): `Γ_{i+1} − Γ_i = exponents i`. Thus the
-*entire* suspension/flow Lyapunov spectrum is the base spectrum divided by `∫τ`, not merely the top
-exponent. (`R` is any nonzero scalar; in the suspension application `R = ∫τ`, positive under a
-bounded roof.) -/
-theorem suspension_perExponent_scaling (R : ℝ) (i : Fin d) :
-    (gammaK hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt)
-        - gammaK hT hA hAmeas hint hint' (le_of_lt i.isLt)) / R
-      = exponents hT hA hAmeas hint hint' i / R := by
+include hT hA hAmeas hint hint' in
+/-- **The base-spectrum telescoping identity.** The consecutive partial sums of the base spectrum
+differ by exactly one exponent: for every sorted index `i : Fin d`,
+`Γ_{i+1}^base − Γ_i^base = exponents i`. This is the purely algebraic content behind the
+per-exponent scaling — it telescopes `Γ_k = ∑_{j<k} exponents j` (`gammaK_eq_sum_top_exponents`) —
+and is reused in the flow statement after dividing through by `∫τ`. -/
+theorem gammaK_succ_sub_gammaK (i : Fin d) :
+    gammaK hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt)
+        - gammaK hT hA hAmeas hint hint' (le_of_lt i.isLt)
+      = exponents hT hA hAmeas hint hint' i := by
   -- Telescope the partial sums: `Γ_{i+1} − Γ_i = exponents i`.
   have hsucc := gammaK_eq_sum_top_exponents hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt)
   have hi := gammaK_eq_sum_top_exponents hT hA hAmeas hint hint' (le_of_lt i.isLt)
   rw [hsucc, hi]
   -- `∑_{j < i+1} exponents (castLE j) − ∑_{j < i} exponents (castLE j) = exponents i`.
-  congr 1
-  -- Reduce both partial sums to `Finset.range`-sums of `exponents ∘ (Fin.mk · _)`.
-  have key : ∑ j : Fin ((i : ℕ) + 1),
-        exponents hT hA hAmeas hint hint' (Fin.castLE (Nat.succ_le_of_lt i.isLt) j)
-      - ∑ j : Fin (i : ℕ),
-        exponents hT hA hAmeas hint hint' (Fin.castLE (le_of_lt i.isLt) j)
-      = exponents hT hA hAmeas hint hint' i := by
-    rw [Fin.sum_univ_castSucc]
-    have hcong : ∀ j : Fin (i : ℕ),
-        exponents hT hA hAmeas hint hint'
-            (Fin.castLE (Nat.succ_le_of_lt i.isLt) (Fin.castSucc j))
-          = exponents hT hA hAmeas hint hint' (Fin.castLE (le_of_lt i.isLt) j) := by
-      intro j; exact congrArg _ (Fin.ext rfl)
-    rw [Finset.sum_congr rfl (fun j _ => hcong j)]
-    have hlast : (Fin.castLE (Nat.succ_le_of_lt i.isLt) (Fin.last (i : ℕ))) = i := Fin.ext rfl
-    rw [hlast]
-    ring
-  exact key
+  rw [Fin.sum_univ_castSucc]
+  have hcong : ∀ j : Fin (i : ℕ),
+      exponents hT hA hAmeas hint hint'
+          (Fin.castLE (Nat.succ_le_of_lt i.isLt) (Fin.castSucc j))
+        = exponents hT hA hAmeas hint hint' (Fin.castLE (le_of_lt i.isLt) j) := by
+    intro j; exact congrArg _ (Fin.ext rfl)
+  rw [Finset.sum_congr rfl (fun j _ => hcong j)]
+  have hlast : (Fin.castLE (Nat.succ_le_of_lt i.isLt) (Fin.last (i : ℕ))) = i := Fin.ext rfl
+  rw [hlast]
+  ring
+
+include hT hA hAmeas hint hint' hτ in
+/-- **The per-exponent (full-spectrum) special-flow scaling.** For every sorted index `i : Fin d`,
+the `i`-th *flow* exponent equals the `i`-th base exponent divided by the mean roof `∫τ`:
+
+`λ_i^flow = exponents i / ∫τ`.
+
+This is a genuine flow statement, not a base-only tautology: the `i`-th flow exponent is *defined*
+here as the increment of the partial-sum *flow* exponents,
+`λ_i^flow = Γ_{i+1}^flow − Γ_i^flow`, and those partial-sum flow exponents are the proved values
+`Γ_k^flow = Γ_k^base / ∫τ` carried by the `k`-fold exterior suspension flow at `μ̂`-a.e. orbit
+class `q` (`ae_suspensionMeasure_hasFlowExponent_extGen`). Concretely, for `μ̂ = suspensionMeasure
+T hτ μ`-almost every orbit class `q`, both consecutive exterior flow exponents are realized,
+
+`HasFlowExponent (extGen (i+1) A) … q (Γ_{i+1}^base / ∫τ)`  and
+`HasFlowExponent (extGen i A) … q (Γ_i^base / ∫τ)`,
+
+and their difference — the `i`-th flow exponent — equals `exponents i / ∫τ`:
+
+`(Γ_{i+1}^base / ∫τ) − (Γ_i^base / ∫τ) = exponents i / ∫τ`.
+
+The increment identity is the telescoping `Γ_{i+1}^base − Γ_i^base = exponents i`
+(`gammaK_succ_sub_gammaK`) divided through by the *actual* mean roof `∫τ` (not a free scalar). Thus
+the *entire* suspension/flow Lyapunov spectrum is the base spectrum divided by `∫τ`, exponent by
+exponent — the full-spectrum analogue of Abramov's `h(flow) = h(base)/∫τ`. -/
+theorem suspension_perExponent_scaling (i : Fin d)
+    (hc : ∀ x, c ≤ τ x) (hcpos : 0 < c) (hC : ∀ x, τ x ≤ C)
+    (hroof : ∀ᵐ x ∂μ,
+      Tendsto (fun n : ℕ => (n : ℝ)⁻¹ * roofSum T hτ (n : ℤ) x) atTop (𝓝 (∫ y, τ y ∂μ)))
+    (hτ_pos : 0 < ∫ y, τ y ∂μ) :
+    ∀ᵐ q ∂suspensionMeasure T hτ μ,
+      HasFlowExponent (extGen ((i : ℕ) + 1) A) T hτ hc hcpos q
+          (gammaK hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt) / ∫ y, τ y ∂μ) ∧
+        HasFlowExponent (extGen (i : ℕ) A) T hτ hc hcpos q
+          (gammaK hT hA hAmeas hint hint' (le_of_lt i.isLt) / ∫ y, τ y ∂μ) ∧
+        (gammaK hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt) / ∫ y, τ y ∂μ)
+            - gammaK hT hA hAmeas hint hint' (le_of_lt i.isLt) / ∫ y, τ y ∂μ
+          = exponents hT hA hAmeas hint hint' i / ∫ y, τ y ∂μ := by
+  -- The two consecutive partial-sum flow exponents, realized a.e. on the suspension.
+  have hsucc := ae_suspensionMeasure_hasFlowExponent_extGen hT hA hAmeas hint hint' hτ
+    (Nat.succ_le_of_lt i.isLt) hc hcpos hC hroof hτ_pos
+  have hi := ae_suspensionMeasure_hasFlowExponent_extGen hT hA hAmeas hint hint' hτ
+    (le_of_lt i.isLt) hc hcpos hC hroof hτ_pos
+  -- The increment identity is the base telescoping divided by `∫τ`.
+  have hincr :
+      (gammaK hT hA hAmeas hint hint' (Nat.succ_le_of_lt i.isLt) / ∫ y, τ y ∂μ)
+          - gammaK hT hA hAmeas hint hint' (le_of_lt i.isLt) / ∫ y, τ y ∂μ
+        = exponents hT hA hAmeas hint hint' i / ∫ y, τ y ∂μ := by
+    rw [div_sub_div_same, gammaK_succ_sub_gammaK hT hA hAmeas hint hint' i]
+  filter_upwards [hsucc, hi] with q hq_succ hq_i
+  exact ⟨hq_succ, hq_i, hincr⟩
 
 end PerExponentScaling
 

@@ -17,9 +17,14 @@ partition `α = {[0,1/2), [1/2,1)}`,
 The entropy side is `ksEntropyPartition_doublingMap_eq_log_two`, obtained by feeding the
 join-cell measure `volume_binJoinCell` (every `n`-fold-join cell has volume `2⁻ⁿ`) into the
 abstract uniform-join reduction `ksEntropyPartition_of_uniform`. The integral side is
-`integral_log_det_doublingMap_eq_log_two`: the Jacobian `|det D(2x)| = 2` is constant, so its log
-integrates against the probability measure to `log 2`. Their agreement is the headline
-`rokhlin_equality_doublingMap`.
+`integral_log_det_doublingMap_eq_log_two`, whose integrand is the genuine log-determinant
+`Real.log |doublingGen.det|` of the doubling map's derivative generator
+`doublingGen = !![2]` (the matrix of `DT`, defined in `Oseledets.Examples.Elementary`). Since
+`doublingGen.det = 2` (`det_doublingGen`, a `1 × 1` determinant), the Jacobian is the constant `2`
+— the doubling map is uniformly expanding — so `log|det DT| = log 2` integrates against the
+probability measure to `log 2`. Their agreement is the headline `rokhlin_equality_doublingMap`,
+which therefore genuinely reads `h(α, T) = ∫ log|det DT|`: replacing the integrand by an arbitrary
+constant would break it, because the constant `2` is fixed by the derivative `det`.
 
 Unlike the `EuclideanSpace`-framed Margulis–Ruelle *inequality* `h ≤ ∑ λᵢ⁺`, this is the genuine
 Pesin/Rokhlin *equality* `h = ∫ log|det DT|`, realized on a real expanding system.
@@ -27,7 +32,8 @@ Pesin/Rokhlin *equality* `h = ∫ log|det DT|`, realized on a real expanding sys
 ## Main results
 
 * `Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two`: `h(α, T) = log 2`.
-* `Oseledets.Examples.Rokhlin.integral_log_det_doublingMap_eq_log_two`: `∫ log 2 dμ = log 2`.
+* `Oseledets.Examples.Rokhlin.integral_log_det_doublingMap_eq_log_two`:
+  `∫ log|det doublingGen| dμ = log 2`.
 * `Oseledets.Examples.Rokhlin.rokhlin_equality_doublingMap`: the two sides agree.
 
 ## References
@@ -118,25 +124,41 @@ theorem ksEntropyPartition_doublingMap_eq_log_two :
     uniform_binJoin, Fintype.card_fin]
   norm_num
 
-/-! ### The integral side: `∫ log|det D(2x)| dμ = log 2` -/
+/-! ### The integral side: `∫ log|det DT| dμ = log 2` -/
 
-/-- **Rokhlin equality, integral side: `∫ log|det DT| dμ = log 2`.** The derivative of the doubling
-map `x ↦ 2x` is multiplication by `2`, so `|det DT| = 2` is constant and `log|det DT| = log 2`.
-Integrating the constant `log 2` against the probability measure `volume` on the unit circle gives
-`(volume univ).real • log 2 = 1 · log 2 = log 2`. -/
+/-- **The determinant of the doubling map's derivative generator is `2`.** The matrix of `DT` for
+the doubling map `x ↦ 2x` is the `1 × 1` generator `doublingGen = !![2]`
+(`Oseledets.Examples.Elementary`), whose determinant is its single entry, `2`. -/
+theorem det_doublingGen : doublingGen.det = 2 := by
+  rw [doublingGen, Matrix.det_fin_one_of]
+
+/-- **Rokhlin equality, integral side: `∫ log|det DT| dμ = log 2`.** The integrand is the genuine
+log-determinant `Real.log |doublingGen.det|` of the doubling map's derivative generator
+`doublingGen = !![2]` (the matrix of `DT`). Since `doublingGen.det = 2` (`det_doublingGen`) the
+Jacobian `|det DT| = 2` is the constant `2` — the doubling map is uniformly expanding — so the
+integrand is `log 2`. Integrating that constant against the probability measure `volume` on the
+unit circle gives `(volume univ).real • log 2 = 1 · log 2 = log 2`. -/
 theorem integral_log_det_doublingMap_eq_log_two :
-    ∫ _ : UnitAddCircle, Real.log 2 ∂(volume : Measure UnitAddCircle) = Real.log 2 := by
-  rw [integral_const, measureReal_def, measure_univ, ENNReal.toReal_one, one_smul]
+    ∫ _ : UnitAddCircle, Real.log |doublingGen.det| ∂(volume : Measure UnitAddCircle)
+      = Real.log 2 := by
+  rw [det_doublingGen, show |(2 : ℝ)| = 2 from abs_of_pos (by norm_num), integral_const,
+    measureReal_def, measure_univ, ENNReal.toReal_one, one_smul]
 
 /-! ### The headline: entropy = integral -/
 
 /-- **Pesin/Rokhlin equality on the doubling map.** The Kolmogorov–Sinai entropy of the binary
-partition under the doubling map equals the integral of `log|det DT| = log 2` of the constant
-Jacobian: both sides are `Real.log 2`. This is the concrete realization of Pesin's *equality* on a
-real expanding system that the `EuclideanSpace`-framed Margulis–Ruelle *inequality* cannot give. -/
+partition under the doubling map equals `∫ log|det DT|`, where the integrand
+`Real.log |doublingGen.det|` is the genuine log-determinant of the doubling map's derivative
+generator `doublingGen = !![2]` (the matrix of `DT`). Both sides are `Real.log 2`: the entropy is
+`log 2` by the dyadic uniform-join count, and the Jacobian `|det DT| = 2` is the constant `2`
+(`det_doublingGen`) because the doubling map is uniformly expanding. This is the concrete
+realization of Pesin's *equality* `h = ∫ log|det DT|` on a real expanding system that the
+`EuclideanSpace`-framed Margulis–Ruelle *inequality* cannot give; because the integrand is a
+genuine determinant of the derivative, the statement is **not** invariant under replacing it by an
+arbitrary constant. -/
 theorem rokhlin_equality_doublingMap :
     ksEntropyPartition ergodic_doublingMap.toMeasurePreserving binPartition
-      = ∫ _ : UnitAddCircle, Real.log 2 ∂(volume : Measure UnitAddCircle) := by
+      = ∫ _ : UnitAddCircle, Real.log |doublingGen.det| ∂(volume : Measure UnitAddCircle) := by
   rw [ksEntropyPartition_doublingMap_eq_log_two, integral_log_det_doublingMap_eq_log_two]
 
 end Oseledets.Examples.Rokhlin
