@@ -149,5 +149,32 @@ machinery first feared.
   `exists_measurable_independentSpanningFrame_of_measurableGraph` (the finite-dim Castaing/KRN measurable
   selection — the single genuine missing Mathlib engine).
 
-**Frontier Wave 2 (in flight):** two independent attacks on the Castaing selection (full-KRN vs finite-dim
-metric-projection), the #6 graph+dimension assembly, and the #4 crude-bound milestone.
+**Frontier Wave 2** (`46863a2`): #6 Castaing **breakthrough** — in finite-dim Hilbert space the KRN limit
+construction is *unnecessary*: a polarization identity `‖P_x c‖² = ‖c‖² − infDist(c,V_x)²` gives the projector
+from weak measurability alone (17 lemmas sorry-free), collapsing #6 to one node. #6 `GraphAndDim` (graph of
+`{λ̄≤c}` + a.e. dim) sorry-free. #4 `CrudeRuelle` sorry-free (covering→entropy pipeline validated, honest
+non-compactness hyps).
+
+**Frontier Wave 3** (`4bdfae4`): **#6 headline delivered** —
+`Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel` (the singular forward filtration projector is
+AEMeasurable, the correct a.e. MET formulation), proved **modulo one classical theorem**
+`AnalyticSet.nullMeasurableSet` (analytic sets are universally measurable). #4 `RuelleCount` sorry-free — the
+orbit-iteration `(1/n)log∏max(1,σᵢ)→Σλᵢ⁺` a.e. + capstone `margulisRuelle_sharp_of_atomVolProd`
+(`ksEntropy ≤ sumPosExp` modulo the atom-count hyp `hatom`).
+
+**Frontier Wave 4 (in flight):** the two remaining genuine pieces — formalizing `AnalyticSet.nullMeasurableSet`
+(closes #6 completely) and the sharp anisotropic covering count `∏max(1,σᵢ)` + `hatom` discharge (closes #4's
+geometric core to the honest non-compactness hypotheses).
+
+### Frontier scorecard
+
+| Leaf / node | Issue | State |
+|---|---|---|
+| `CoveringFromVolume` (Mañé 12.5) | #4 | ✅ sorry-free |
+| `AtomCountEntropy`, `VolumeDistortion`, `CrudeRuelle` | #4 | ✅ sorry-free |
+| `RuelleCount` (orbit iteration + capstone) | #4 | ✅ sorry-free (mod `hatom`) |
+| sharp anisotropic covering + `hatom` discharge | #4 | 🔄 Wave 4 |
+| `JointMeasurableLambdaBar`, `GraphAndDim` | #6 | ✅ sorry-free |
+| converter: polarization + Gram–Schmidt (17 lemmas) | #6 | ✅ sorry-free |
+| `aemeasurable_orthProjMatrix_lambdaSublevel` (headline) | #6 | ✅ sorry-free mod 1 lemma |
+| `AnalyticSet.nullMeasurableSet` (last node) | #6 | 🔄 Wave 4 |
