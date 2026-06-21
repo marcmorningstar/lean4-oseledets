@@ -28,6 +28,15 @@ Worktrees i4/i5/i6 all synced to `613b47a`. Nothing running; tree clean.
 - Every audited result depends on exactly `[propext, Classical.choice, Quot.sound]`.
 - Built via 13 incremental grind rounds + **5 long autonomous campaigns** + earlier QA passes.
 
+## ✅ CAMPAIGN COMPLETE (2026-06-21) — all six issues solved/formalized, full `lake build` GREEN (3140 jobs)
+
+All of #1–#6 are landed in the linted, axiom-audited `Oseledets` library (`linter.mathlibStandardSet` +
+`warningAsError`; every headline `#print axioms = [propext, Classical.choice, Quot.sound]`). Phase 2 went
+beyond the Phase-1 walls: the Ruelle inequality geometric core and the singular measurable filtration were
+**formalized** by building the missing Mathlib-scale infrastructure (top-down via the `Frontier` staging lib,
+then migrated). Two independent QA layers (adversarial soundness audit + a 7-lens sweep) returned SOUND; the
+7-lens findings (all quality, no correctness defects) were fixed. See `AuditReport.md` for the full accounting.
+
 ## Per-issue status
 
 | # | Topic | Status |
@@ -35,9 +44,12 @@ Worktrees i4/i5/i6 all synced to `613b47a`. Nothing running; tree clean.
 | 1 | constant-cocycle exponents | **DONE** |
 | 2 | derivative (tangent) cocycle | **DONE** |
 | 3 | worked examples | **DONE** |
-| 4 | Ruelle entropy inequality | abstract reduction **+ sharpening** done; geometric core = wall (documented) |
+| 4 | Ruelle entropy inequality | **FORMALIZED** — `Oseledets.margulisRuelle_sharp : ksEntropy ≤ Σλᵢ⁺` (full Mañé covering pipeline; honest Riquelme-necessary distortion hyps) |
 | 5 | suspension / special flow | **DONE** — fully unconditional space-level flow exponent (`hPmeas` discharged) |
-| 6 | full singular forward filtration | spectrum a.e.-const + Horn + kernel + algebraic filtration + tempered `V_j` done; unconditional flag = one characterized wall |
+| 6 | full singular forward filtration | **FORMALIZED** — `Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel` (a.e. measurable singular filtration; new infra `AnalyticSet.nullMeasurableSet`) |
+
+> The detailed Phase-1 narrative below records the *journey* (the wall characterization that motivated the
+> eventual routes). The Phase-2 closure is summarized at the top and in `AuditReport.md`.
 
 ## ⟢ ACTIVE CAMPAIGN (2026-06-20, orchestrated) — grounded plans + Wave 1 in flight
 
