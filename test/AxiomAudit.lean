@@ -39,6 +39,7 @@ import Oseledets.Lyapunov.Extensions.SingularPerDirectionExponent
 import Oseledets.Lyapunov.Extensions.SingularSpectralValues
 import Oseledets.Lyapunov.Extensions.SingularSpectrumConstant
 import Oseledets.Lyapunov.Extensions.SingularSlowSpace
+import Oseledets.Lyapunov.Extensions.SingularBandConverge
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -1469,3 +1470,16 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
  Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.tendsto_orthProjMatrix_vSlowSingularStep_of_tendsto_bandProjector
+
+-- Issue #6 (det-free band route): the V_j band-increment bound with the inverse isolated to a single
+-- per-step coefficient hypothesis; the complement reduction band-convergence ⇒ slow-space convergence.
+
+/-- info: 'Oseledets.numerator_div_gap_le_detfree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.numerator_div_gap_le_detfree
+
+/-- info: 'Oseledets.tendsto_vSlowSingularStep_of_bandProjector_detfree' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.tendsto_vSlowSingularStep_of_bandProjector_detfree

@@ -142,6 +142,26 @@ gated hard on sorry-free; they land only if they genuinely compile.
   new math): turn the reverse SVD sandwich `orthogonal_block_mass_symm` into a two-sided aperture bound without
   `‖B⁻¹‖`. This is the fundamental non-invertible-MET obstruction.
 
+### ✅ WAVE 4 LANDED — wall PROVED tight (counterexample); inverse isolated to one per-step scalar
+
+Two independent mathematician angles both reached the same rigorous conclusion. `SingularBandConverge.lean`
+(green, sorry-free, axiom-clean) removes `det≠0` from the ENTIRE band-projector increment bound except one
+scalar: `numerator_div_gap_le_detfree` (det-free gap-denominator collapse, replacing the compound condition
+number `κ=cB·cBi` by `cB/s`), `norm_bandProjector_succ_sub_le_detfree` (det-free per-step increment, consuming
+only the residual `hμ₀lb : s²cM² ≤ μ̃₀`), and `tendsto_vSlowSingularStep_of_bandProjector_detfree`
+(band-convergence ⇒ `V_j` convergence, unconditional). **The residual is one inequality**
+`(R) ‖compound k (B·Mₙ)‖ ≥ s·‖compound k Mₙ‖` with `s` bounded below.
+
+**PROVED (not just unmet):** the maximal det-free coefficient is `s = σ_min(compound k B) = 1/cBi` EXACTLY —
+so the inverse is genuinely structural, not generic overkill. Explicit COUNTEREXAMPLE to the forward-bound
+hope: `k=1, B=½I, M=I ⇒ μ̃₀=¼ < 1=cM²`. The expanding-top-k insight controls the TIME-AVERAGE
+`(1/n)log‖Λᵏ cocycle‖ → λ₁+…+λₖ`, not the per-step ratio a single contracting step pushes below 1; and the
+reverse SVD sandwich is mass-SYMMETRIC (no lower bound). So neither forward growth nor the reverse sandwich
+removes the last inverse per-step. **The ONLY escape is an AMORTIZED (windowed, multi-step) det-free lower
+mass envelope** — the genuine mathematical core of the non-invertible MET filtration (Ruelle Lemma 1.4 without
+inverses), where the cut-above-kernel structure + ergodicity control the bad collapse set over a window. That
+is Wave 5's target; the per-step route is now a closed, characterized wall.
+
 ### #5 — suspension / special flow (substantially closed)
 - **Space-level headline proved:** `ae_suspensionMeasure_hasFlowExponent` — for μ̂-a.e.
   `q ∈ SuspensionSpace`, the representative-free flow exponent `HasFlowExponent q (λ_base/∫τ)`.
