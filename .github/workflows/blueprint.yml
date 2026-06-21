@@ -58,7 +58,5 @@ jobs:
         with:
           blueprint: true
           homepage: home_page
-          references: docs/references.bib
-          # Only publish to GitHub Pages from `main`. On the setup branch and on PRs the
-          # blueprint/docs are still built (a dry run), but nothing is deployed.
-          deploy: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          # Publish from `main` on push or manual dispatch. On PRs this remains a dry run.
+          deploy: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
