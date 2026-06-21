@@ -13,8 +13,8 @@
 | # | Topic | Verdict |
 |---|-------|---------|
 | **5** | suspension / special flow | ✅ **SOLVED** — fully unconditional space-level flow exponent `λ_base/∫τ` |
-| **4** | Ruelle entropy inequality | ✅ **Honest terminal** — abstract reduction + sharpening; geometric core is a multi-month Mathlib-scale wall (documented, proved unreachable now) |
-| **6** | full singular forward filtration | ✅ **Terminal** — *all* det-free content landed; the unconditional measurable flag is one wall, **proved tight from all 3 construction routes** |
+| **4** | Ruelle entropy inequality | ✅ **FORMALIZED (Phase 2)** — `Oseledets.margulisRuelle_sharp : ksEntropy ≤ Σλᵢ⁺` in the linted, axiom-audited lib, via the full Mañé covering-count pipeline; carries the Riquelme-necessary distortion hyps. (Phase 1 had characterized the geometric core as a wall; Phase 2 built the missing Mathlib-scale infra to close it.) |
+| **6** | full singular forward filtration | ✅ **FORMALIZED (Phase 2)** — `Oseledets.aemeasurable_orthProjMatrix_lambdaSublevel` (a.e. measurable singular filtration) in the linted lib, via the polarization route + new infra `MeasureTheory.AnalyticSet.nullMeasurableSet` (a Mathlib gap). (Phase 1 had proved the *everywhere* flag's per-step wall tight; Phase 2 closed the correct *a.e.* formulation.) |
 
 ---
 
@@ -173,8 +173,8 @@ geometric core to the honest non-compactness hypotheses).
 | `CoveringFromVolume` (Mañé 12.5) | #4 | ✅ sorry-free |
 | `AtomCountEntropy`, `VolumeDistortion`, `CrudeRuelle` | #4 | ✅ sorry-free |
 | `RuelleCount` (orbit iteration + capstone) | #4 | ✅ sorry-free (mod `hatom`) |
-| sharp anisotropic covering + `hatom` discharge | #4 | 🔄 Wave 4 |
+| sharp anisotropic covering + `hatom` discharge | #4 | ✅ done (SharpCovering + MargulisRuelleSharp) |
 | `JointMeasurableLambdaBar`, `GraphAndDim` | #6 | ✅ sorry-free |
 | converter: polarization + Gram–Schmidt (17 lemmas) | #6 | ✅ sorry-free |
 | `aemeasurable_orthProjMatrix_lambdaSublevel` (headline) | #6 | ✅ sorry-free mod 1 lemma |
-| `AnalyticSet.nullMeasurableSet` (last node) | #6 | 🔄 Wave 4 |
+| `AnalyticSet.nullMeasurableSet` (last node) | #6 | ✅ done (Choquet capacitability) → migrated to linted lib |
