@@ -111,6 +111,16 @@ import Oseledets.Entropy.Ruelle.Count
 import Oseledets.Entropy.Ruelle.SharpCovering
 import Oseledets.Entropy.Ruelle.MargulisRuelleSharp
 import Oseledets.Singular.SingularFiltrationMeasurable
+import Oseledets.Fourier.Torus2
+import Oseledets.Lyapunov.Extensions.ConstantCocycleSpectralRadius
+import Oseledets.Lyapunov.Extensions.SingularStratumExponent
+import Oseledets.Continuous.SuspensionPartialSumExponent
+import Oseledets.Examples.RuelleDoubling
+import Oseledets.Examples.CatMapOrbit
+import Oseledets.Examples.CatMapToral
+import Oseledets.Examples.Rokhlin.AbstractEqui
+import Oseledets.Examples.Rokhlin.DoublingCrux
+import Oseledets.Examples.Rokhlin.DoublingEquality
 
 /-!
 # Axiom audit
@@ -1570,3 +1580,93 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.tendsto_log_volProd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.tendsto_log_volProd
+
+-- MET enhancements campaign: #1-#6 closures
+
+/-- info: 'Oseledets.topExponent_constantCocycle_eq_log_spectralRadius' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.topExponent_constantCocycle_eq_log_spectralRadius
+
+/-- info: 'Oseledets.doublingMap_sumPosExp_eq_log_two' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.doublingMap_sumPosExp_eq_log_two
+
+/-- info: 'Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.doublingMap_ksEntropyPartition_le_sumPosExp
+
+/--
+info: 'Oseledets.singular_perDirection_exponent_eq_lambda_of_mem_stratum' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Oseledets.singular_perDirection_exponent_eq_lambda_of_mem_stratum
+
+/-- info: 'Oseledets.lambdaBar_eq_of_mem_stratum' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.lambdaBar_eq_of_mem_stratum
+
+/-- info: 'Oseledets.log_le_liminf_log_cocycle_apply_detfree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.log_le_liminf_log_cocycle_apply_detfree
+
+/-- info: 'Oseledets.CatMapToral.ergodic_catTorus' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.CatMapToral.ergodic_catTorus
+
+/-- info: 'Oseledets.CatMapToral.measurePreserving_catTorus' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.CatMapToral.measurePreserving_catTorus
+
+/-- info: 'Oseledets.CatMapToral.orbit_infinite' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.CatMapToral.orbit_infinite
+
+/-- info: 'Oseledets.suspension_perExponent_scaling' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.suspension_perExponent_scaling
+
+/-- info: 'Oseledets.suspension_gammaK_flow_scaling' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.suspension_gammaK_flow_scaling
+
+/-- info: 'Oseledets.ae_suspensionMeasure_hasFlowExponent_extGen' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.ae_suspensionMeasure_hasFlowExponent_extGen
+
+/-- info: 'Oseledets.measurable_extGen' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurable_extGen
+
+/-- info: 'Oseledets.Fourier.eq_zero_of_forall_char_inner_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Fourier.eq_zero_of_forall_char_inner_eq_zero
+
+/-- info: 'Oseledets.Fourier.orthonormal_torusChar' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Fourier.orthonormal_torusChar
+
+/-- info: 'Oseledets.Fourier.hasSum_sq_torusFourierCoeff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Fourier.hasSum_sq_torusFourierCoeff
+
+/-- info: 'Oseledets.Fourier.torusChar_apply' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Fourier.torusChar_apply
+
+/-- info: 'Oseledets.Examples.Rokhlin.rokhlin_equality_doublingMap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Examples.Rokhlin.rokhlin_equality_doublingMap
+
+/--
+info: 'Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two
+
+/-- info: 'Oseledets.Examples.Rokhlin.volume_binJoinCell' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.Examples.Rokhlin.volume_binJoinCell

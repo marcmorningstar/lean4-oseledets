@@ -23,11 +23,18 @@ turns: the measurable graph of the eventual-kernel family
 (`Oseledets.measurableSet_graph_eventualKer`) plus constant kernel dimension yields, by a
 finite measurable stratification + Gram–Schmidt, exactly such a measurable orthonormal frame.
 The clean, fully `sorry`-free heart of the converter — *measurable orthonormal frame ⇒
-measurable projector* — is `measurable_orthProjMatrix_of_orthonormalFrame`. The remaining,
-genuinely measure-theoretic, step (a measurable orthonormal frame **exists** for a
-measurable-graph constant-rank family) is the Kuratowski–Ryll-Nardzewski / Castaing content
-that Mathlib does not yet provide; it is isolated in
-`exists_measurable_orthonormalFrame_of_measurableGraph` and flagged there.
+measurable projector* — is `measurable_orthProjMatrix_of_orthonormalFrame`, and (granted the
+KRN/Castaing **conclusion**, `HasMeasurableSpanningFrame V`) the everywhere-Borel projector is
+`sorry`-free via `measurable_orthProjMatrix_of_frame`. The remaining, genuinely measure-theoretic,
+step is *not* the measurable selection — that Castaing selection is `sorry`-free downstream in
+`Frontier.Issue6.CastaingSelection` (polarisation shortcut) — but the KRN **hypothesis** (weak
+measurability of `x ↦ V x`) in *graph* form: the projection of the Borel graph onto `X` through a
+ball. Its `x`-sections are σ-compact, so by the **Arsenin–Kunugui** theorem the projection is
+Borel — a *true* statement Mathlib cannot yet prove (it has only the Lusin–Souslin analytic-set
+machinery, under which a projection is merely analytic). It is isolated in
+`exists_measurable_independentSpanningFrame_of_measurableGraph` and flagged there. The
+a.e./universally-measurable weakening of that node *is* available and `sorry`-free
+(`Frontier.Issue6.MeasurableProjection`, migrated to `Oseledets.Singular.MeasurableProjection`).
 
 ## Main definitions
 
@@ -49,6 +56,12 @@ that Mathlib does not yet provide; it is isolated in
 * `Oseledets.isMeasurableOrthonormalFrame_gramSchmidtNormed`: a measurable, pointwise
   independent, pointwise spanning frame orthonormalises to a measurable orthonormal frame
   (`sorry`-free) — this discharges the orthonormalisation half of the converter.
+* `Oseledets.HasMeasurableSpanningFrame`: the KRN/Castaing **conclusion** as a hypothesis — `V`
+  admits a measurable, pointwise independent, pointwise spanning frame.
+* `Oseledets.measurable_orthProjMatrix_of_frame`, `Oseledets.measurableSubspace_of_frame`:
+  **the conditional everywhere-Borel projector, `sorry`-free** — granted
+  `HasMeasurableSpanningFrame`, `x ↦ orthProjMatrix (V x)` is measurable. The converter has *no*
+  measure-theoretic gap beyond this hypothesis.
 * `Oseledets.measurableSubspace_of_measurableGraph_constDim`: **the target** — a measurable
   graph together with constant finite rank gives a measurable projector. It is reduced to the
   core via the frame-existence lemma below.
@@ -56,15 +69,20 @@ that Mathlib does not yet provide; it is isolated in
 ## The isolated measure-theoretic gap
 
 * `Oseledets.exists_measurable_independentSpanningFrame_of_measurableGraph` (`sorry`, BLOCKED):
-  existence of a *measurable, pointwise linearly-independent, pointwise spanning* frame from a
-  measurable graph at constant rank. This is the **only** remaining gap: orthonormalisation is
-  proved `sorry`-free above, so what is missing is just the finite-dimensional Castaing
-  representation — countably many measurable selections of the graph slices, dense in each
-  fibre, plus a measurable size-`m`-independent-subset stratification. Mathlib lacks both the
-  measurable-selection (Kuratowski–Ryll-Nardzewski) theorem and a `MeasurableSpace` structure on
-  `Submodule`/`Grassmannian`, so the dense-measurable-selection step has no Mathlib API to
-  invoke. `Oseledets.exists_measurable_orthonormalFrame_of_measurableGraph` and the target
-  inherit `sorry` from it; everything else in the file is `sorry`-free.
+  production of the measurable spanning frame from a *bare* measurable graph at constant rank. The
+  measurable-selection (KRN/Castaing) content is **not** the obstruction — it is `sorry`-free
+  downstream in `Frontier.Issue6.CastaingSelection`
+  (`Frontier.exists_measurable_independentSpanningFrame_of_measurableInfDist`, a polarisation
+  shortcut), and orthonormalisation is `sorry`-free above. The obstruction is the KRN *hypothesis*
+  itself in graph form: *weak measurability* of `x ↦ V x`, i.e. measurability of the projection
+  `{x | infDist c (V x) < r} = Prod.fst '' (graph ∩ (univ ×ˢ ball c r))`. Its `x`-sections are
+  σ-compact, so the **Arsenin–Kunugui** theorem makes the projection Borel — *true*, but Mathlib has
+  only Lusin–Souslin (projection ⟹ analytic, generally non-Borel by Suslin) and no
+  `MeasurableSpace`/`Borel` structure on the Grassmannian, so the everywhere-Borel discharge has no
+  Mathlib foothold. The node is *equivalent to the converter's target itself* (via
+  `infDist c (V x) = ‖c − (V x).starProjection c‖`), confirming it is irreducible. The a.e.
+  weakening (analytic ⟹ universally measurable) *is* `sorry`-free and already migrated
+  (`Oseledets.Singular.MeasurableProjection`).
 
 Literature: C. González-Tokman, A. Quas, *A semi-invertible operator Oseledets theorem*
 (ETDS 2014), Appendix B (measurable Grassmannian, nice bases) and G. Froyland, S. Lloyd,
@@ -260,38 +278,123 @@ theorem isMeasurableOrthonormalFrame_gramSchmidtNormed
   span x := by
     rw [span_gramSchmidtNormed_range, span_gramSchmidt, hspan]
 
-/-! ### The measure-theoretic gap: from a measurable graph to a measurable frame -/
+/-! ### The KRN/Castaing *conclusion*, conditioned: an everywhere-Borel projector
+
+The Kuratowski–Ryll-Nardzewski / Castaing measurable-selection theorem is an *implication*
+`weak measurability ⟹ a measurable selection (Castaing representation)`. The two halves of that
+implication play very different roles in this converter, and it is worth isolating them precisely.
+
+* The **conclusion** of KRN — that a measurable, pointwise linearly-independent, pointwise
+  spanning frame `f` for `V` *exists* — is captured by the predicate `HasMeasurableSpanningFrame V`
+  below. **Granted this conclusion, the everywhere-Borel projector is `sorry`-free**: Gram–Schmidt
+  orthonormalises `f` measurably (`isMeasurableOrthonormalFrame_gramSchmidtNormed`) and the Gram
+  outer-product formula turns the frame into the measurable projector
+  (`measurable_orthProjMatrix_of_orthonormalFrame`). This is `measurable_orthProjMatrix_of_frame`.
+
+* The **hypothesis** of KRN — weak measurability of the multifunction `x ↦ V x`, i.e. measurability
+  of `{x | V x ∩ U ≠ ∅}` for every open `U` — is the *only* thing the bare measurable graph does not
+  hand us for free. Producing the frame from a measurable graph is therefore neither the
+  Gram–Schmidt step nor the selection step (both elementary / already done): it is exactly the
+  *weak-measurability* step `graph ⟹ {x | V x ∩ U ≠ ∅} measurable`, which for the subspace-valued,
+  constant-rank multifunction is the **Arsenin–Kunugui** projection theorem (see the BLOCKED leaf
+  below).
+
+So the converter's only genuine wall is the KRN *hypothesis* in its graph form, not the KRN
+selection itself; the selection content is delivered `sorry`-free downstream in
+`Frontier.Issue6.CastaingSelection` (via a finite-dimensional polarisation shortcut), and the
+present section records the `sorry`-free conditional half here, at the converter's own layer. -/
+
+/-- **The KRN/Castaing conclusion, as a hypothesis.** `V` *has a measurable spanning frame* at
+rank `m` when there is a measurable family `f : X → Fin m → EuclideanSpace ℝ (Fin d)` that is, at
+every `x`, linearly independent and spans `V x`. This is exactly the deliverable of the
+Kuratowski–Ryll-Nardzewski / Castaing measurable-selection theorem for the closed-valued (here
+finite-dimensional-subspace-valued) multifunction `x ↦ V x`. Everything the converter needs is a
+`sorry`-free consequence of this predicate (`measurable_orthProjMatrix_of_frame`,
+`measurableSubspace_of_frame`); only its *production* from a bare measurable graph is the
+Arsenin–Kunugui wall. -/
+def HasMeasurableSpanningFrame {m : ℕ}
+    (V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))) : Prop :=
+  ∃ f : X → Fin m → EuclideanSpace ℝ (Fin d),
+    (∀ i, Measurable fun x => f x i) ∧ (∀ x, LinearIndependent ℝ (f x)) ∧
+      (∀ x, span ℝ (Set.range (f x)) = V x)
+
+/-- **The everywhere-Borel projector from the KRN conclusion (`sorry`-free).** If `V` has a
+measurable spanning frame at rank `m` (`HasMeasurableSpanningFrame`, the KRN/Castaing output), then
+`x ↦ orthProjMatrix (V x)` is measurable. The frame is orthonormalised measurably by Gram–Schmidt
+(`isMeasurableOrthonormalFrame_gramSchmidtNormed`) and fed to the `sorry`-free Gram-formula core
+(`measurable_orthProjMatrix_of_orthonormalFrame`). This is the *positive* half of KRN/Castaing for
+the converter, with no measure-theoretic gap: the entire dependence on the missing
+measurable-selection input is now confined to the `HasMeasurableSpanningFrame` hypothesis. -/
+theorem measurable_orthProjMatrix_of_frame {m : ℕ}
+    {V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))}
+    (hframe : HasMeasurableSpanningFrame (m := m) V) :
+    Measurable fun x => orthProjMatrix (V x) := by
+  obtain ⟨f, hf, hindep, hspan⟩ := hframe
+  exact measurable_orthProjMatrix_of_orthonormalFrame
+    (isMeasurableOrthonormalFrame_gramSchmidtNormed hf hindep hspan)
+
+/-- **`MeasurableSubspace V` from the KRN conclusion (`sorry`-free).** Restatement of
+`measurable_orthProjMatrix_of_frame` as a `MeasurableSubspace` witness. -/
+theorem measurableSubspace_of_frame {m : ℕ}
+    {V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))}
+    (hframe : HasMeasurableSpanningFrame (m := m) V) :
+    MeasurableSubspace V :=
+  measurable_orthProjMatrix_of_frame hframe
+
+/-! ### The measure-theoretic gap: from a measurable graph to a measurable frame
+
+By the previous section the converter is `sorry`-free *given* a measurable spanning frame
+(`HasMeasurableSpanningFrame`, the KRN/Castaing conclusion). The remaining BLOCKED leaf is purely
+the production of that frame from a *bare measurable graph* — i.e. the KRN *hypothesis* (weak
+measurability) in graph form, which is the Arsenin–Kunugui projection theorem. -/
 
 /-- **Existence of a measurable orthonormal frame from a measurable graph at constant rank.**
 A measurable graph `{(x, v) | v ∈ V x}` together with constant finite dimension `m` yields a
 measurable orthonormal frame `e` for `V`.
 
 **This is the single genuinely measure-theoretic gap of the converter and is left `sorry`
-(BLOCKED).** This is now the *only* gap of the converter: orthonormalisation has been split off
-and proved `sorry`-free (`measurable_gramSchmidt`, `measurable_gramSchmidtNormed`,
-`isMeasurableOrthonormalFrame_gramSchmidtNormed`), so all that remains is to produce — from the
-bare measurable graph at constant rank — a **measurable, pointwise linearly-independent,
-pointwise spanning** frame `f : X → Fin m → EuclideanSpace ℝ (Fin d)`. The finite-dimensional
-construction is standard but its single essential ingredient has no Mathlib foothold:
+(BLOCKED).** It is the production of a `HasMeasurableSpanningFrame V` (the KRN/Castaing conclusion)
+from the bare measurable graph; granted that frame, the everywhere-Borel projector is `sorry`-free
+(`measurable_orthProjMatrix_of_frame`). Two contributing steps are *already done* `sorry`-free, so
+the remaining gap is sharper than "Castaing representation absent":
 
-* **Castaing representation (the crux).** One needs countably many measurable selections
-  `wₖ : X → EuclideanSpace ℝ (Fin d)` with `wₖ x ∈ V x` for all `x` and `{wₖ x}ₖ` *dense*
-  (equivalently here, spanning, since `V x` is finite-dimensional) in `V x`. This is the content
-  of the **Kuratowski–Ryll-Nardzewski measurable selection theorem** for a closed-valued
-  measurable multifunction into a Polish space. Mathlib has **no** measurable selection theorem of
-  this form (no KRN, no Castaing representation, and no `MeasurableSpace` on `Submodule` /
-  `Grassmannian`), so there is no lemma to invoke; proving it from scratch is itself a
-  Mathlib-scale development (the `iSup`/graph machinery this file sits above was built as its first
-  step). Once the `wₖ` are in hand, choosing at each `x` the lexicographically-first size-`m`
-  subset on which the selections are independent (a measurable `Gram ≠ 0` condition; constant rank
-  `m` guarantees one exists) and gluing across these finitely-many measurable strata with
-  `Measurable.piecewise` yields the required independent spanning frame `f`. That gluing is
-  elementary and uses only existing Mathlib API, so the genuine blocker is exactly the bullet
-  above.
+* **The KRN/Castaing selection itself is NOT the wall.** The finite-dimensional Castaing
+  representation — a measurable independent spanning frame for `V` *given weak measurability of `V`*
+  — is delivered `sorry`-free downstream in `Frontier.Issue6.CastaingSelection`
+  (`Frontier.exists_measurable_independentSpanningFrame_of_measurableInfDist`), via a polarisation
+  shortcut that bypasses dense measurable selection entirely: every projector coordinate is a fixed
+  real combination of the scalar maps `x ↦ infDist c (V x)`, so weak measurability alone yields the
+  measurable projected basis, from which the recursive measurable subframe picker
+  (`Frontier.pickIndependent`) extracts the frame. Orthonormalisation is likewise `sorry`-free here
+  (`isMeasurableOrthonormalFrame_gramSchmidtNormed`).
 
-Literature: González-Tokman–Quas (ETDS 2014), Appendix B (separability of the Grassmannian,
-nice/`2`-nice bases, `(F, B_G(X))`-measurable subspace maps) and the Castaing–Valadier theory of
-measurable multifunctions. -/
+* **The wall is the KRN *hypothesis* in graph form = Arsenin–Kunugui.** What the bare graph does not
+  give is *weak measurability* of `x ↦ V x`, i.e. measurability of
+  `{x | infDist c (V x) < r} = {x | V x ∩ ball c r ≠ ∅}`. This set is
+  `Prod.fst '' (graph ∩ (univ ×ˢ ball c r))`, the projection onto `X` of a Borel set whose
+  `x`-sections `V x ∩ ball c r` are **σ-compact** (open subsets of the finite-dimensional, locally
+  compact `V x`). *The projection of a Borel set with σ-compact sections is Borel* — this is the
+  **Arsenin–Kunugui theorem** (Kechris, *Classical Descriptive Set Theory*, 18.18; Saint-Raymond).
+  The statement here is therefore **true** (the σ-compact-section hypothesis is met), but Mathlib
+  has only the Lusin–Souslin analytic-set machinery and the unrestricted projection of a Borel set
+  is in general merely **analytic, not Borel** (Suslin), so the everywhere-Borel discharge requires
+  the Arsenin–Kunugui strengthening, which is absent from Mathlib. (The a.e./universally-measurable
+  weakening *is* available — projection ⟹ analytic ⟹ universally measurable — and is proved
+  `sorry`-free in `Frontier.Issue6.MeasurableProjection` /
+  `Oseledets.Singular.MeasurableProjection`; that is the correct hypothesis for the a.e.
+  multiplicative ergodic theorem and is already migrated into the linted library.)
+
+This node is *equivalent to the converter's own target*:
+`infDist c (V x) = ‖c − (V x).starProjection c‖`
+(`Frontier.infDist_eq_norm_sub_starProjection`), so weak measurability of `V` is interderivable with
+measurability of the projector. It is therefore a single irreducible measure-theoretic node, not a
+removable detour, and the KRN/Castaing route cannot bypass it: KRN *consumes* weak measurability as
+its hypothesis.
+
+Literature: K. Kuratowski, C. Ryll-Nardzewski, *A general theorem on selectors* (1965);
+W. Arsenin, K. Kunugui (Kechris, *Classical DST*, 18.18) on projections of Borel sets with
+σ-compact sections; J. Saint-Raymond (1976); C. González-Tokman, A. Quas, *A semi-invertible
+operator Oseledets theorem* (ETDS 2014), Appendix B. -/
 theorem exists_measurable_independentSpanningFrame_of_measurableGraph
     {V : X → Submodule ℝ (EuclideanSpace ℝ (Fin d))} {m : ℕ}
     (hgraph : MeasurableSet {p : X × EuclideanSpace ℝ (Fin d) | p.2 ∈ V p.1})
@@ -299,9 +402,11 @@ theorem exists_measurable_independentSpanningFrame_of_measurableGraph
     ∃ f : X → Fin m → EuclideanSpace ℝ (Fin d),
       (∀ i, Measurable fun x => f x i) ∧ (∀ x, LinearIndependent ℝ (f x)) ∧
         (∀ x, span ℝ (Set.range (f x)) = V x) := by
-  sorry -- BLOCKED: finite-dim Castaing representation (KRN measurable selection) absent in
-        -- Mathlib; see the docstring — this is the *only* remaining gap (orthonormalisation is
-        -- proved sorry-free downstream).
+  sorry -- BLOCKED: Arsenin–Kunugui projection theorem (projection of a Borel set with σ-compact
+        -- sections is Borel) absent from Mathlib. The KRN/Castaing SELECTION is sorry-free
+        -- downstream (CastaingSelection); the wall is the KRN HYPOTHESIS (weak measurability of V)
+        -- in graph form, equivalent to the converter's target. See the docstring; the a.e. route
+        -- (analytic ⟹ universally measurable) is sorry-free in MeasurableProjection.
 
 /-- **Existence of a measurable orthonormal frame from a measurable graph at constant rank.**
 Combines the (blocked) independent-spanning-frame existence with `sorry`-free Gram–Schmidt
