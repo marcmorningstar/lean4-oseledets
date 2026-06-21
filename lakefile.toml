@@ -36,3 +36,13 @@ moreLeanArgs = ["-Dweak.linter.mathlibStandardSet=true", "-DwarningAsError=true"
 [[lean_lib]]
 name = "AxiomAudit"
 srcDir = "test"
+
+# Frontier: STAGING library for the in-progress TOP-DOWN formalization of the missing Mathlib-scale
+# infrastructure (#4 Ruelle-inequality geometric core; #6 measurable singular filtration). Deliberately
+# NOT linted, NOT warning-as-error, and NOT a default target — so top-down skeletons carrying `sorry`
+# compile and track (with warm leancheck) during development WITHOUT polluting the green `Oseledets` /
+# `AxiomAudit` build. A subtree migrates into `Oseledets/` proper (which enforces sorry-free) only once it
+# is fully sorry-free. Built explicitly via `lake build Frontier.<Module>`. autoImplicit stays off
+# (package `[leanOptions]`), matching Mathlib style.
+[[lean_lib]]
+name = "Frontier"

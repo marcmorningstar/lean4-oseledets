@@ -1,0 +1,23 @@
+/-
+Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Marcel Morgenstern
+-/
+
+/-!
+# Frontier — staging library for top-down frontier formalization
+
+This is the **staging** root of the `Frontier` lake library: the in-progress, top-down formalization of the
+Mathlib-scale infrastructure needed to make the open MET enhancements fully unconditional —
+
+* **#4** the Ruelle entropy inequality `h_μ(T) ≤ ∑ λᵢ⁺` (smooth-ergodic geometric core), and
+* **#6** the measurable singular forward Oseledets filtration (measurable selection of `{v : λ̄ ≤ c}`).
+
+Unlike the `Oseledets` library, `Frontier` is **not** linted, **not** `warningAsError`, and **not** a default
+build target, so modules here may carry `sorry` while the dependency tree is filled in top-down. Each module is
+built explicitly via `lake build Frontier.<Module>`. Once a subtree is fully `sorry`-free it migrates into
+`Oseledets/` proper (which enforces sorry-freeness and the Mathlib style-linter set).
+
+Modules are written to **Mathlib-merge quality** (naming conventions, namespacing, docstrings) so the
+infrastructure is upstreamable as reference.
+-/
