@@ -41,6 +41,8 @@ import Oseledets.Lyapunov.Extensions.SingularSpectrumConstant
 import Oseledets.Lyapunov.Extensions.SingularSlowSpace
 import Oseledets.Lyapunov.Extensions.SingularBandConverge
 import Oseledets.Lyapunov.Extensions.SingularSlowSpaceUnconditional
+import Oseledets.Lyapunov.Extensions.SingularLambdaBarFiltration
+import Oseledets.Lyapunov.Extensions.SingularLambdaBarMeasurable
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
 import Oseledets.TwoSided.Invertible
 import Oseledets.TwoSided.SpectralRank
@@ -1499,3 +1501,25 @@ info: 'Oseledets.Entropy.MeasurePartition.sum_toReal_measure_eq_one' depends on 
 /-- info: 'Oseledets.bandProjector_increment_eq_aperture' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.bandProjector_increment_eq_aperture
+
+-- Issue #6 (algebraic forward filtration): the lambdaBar sublevel as a submodule, antitone + equivariant
+-- (floored growth + the det-free HasFiniteTopGrowth finiteness hypothesis).
+
+/-- info: 'Oseledets.lambdaBarSublevel_antitone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.lambdaBarSublevel_antitone
+
+/-- info: 'Oseledets.lambdaBarSublevel_equivariant' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.lambdaBarSublevel_equivariant
+
+-- Issue #6 (measurability reduction): {v : lambdaBar ≤ c} is a MeasurableSubspace given the projector
+-- convergence — which provably reduces to the same band/aperture convergence (the pinned inverse wall).
+
+/-- info: 'Oseledets.measurableSubspace_of_tendsto_orthProjMatrix' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSubspace_of_tendsto_orthProjMatrix
+
+/-- info: 'Oseledets.measurableSubspace_lambdaSublevel_of_tendsto' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.measurableSubspace_lambdaSublevel_of_tendsto

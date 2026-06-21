@@ -37,7 +37,7 @@ Worktrees i4/i5/i6 all synced to `613b47a`. Nothing running; tree clean.
 | 3 | worked examples | **DONE** |
 | 4 | Ruelle entropy inequality | abstract reduction **+ sharpening** done; geometric core = wall (documented) |
 | 5 | suspension / special flow | **DONE** — fully unconditional space-level flow exponent (`hPmeas` discharged) |
-| 6 | full singular forward filtration | bottom stratum **+ det-free subspace/per-direction infra** done; full flag = wall |
+| 6 | full singular forward filtration | spectrum a.e.-const + Horn + kernel + algebraic filtration + tempered `V_j` done; unconditional flag = one characterized wall |
 
 ## ⟢ ACTIVE CAMPAIGN (2026-06-20, orchestrated) — grounded plans + Wave 1 in flight
 
@@ -186,6 +186,46 @@ problem is precisely the **measurable selection of the limsup-sublevel subspace 
 cocycles** — which the kernel stratum dodged via monotonicity (`eventualKer` = monotone ⨆), but the finite
 strata are non-monotone. This is the classical non-invertible measurable-Oseledets-filtration problem (KRN
 selection, absent from Mathlib). Wave 6 either cracks it via the CFC/spectral-projector technique or pins it.
+
+### ✅ WAVE 6 LANDED — algebraic forward filtration + measurability wall PINNED from all routes
+
+- **#6 algebraic forward filtration LANDED:** `SingularLambdaBarFiltration.lean` (green, sorry-free,
+  axiom-clean). `lambdaBarSublevel` (the slow subspace `{v : λ̄ ≤ c}`, as an `IsUltrametricGrowth.sublevel`
+  submodule), `lambdaBarSublevel_antitone`, `lambdaBarSublevel_equivariant`, `mem_lambdaBarSublevel_iff`, the
+  floored non-Archimedean growth inequality `lambdaBar_add_le_max_zero`. The worker CORRECTED the spec (it was
+  false as literally posed): for a singular cocycle the raw `{λ̄ ≤ c}∪{0}` is NOT a submodule for `c<0`
+  (counterexample `A=diag(½,0)`: `log 0 = 0` junk makes two decaying vectors sum to a non-decaying one), so the
+  honest construction floors growth at 0 and carries the minimal det-free finiteness hypothesis
+  `HasFiniteTopGrowth` (a.e.-true by Furstenberg–Kesten).
+- **#6 measurability reduction LANDED + wall PINNED:** `SingularLambdaBarMeasurable.lean` (green, sorry-free).
+  `measurableSubspace_of_tendsto_orthProjMatrix` (general: measurable projector limit ⇒ measurable subspace) +
+  `measurableSubspace_lambdaSublevel_of_tendsto` + `orthProjMatrix_vSlowSingularStep_tendsto_iff_bandProjector`
+  prove `{v : λ̄ ≤ c}` is measurable GIVEN projector convergence — and that convergence is provably the SAME
+  band/aperture limit walled by `bandProjector_increment_eq_aperture` (one rank-dropping step makes it O(1)).
+  So the direct-exponent route does NOT escape; it reduces to the identical inverse wall. The two genuinely
+  missing Mathlib facts are named: (1) continuity of sorted Hermitian eigenvalues/eigenvectors; (2) a
+  normalized singular-Gram (qpow) limit at a gap cut (−∞-aware).
+
+## ⊨ #6 — DEFINITIVE TERMINAL STATE (all reachable det-free content landed; one wall, characterized 3 ways)
+
+**LANDED, sorry-free, axiom-clean** (the genuine singular forward MET content reachable in pinned Mathlib):
+- Genuine singular Lyapunov **spectrum**: per-direction exponent (`singularSpectralValue`), deterministically
+  ANTITONE, measurable, **a.e. CONSTANT** (`ae_singularSpectralValue_eq_const`), with cut-threshold ladder —
+  plus the new **Horn inequality** `singularValues_comp_le_opNorm` (Mathlib-absent, built via Courant–Fischer).
+- **Bottom (kernel) stratum**: `eventualKer` measurable + equivariant + measurable dimension (prior work).
+- **Algebraic forward filtration**: `lambdaBarSublevel` submodule, antitone, equivariant, growth dichotomy.
+- **Tempered-class measurable `V_j`**: converges/measurable/antitone on the tempered-non-degeneracy class
+  (strictly weaker than `det≠0`); the whole flag reduced to ONE convergence input.
+- Subspace metric + Cauchy machinery; det-free band-increment bound with the inverse isolated to one scalar.
+
+**THE ONE WALL (genuine research frontier, characterized from all 3 independent constructions):** the
+UNCONDITIONAL general-singular measurable flag needs a det-free lower bound on the per-step top-k compound
+eigenvalue. PROVED tight (counterexample `B=½I`): the band increment EQUALS the between-step frame aperture =
+`cond(B)` (the inverse); a single rank-dropping step (allowed when `det=0`) makes it O(1). The amortized and
+the direct-exponent-sublevel routes both REDUCE to this same limit. Escaping it needs either KRN measurable
+selection or a normalized singular-Gram convergence theory — both absent from Mathlib, genuinely multi-session
+(the classical non-invertible measurable-Oseledets-filtration problem; cf. Froyland–Lloyd–Quas semi-invertible
+MET, which assumes base invertibility for exactly this reason). NOTHING faked or axiomatized.
 
 ### #5 — suspension / special flow (substantially closed)
 - **Space-level headline proved:** `ae_suspensionMeasure_hasFlowExponent` — for μ̂-a.e.
