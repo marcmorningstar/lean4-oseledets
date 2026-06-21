@@ -121,3 +121,33 @@ per agent** as the final gate; the orchestrator ran every authoritative build, a
 and all git. 6 waves: planning → close #5 + #4 sharpen + #6 infra → spectrum → spectrum-a.e.-constant +
 V_j-reduction → keystone (wall proved) → amortized (wall confirmed) → algebraic filtration + measurability
 (wall pinned). Every milestone committed + pushed.
+
+---
+
+## PHASE 2 — Frontier campaign: formalizing the missing Mathlib-scale infrastructure to CLOSE the walls
+
+New directive: build the genuinely-missing Mathlib infrastructure to make #4 and #6 unconditional, **top-down**
+(state the top theorem with `sorry` at the gaps, fill down until none remain), to **Mathlib-merge quality**.
+
+**Method/infra:** a sorry-tolerant `Frontier` lake lib (not linted, not `warningAsError`, not a default
+target) so top-down skeletons with `sorry` compile + track via warm leancheck while `Oseledets`/`AxiomAudit`
+stay green; subtrees migrate into `Oseledets/` only once sorry-free. Canonical proof sources scraped via
+firecrawl to `docs/research/frontier/` (Ruelle/Mañé/Pesin/Riquelme for #4; Arnold/Froyland–Lloyd–Quas/KRN/Viana
+for #6). Top-down decompositions found *bounded, reachable* routes — neither issue needs the full heavy
+machinery first feared.
+
+- **#6 route (KRN/measurable-graph — DODGES the proven aperture wall):** measurable graph of `{v : λ̄ ≤ c}`
+  (no limit) + a.e.-constant dimension → measurable projector via a constant-rank measurable frame + Gram–Schmidt.
+- **#4 route (Mañé covering-count):** reduces to one deep leaf (covering-number-from-volume) + small glue; a
+  crude-bound milestone validates the pipeline (with honest non-compactness hypotheses per Riquelme).
+
+**Frontier Wave 1 — 4/5 missing-infra leaves SORRY-FREE** (`9315c1d`):
+- #4 `CoveringFromVolume` (Mañé Lemma 12.5, the bottleneck — sorry-free, axiom-clean, upstreamable),
+  `AtomCountEntropy`, `VolumeDistortion` — all sorry-free.
+- #6 `JointMeasurableLambdaBar` (sorry-free); `MeasurableGraphToProjector` — the whole converter (measurable
+  Gram–Schmidt + frame→projector, 10 lemmas) sorry-free **except one** irreducible gap:
+  `exists_measurable_independentSpanningFrame_of_measurableGraph` (the finite-dim Castaing/KRN measurable
+  selection — the single genuine missing Mathlib engine).
+
+**Frontier Wave 2 (in flight):** two independent attacks on the Castaing selection (full-KRN vs finite-dim
+metric-projection), the #6 graph+dimension assembly, and the #4 crude-bound milestone.
