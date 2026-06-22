@@ -77,14 +77,28 @@ already done sorry-free pre-campaign; this is the everywhere-Borel strengthening
 unchanged = `[propext, Classical.choice, Quot.sound]`. Nothing migrated to `Oseledets/` (correct:
 migration requires sorry-free).
 
-## Recommended next steps (each a clean, self-contained Mathlib-grade target)
-1. **#9** (most tractable): `continuousOn_tangentCoordChange_movingIndex` — a focused tangent-bundle
-   lemma; likely upstreamable. Closing it closes #9 entirely.
-2. **#8**: `spectrum(⋀^j A) = j-fold products` over ℂ — needs Schur/generalized-eigenspace
-   triangularization (itself a worthwhile Mathlib contribution). Closes #8 entirely.
-3. **#11**: Effros Borel hyperspace + coanalytic reduction (Novikov) — a multi-PR DST programme.
-4. **#10**: Shannon–McMillan–Breiman + a countable-partition KS-entropy API (then Layer 1); Layer 2
-   is a multi-year Pesin library.
+## Recommended next steps — measured by the dependency-DAG spike (critical-path depth × width)
+The "next steps" are now ranked by **measured** effort, not vibes (DAG reports:
+`docs/research/frontier/issue{4,6}/DAG-*.md`; Mathlib node-availability grep-verified + adversarially
+audited). Parallel-Claude wall-clock ≈ critical-path-depth × per-node design+prove time (breadth is
+absorbed by running many warm-worktree agents at once).
+
+| Target | Residual | depth × width | Parallel-Claude | Human/PR cadence |
+|---|---|---|---|---|
+| **#9** (most tractable) | `continuousOn_tangentCoordChange_movingIndex` (one tangent-bundle lemma) | shallow | ~a session | days |
+| **#8** | `spectrum(⋀ʲA) = j-fold products` (needs ℂ-triangularization) | shallow | days–~2 wks | weeks |
+| **#11** (near-term — RECLASSIFIED) | one sorry `4.7.2`, chain `4.6.5 → 4.7.1 → 4.7.2` | 3 × 1 | ~1–2.5 wks | ~6–10 wks (1–2 PRs) |
+| **#10** (genuinely large) | 8 design-novel nodes in series (foliation AC, disintegration along Wᵘ) | 8 × 6 | ~4–6 months | ~3–6 years |
+
+**#11 reclassified** from "multi-year DST programme" to near-term: the full Effros/Π¹₁/transfinite-
+derivative tower is absent from Mathlib BUT off the critical path (the repo routes through a Euclidean
+re-route), and Mathlib already has the separation engine (`MeasurablySeparable.iUnion`,
+`measurablySeparable_range_of_disjoint`). Real remaining work = the 4.6.2 generalized-first-separation
+induction + the 4.7.1/4.7.2 structure lemmas. **#10** stays large because its critical path is 8
+*serial* design-novel nodes — parallelism absorbs the off-path Layer-1 (SMB + countable-partition KS
+API) but cannot compress the Layer-2 foliation chain (Amdahl's law); the two deepest nodes (absolute
+continuity of Wᵘ, disintegration of μ along Wᵘ) are the historically hardest pieces of Ledrappier–Young
+and have no Mathlib precursors.
 
 Detailed per-wave records: `reports/implementation/WAVE1-RESULTS.md`, the workflow outputs, and the
 recon feasibility reports under `docs/research/frontier/issue*/FEASIBILITY-*.md`.
