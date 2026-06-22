@@ -5,6 +5,7 @@ Authors: Marcel Morgenstern
 -/
 import Mathlib.Geometry.Manifold.MFDeriv.Basic
 import Mathlib.Geometry.Manifold.MFDeriv.SpecificFunctions
+import Mathlib.Geometry.Manifold.ContMDiff.Defs
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Oseledets.Cocycle.Norm
 import Oseledets.MultiplicativeErgodic
@@ -293,36 +294,60 @@ theorem det_derivativeCocycleManifold_ne_zero {T : M → M}
   have hunit : IsUnit (derivativeCocycleManifold I T x) := (hiso x).map (frameAlg E)
   exact isUnit_iff_ne_zero.mp ((Matrix.isUnit_iff_isUnit_det _).mp hunit)
 
+/-- **The sharp analytic core (issue #2 wall, boundaryless C¹ form).**
+Measurability of the manifold derivative `x ↦ mfderiv I I T x : E →L[ℝ] E` for a `C¹` self-map `T`
+of a **boundaryless** manifold, equipped with its Borel σ-algebra.
+
+This is the single irreducible measurability obligation behind the manifold MET, isolated as a
+`sorry` with the sharpest honest hypotheses identified by the feasibility analysis
+(`docs/research/frontier/issue2/FEASIBILITY-2026-06-22.md`, Strategy α/γ):
+
+* `[I.Boundaryless]` ⇒ `range I = univ`, so chart-locally
+  `mfderiv I I T x = fderiv ℝ (writtenInExtChartAt I I x T) (extChartAt I x x)` (no `fderivWithin`
+  over `range I`; Mathlib has **no** `measurable_fderivWithin` over a proper closed set, only over
+  `univ` via the unconditional `measurable_fderiv`);
+* `ContMDiff I I 1 T` (C¹) ⇒ `ContMDiffAt.mfderiv_const` makes the fixed-base in-coordinates
+  representative `inTangentCoordinates I I id T (mfderiv I I T) x₀` *continuous* on a chart
+  neighbourhood of each `x₀`;
+* `[SigmaCompactSpace M] [SecondCountableTopology H]` ⇒ a countable atlas, so the chart-local
+  measurable representatives glue (via `measurable_of_measurable_on_countable_cover`) into a global
+  measurable map.
+
+The remaining gap is the *recovery* step: passing from the (continuous, hence measurable) fixed-base
+representative `inTangentCoordinates … x₀` back to `mfderiv I I T x` itself requires conjugating by
+two `tangentCoordChange` factors whose **chart index moves with the base point** — a
+moving-trivialization-index continuity that Mathlib packages only *inside* `inTangentCoordinates`
+(via the smooth-tangent-bundle machinery), never as an isolable factor. Closing it is the
+~250-400-line chart-algebra telescoping flagged at ~70% odds in the report. It is recorded here as a
+single sharp, fully-typed `sorry` — strictly stronger hypotheses than the original opaque leaf, and
+faithful to the literature (Filip §2.2.2; Arnold, *RDS*, Ch. 4). -/
+theorem measurable_mfderiv_of_contMDiff_boundaryless
+    [I.Boundaryless] [MeasurableSpace M] [BorelSpace M]
+    [SigmaCompactSpace M] [SecondCountableTopology H] {T : M → M}
+    (hT : ContMDiff I I 1 T) :
+    Measurable (bundleDerivativeCocycle I T) := by
+  -- SHARP RESIDUAL CORE — see the docstring. `bundleDerivativeCocycle I T x = mfderiv I I T x`
+  -- (`E →L[ℝ] E`, by `rfl`). Reduces to the moving-chart-index recovery step in the chart-glue of
+  -- `inTangentCoordinates I I id T (mfderiv I I T) x₀` (continuous by `ContMDiffAt.mfderiv_const`,
+  -- m = 0, n = 1) across a countable atlas. Mathlib has no isolable moving-trivialization-index
+  -- coordinate-change continuity lemma; supplying it is the wall.
+  sorry
+
 /-- **Measurability of the manifold derivative cocycle generator — THE WALL.**
 
 To feed the matrix MET, the generator `x ↦ derivativeCocycleManifold I T x` must be measurable for
 the Borel σ-algebra of `M`. Since `frameAlg E` and the matrix-entry projections are continuous, this
 reduces to measurability of the *manifold derivative* `x ↦ mfderiv I I T x` as a map
-`M → (E →L[ℝ] E)` — the exact manifold analogue of `measurable_fderiv` used in the Euclidean
-`Oseledets.measurable_derivativeCocycle`.
-
-**Mathlib provides no such lemma.** `mfderiv I I T x` is defined chart-locally as
-`if MDifferentiableAt I I T x then fderivWithin ℝ (writtenInExtChartAt I I x T) (range I) …  else 0`
-(see `Mathlib.Geometry.Manifold.MFDeriv.Defs`), and there is:
-* no global measurability theorem for `x ↦ mfderiv I I T x`, and
-* no `MeasurableSpace` instance produced from a `ChartedSpace`/`IsManifold` structure (one must
-  `borelize M` by hand, which is fine, but the measurability lemma is still absent).
-
-Supplying it is a genuine Mathlib-scale task: equip `M` with its Borel σ-algebra; over each chart
-domain, `mfderiv` is `tangentCoordChange`-conjugate to the *Euclidean* `fderivWithin` of
-`writtenInExtChartAt`, which IS measurable by `measurable_fderivWithin`/`measurable_fderiv` on the
-model `E`; then glue these chart-local measurable representatives across a countable measurable cover
-of `M` by chart domains (a second-countable manifold has one), checking the conjugating
-`tangentCoordChange` factors are measurable (they are continuous on chart overlaps). None of this
-gluing exists in Mathlib today. -/
-theorem measurable_bundleDerivativeCocycle [MeasurableSpace M] [BorelSpace M] {T : M → M}
-    (hT : MDifferentiable I I T) :
-    Measurable (bundleDerivativeCocycle I T) := by
-  -- BLOCKED: no measurability theory for the manifold derivative `x ↦ mfderiv I I T x` in Mathlib
-  -- (no global lemma; would require gluing chart-local `fderivWithin`-measurability of
-  -- `writtenInExtChartAt` across a countable measurable cover of `M` by chart domains, conjugated by
-  -- the continuous `tangentCoordChange`). This is the single genuine wall of the manifold MET.
-  sorry
+`M → (E →L[ℝ] E)` (the manifold analogue of `measurable_fderiv`). Under the **honest boundaryless /
+C¹ / σ-compact** hypotheses it is exactly the sharp core
+`measurable_mfderiv_of_contMDiff_boundaryless`: `bundleDerivativeCocycle I T x` is, by definition,
+`mfderiv I I T x`. -/
+theorem measurable_bundleDerivativeCocycle
+    [I.Boundaryless] [MeasurableSpace M] [BorelSpace M]
+    [SigmaCompactSpace M] [SecondCountableTopology H] {T : M → M}
+    (hT : ContMDiff I I 1 T) :
+    Measurable (bundleDerivativeCocycle I T) :=
+  measurable_mfderiv_of_contMDiff_boundaryless hT
 
 /-- The framing `frameAlg E` is measurable into the entrywise (Pi) measurable structure on matrices:
 each matrix entry `(frameAlg E L) i j` is a continuous (`ℝ`-linear, finite-dimensional) function of
@@ -339,8 +364,10 @@ theorem measurable_frameAlg : Measurable (frameAlg E) := by
 /-- Measurability of the matrix generator follows from the bundle-derivative measurability wall by
 measurability of the framing `frameAlg E`. Stated separately so the dependence on the wall is
 explicit; the matrix MET takes this as the hypothesis `hAmeas`. -/
-theorem measurable_derivativeCocycleManifold [MeasurableSpace M] [BorelSpace M] {T : M → M}
-    (hT : MDifferentiable I I T) :
+theorem measurable_derivativeCocycleManifold
+    [I.Boundaryless] [MeasurableSpace M] [BorelSpace M]
+    [SigmaCompactSpace M] [SecondCountableTopology H] {T : M → M}
+    (hT : ContMDiff I I 1 T) :
     Measurable (derivativeCocycleManifold I T) :=
   (measurable_frameAlg (E := E)).comp (measurable_bundleDerivativeCocycle hT)
 

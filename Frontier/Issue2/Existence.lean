@@ -119,41 +119,72 @@ def MeasurableFraming.of_measurablePartitionFrame {T : M → M}
   measurable_framedGenerator :=
     measurable_of_measurable_on_countable_cover P hPmeas hPcover hblock
 
-/-! ### The wall: existence on a σ-compact smooth manifold -/
+/-! ### The wall: existence on a σ-compact smooth manifold
 
-/-- **Existence of a measurable framing on a σ-compact smooth manifold (the WALL of issue #2).**
-For a `C¹` finite-dimensional, σ-compact (hence second-countable) manifold `M` with its Borel
-σ-algebra, and any `MDifferentiable` self-map `T`, the tangent bundle admits a `MeasurableFraming`.
+The feasibility analysis (`docs/research/frontier/issue2/FEASIBILITY-2026-06-22.md`, Strategy β)
+showed that the original "disjointified-trivialization" plan in this file's docstring is a **red
+herring** for Mathlib's tangent-bundle model: since `TangentSpace I x` is *definitionally* the model
+space `E` for every `x`, one may take the **globally constant identity frame**
+`frame x := ContinuousLinearEquiv.refl ℝ E`. The `MeasurableFraming` obligation then collapses
+*verbatim* into measurability of `x ↦ mfderiv I I T x` — i.e. Leaf A
+(`Frontier.Issue2.measurable_mfderiv_of_contMDiff_boundaryless`). No per-point bundle
+trivialization, no chart-selector, no `Trivialization.continuousLinearEquivAt` are needed.
 
-The construction is the disjointified-countable-atlas argument of the module docstring: a countable
-atlas exists by σ-compactness; its open chart sources disjointify to a countable measurable
-partition; each block carries the continuous trivialization frame
-`Trivialization.continuousLinearEquivAt`; gluing
-(`MeasurableFraming.of_measurablePartitionFrame`) gives a global frame whose conjugated derivative
-is measurable because it is the (continuous) chart-coordinate representation of `mfderiv` on each
-block.
+Because this file's `E` carries only `[NormedSpace ℝ E]` (not the inner-product / finite-dimensional
+structure of `DerivativeCocycleManifold.lean`), the sharp analytic core is restated here in its
+minimal context as `measurable_mfderiv_of_contMDiff_boundaryless'`. It is the *same* irreducible
+measurability fact, with the same honest `[I.Boundaryless]` + `ContMDiff I I 1 T` + σ-compact
+hypotheses; see the Leaf-A docstring for the residual moving-chart-index recovery gap. -/
 
-The proof is a single BLOCKED leaf. Two precise pieces are owed, both Mathlib-scale:
+/-- The manifold derivative `x ↦ mfderiv I I T x`, recorded with the homogeneous model-fibre type
+`E →L[ℝ] E` (legitimate since `TangentSpace I x` is definitionally `E`). This packaging gives the
+derivative a non-dependent codomain, so that `Measurable` makes sense; it mirrors
+`Frontier.Issue2.bundleDerivativeCocycle` (kept local here, where `E` carries only `NormedSpace`). -/
+noncomputable def mfderivModel (T : M → M) (x : M) : E →L[ℝ] E := mfderiv I I T x
 
-* **(A) per-block continuity** of `x ↦ inTangentCoordinates I I T T (mfderiv I I T) x₀ x` on a chart
-  neighbourhood of `x₀`. This is exactly `ContMDiffAt.mfderiv_const` at `m = 0`
-  (`Mathlib.Geometry.Manifold.ContMDiffMFDeriv`), a genuine theorem whose import chain is **not in
-  the precompiled Mathlib cache here** (wiring it forces a from-source rebuild of the
-  manifold-derivative chain);
-* **(B) a measurable chart-selector** picking, measurably in `x`, the block of the disjointified
-  cover containing `x`, plus identifying the per-block frame's conjugated derivative with the
-  continuous in-coordinates map from (A) — infrastructure Mathlib does not package for manifolds.
-
-Given (A)+(B), the proof is `MeasurableFraming.of_measurablePartitionFrame` applied to the
-disjointified countable atlas. -/
-theorem exists_measurableFraming_of_sigmaCompact
-    [SigmaCompactSpace M] [SecondCountableTopology H]
-    {T : M → M} (hT : MDifferentiable I I T) :
-    Nonempty (MeasurableFraming I T) := by
+/-- **The sharp analytic core (issue #2 wall), minimal-context restatement.**
+Measurability of the manifold derivative `x ↦ mfderiv I I T x : E →L[ℝ] E` (`mfderivModel`) for a
+`C¹` self-map `T` of a **boundaryless** σ-compact manifold with its Borel σ-algebra. This is the
+exact analogue of `Frontier.Issue2.measurable_mfderiv_of_contMDiff_boundaryless`, stated here with
+only `[NormedSpace ℝ E]` (no inner-product / finite-dimensional assumptions, which the framing
+existence does not need). See that lemma's docstring for the precise reduction and the residual
+analytic gap (the moving-trivialization-index coordinate-change continuity Mathlib does not
+isolate). -/
+theorem measurable_mfderivModel_of_contMDiff_boundaryless
+    [I.Boundaryless]
+    [SigmaCompactSpace M] [SecondCountableTopology H] {T : M → M}
+    (hT : ContMDiff I I 1 T) :
+    Measurable (mfderivModel (I := I) T) := by
+  -- SHARP RESIDUAL CORE — identical to Leaf A; see
+  -- `Frontier.Issue2.measurable_mfderiv_of_contMDiff_boundaryless`. With the constant identity
+  -- frame the conjugated map is `mfderivModel T x = mfderiv I I T x` itself, so this is exactly
+  -- measurability of `x ↦ mfderiv I I T x`. The recovery from the (continuous) fixed-base
+  -- `inTangentCoordinates I I id T (mfderiv I I T) x₀` to `mfderiv` itself needs moving-chart-index
+  -- coordinate-change continuity, which Mathlib packages only inside `inTangentCoordinates`, never
+  -- as an isolable factor.
   sorry
-  -- BLOCKED: see the docstring. Requires (A) `ContMDiffAt.mfderiv_const` (uncached import chain)
-  -- for the per-block continuity of `inTangentCoordinates I I T T (mfderiv I I T) x₀`, and (B) a
-  -- measurable chart-selector over the disjointified countable atlas — neither available in the
-  -- Mathlib build here. The reduction itself (`of_measurablePartitionFrame`) is sorry-free above.
+
+/-- **Existence of a measurable framing on a σ-compact boundaryless C¹ manifold.**
+For a `C¹`, σ-compact (hence second-countable) **boundaryless** manifold `M` with its Borel
+σ-algebra, and any `ContMDiff I I 1` self-map `T`, the tangent bundle admits a `MeasurableFraming`.
+
+**Strategy β (the report's collapse of this leaf into Leaf A).** Take the globally constant identity
+frame `frame x := ContinuousLinearEquiv.refl ℝ E`, legitimate because `TangentSpace I x` is
+*definitionally* `E`. The conjugated derivative `frame (T x) ∘L mfderiv I I T x ∘L (frame x).symm`
+is then *definitionally* `mfderivModel T x = mfderiv I I T x`, so the framing's measurability
+obligation is exactly measurability of `x ↦ mfderiv I I T x` — supplied by the sharp core
+`measurable_mfderivModel_of_contMDiff_boundaryless`. The disjointified-atlas / trivialization
+machinery in the old plan is unnecessary. -/
+theorem exists_measurableFraming_of_sigmaCompact
+    [I.Boundaryless]
+    [SigmaCompactSpace M] [SecondCountableTopology H]
+    {T : M → M} (hT : ContMDiff I I 1 T) :
+    Nonempty (MeasurableFraming I T) :=
+  ⟨{ frame := fun _ => ContinuousLinearEquiv.refl ℝ E
+     measurable_framedGenerator := by
+       -- the conjugated derivative with the constant identity frame is `mfderiv` itself
+       -- (`id ∘L mfderiv ∘L id` is definitionally `mfderiv`), i.e. `mfderivModel T`.
+       show Measurable (mfderivModel (I := I) T)
+       exact measurable_mfderivModel_of_contMDiff_boundaryless (I := I) hT }⟩
 
 end Frontier.Issue2

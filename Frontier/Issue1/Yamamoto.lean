@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Marcel Morgenstern
 -/
 import Oseledets.Lyapunov.Extensions.ConstantCocycle
+import Oseledets.Lyapunov.Extensions.ConstantCocycleSpectralRadius
+import Oseledets.Lyapunov.ExteriorNorm.Plucker
 import Mathlib.LinearAlgebra.Matrix.Charpoly.Eigs
 import Mathlib.Analysis.Complex.Polynomial.Basic
 
@@ -37,14 +39,31 @@ The arithmetic content **above** Yamamoto's limit — that the cocycle's `expone
 `exponents … i` is *defined* (in `Oseledets.Lyapunov.Extensions.Spectrum`) as the deterministic
 limit of exactly the sequence `(1/n) log σᵢ(cocycle …) = (1/n) log σᵢ(Mⁿ)`.
 
-Yamamoto's limit itself (`yamamoto_singularValues_tendsto`) is the **one** `BLOCKED` leaf. Its
-proof is genuinely Mathlib-scale infrastructure that Mathlib does not yet have: it goes through the
-multiplicative Jordan–Chevalley decomposition, the conjugation trick
-`Wₙ = diag(1, n, …, n^{m-1})` collapsing the strictly-upper-triangular (nilpotent) part, the
-trace-power identities `∑ᵢ |λᵢ|^p = limₙ tr(|Aⁿ|^{p/n})`, compactness of the limit points of
-`{|Aⁿ|^{1/n}}` in the positive-semidefinite cone, and a multiset match of eigenvalue moduli via the
-moments `tr(Hᵖ)`. See the reference below; none of polar `|Aⁿ|`, fractional matrix powers
-`H^{p/n}`, or sorted complex-eigenvalue moduli-with-multiplicity is presently available.
+Yamamoto's limit itself (`yamamoto_singularValues_tendsto`) is the **one** `BLOCKED` leaf. This
+module pursues the **exterior-power / Gelfand route** (Strategy C of the feasibility report), which
+*sidesteps* the polar decomposition, the multiplicative Jordan–Chevalley decomposition, and Weyl
+perturbation that the trace-moment route (Dowla–Mukherjee/Nayak) needs, reducing the entire leaf to
+a **single** residual matrix-analysis fact:
+
+> the spectral radius of the `(i+1)`-st compound (exterior power) `C_{i+1}(M)` equals the product
+> of the top `i+1` eigenvalue moduli of `M`, `∏_{k≤i} |λₖ(M)|`.
+
+The reduction works because the repository already provides the two non-trivial ingredients:
+
+* **`σ-product = compound norm`** (`Oseledets.ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound`):
+  `∏_{k<j} σₖ(Mⁿ) = ‖C_j(Mⁿ)‖`, and `C_j(Mⁿ) = (C_j M)ⁿ` (`compoundMatrix_pow` below, an immediate
+  consequence of Cauchy–Binet `compoundMatrix_mul`); and
+* **Gelfand for a real matrix** (`Oseledets.tendsto_pow_norm_one_div_spectralRadius`):
+  `‖Bⁿ‖^{1/n} → (spectralRadius ℂ B_ℂ).toReal`, applied to `B = C_j(M)`.
+
+Chaining these gives `(σ₀⋯σ_{j-1}(Mⁿ))^{1/n} → ρ(C_j(M))`; with the residual spectral fact
+`ρ(C_{i+1}(M)) = ∏_{k≤i}|λₖ|` this is the product form of Yamamoto, and the single-index statement
+follows by telescoping `j = i+1` against `j = i` in `(1/n) log`. The **two residual leaves** that
+Mathlib/this repository do not yet provide are stated as sharp, individually-typed `sorry`s below:
+`spectralRadius_compound_eq_prod_eigenvalueModuli` (the eigenvalues of an exterior power are the
+`(i+1)`-fold products of the base eigenvalues, so the spectral radius is the product of the top
+moduli) and `yamamoto_prod_to_index` (the telescoping/`log`-of-zero bookkeeping from the product
+form to the single index). All the analytic plumbing between them is discharged sorry-free.
 
 ## Main definitions
 
@@ -99,7 +118,107 @@ theorem eigenvalueModuli_length (M : Matrix (Fin d) (Fin d) ℝ) :
   rw [Polynomial.splits_iff_card_roots.mp hsplits, Matrix.charpoly_natDegree_eq_dim,
     Fintype.card_fin]
 
-/-! ## Yamamoto's theorem (the single `BLOCKED` leaf) -/
+/-! ## Strategy C: exterior-power / Gelfand reduction
+
+The whole leaf reduces, through reusable repository infrastructure, to a single residual spectral
+fact about the compound (exterior power) matrix. We first record the multiplicative ingredients,
+then the two sharp residual `sorry`s, then the sorry-free assembly. -/
+
+open scoped Matrix.Norms.L2Operator ENNReal
+
+/-- **The compound (exterior power) of a matrix power is the power of the compound.**
+`C_k(Mⁿ) = (C_k M)ⁿ`. This is Cauchy–Binet (`ExteriorNorm.compoundMatrix_mul`) iterated, with
+`ExteriorNorm.compoundMatrix_one` for the base case; it is the multiplicativity that lets Gelfand's
+formula act on `C_k(M)` rather than on each `C_k(Mⁿ)` separately. Sorry-free. -/
+theorem compoundMatrix_pow (k : ℕ) (M : Matrix (Fin d) (Fin d) ℝ) (n : ℕ) :
+    ExteriorNorm.compoundMatrix k (M ^ n) = (ExteriorNorm.compoundMatrix k M) ^ n := by
+  induction n with
+  | zero => simpa using ExteriorNorm.compoundMatrix_one k
+  | succ m ih => rw [pow_succ, pow_succ, ExteriorNorm.compoundMatrix_mul, ih]
+
+/-- **Residual leaf 1 (the eigenvalues of an exterior power).** For every `j`, the spectral radius
+of the `j`-th compound (exterior power) `C_j(M)` over `ℂ` equals the product of the top `j`
+eigenvalue moduli of `M`:
+```
+  ρ(C_j(M)_ℂ)  =  ∏_{k < j} |λₖ(M)|.
+```
+This is the classical fact that the eigenvalues of `⋀^j A` are exactly the `j`-fold products
+`λ_{i₀}⋯λ_{i_{j-1}}` over strictly increasing index tuples; the largest modulus among these products
+is attained at the top `j` eigenvalues (the list `eigenvalueModuli M` is sorted non-increasingly), so
+the spectral radius — the maximal modulus of a spectral value — is `∏_{k<j}|λₖ|`. (For `j = 0` both
+sides are `1`: `C_0(M)` is the `1×1` identity and the empty product is `1`. For `j > d` both sides
+are `0`.)
+
+`SHARP SORRY` (Strategy-C residual). Mathlib has `exteriorPower.map` but **no** lemma identifying its
+characteristic polynomial / spectrum with the `j`-fold products of the base eigenvalues, and this
+repository's `ExteriorNorm.compoundMatrix` carries only the *norm/singular-value* side, not the
+*eigenvalue* side. Closing this requires either (i) a charpoly-of-compound lemma
+`(C_j M).charpoly = ∏_{S ∈ powersetCard j} (X - ∏_{k∈S} λₖ)` built from the wedge-basis action of
+`⋀^j(toLin M)` on products of eigenvectors, or (ii) the `det`/`trace`-coefficient route via the
+elementary symmetric polynomials of the eigenvalues. Either is a self-contained matrix-analysis
+contribution; it is the *only* genuinely missing mathematical content of Strategy C, the polar /
+Jordan–Chevalley / Weyl machinery of the trace-moment route being entirely sidestepped. -/
+theorem spectralRadius_compound_eq_prod_eigenvalueModuli [NeZero d]
+    (M : Matrix (Fin d) (Fin d) ℝ) (j : ℕ) :
+    (spectralRadius ℂ ((ExteriorNorm.compoundMatrix j M).map (algebraMap ℝ ℂ))).toReal
+      = ∏ k ∈ Finset.range j, (eigenvalueModuli M).getD k 0 :=
+  sorry
+
+/-- The compound index `finrank ℝ (⋀^j (EuclideanSpace ℝ (Fin d)))` is nonzero exactly when
+`j ≤ d`, since it equals `Nat.choose d j` (`exteriorPower.finrank_eq`,
+`finrank (EuclideanSpace ℝ (Fin d)) = d`). Packaged as a `NeZero` instance under `j ≤ d` so that
+Gelfand's formula (which needs a nonempty matrix index) applies to `C_j(M)`. -/
+theorem neZero_finrank_exteriorPower_of_le {j : ℕ} (hj : j ≤ d) :
+    NeZero (Module.finrank ℝ (⋀[ℝ]^j (EuclideanSpace ℝ (Fin d)))) := by
+  refine ⟨?_⟩
+  rw [exteriorPower.finrank_eq, finrank_euclideanSpace, Fintype.card_fin]
+  exact (Nat.choose_pos hj).ne'
+
+/-- **The Gelfand limit for the compound, in product form.** For every `j ≥ 1`,
+```
+  (∏_{k<j} σₖ(Mⁿ))^{1/n}  →  ρ(C_j(M)_ℂ)   as n → ∞,
+```
+because `∏_{k<j} σₖ(Mⁿ) = ‖C_j(Mⁿ)‖ = ‖(C_j M)ⁿ‖`
+(`ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound` + `compoundMatrix_pow`) and Gelfand's
+formula `‖Bⁿ‖^{1/n} → ρ(B_ℂ)` (`tendsto_pow_norm_one_div_spectralRadius`) applies to `B = C_j(M)`.
+Sorry-free. -/
+theorem tendsto_prod_singularValues_pow (M : Matrix (Fin d) (Fin d) ℝ) (j : ℕ)
+    [NeZero (Module.finrank ℝ (⋀[ℝ]^j (EuclideanSpace ℝ (Fin d))))] :
+    Tendsto (fun n : ℕ =>
+        (∏ k ∈ Finset.range j, (Matrix.toEuclideanLin (M ^ n)).singularValues k) ^ (1 / n : ℝ))
+      atTop (𝓝 (spectralRadius ℂ
+        ((ExteriorNorm.compoundMatrix j M).map (algebraMap ℝ ℂ))).toReal) := by
+  -- Gelfand for the compound matrix `C_j(M)`.
+  have hg := tendsto_pow_norm_one_div_spectralRadius (ExteriorNorm.compoundMatrix j M)
+  refine hg.congr fun n => ?_
+  -- `∏_{k<j} σₖ(Mⁿ) = ‖C_j(Mⁿ)‖ = ‖(C_j M)ⁿ‖`.
+  rw [ExteriorNorm.prod_singularValues_eq_l2_opNorm_compound, compoundMatrix_pow]
+
+/-- **Residual leaf 2 (telescoping / `log`-of-zero bookkeeping).** Given the product-form Gelfand
+limits — `(∏_{k<j} σₖ(Mⁿ))^{1/n} → ∏_{k<j}|λₖ|` for `j = i` and `j = i+1`, packaged via residual
+leaf 1 — the single-index Yamamoto limit `(1/n) log σᵢ(Mⁿ) → log|λᵢ|` follows by telescoping
+`log(∏_{k<i+1}) − log(∏_{k<i}) = log σᵢ`.
+
+`SHARP SORRY` (Strategy-C residual). This is the "elementary but voluminous" repackaging flagged as
+sub-lemma S15 in the feasibility report: it must pass from the multiplicative (`^{1/n}`) form to the
+additive (`(1/n)·log`) form, divide out the lower product, and handle the junk-value branches where a
+singular value or an eigenvalue modulus vanishes (`Real.log 0 = 0`, division by `0`), including the
+`i ≥ d` tail where both sides are constantly `0`. It needs only `Real`-analysis plumbing
+(`Real.continuousAt_log`, `Real.log_prod`, `tendsto_nhds_unique`, antitone-sort index bookkeeping for
+`eigenvalueModuli`), no new matrix analysis, but is left sharp rather than flailed. -/
+theorem yamamoto_prod_to_index [NeZero d] (M : Matrix (Fin d) (Fin d) ℝ) (i : ℕ)
+    (hi : Tendsto (fun n : ℕ =>
+        (∏ k ∈ Finset.range (i + 1), (Matrix.toEuclideanLin (M ^ n)).singularValues k) ^ (1 / n : ℝ))
+      atTop (𝓝 (∏ k ∈ Finset.range (i + 1), (eigenvalueModuli M).getD k 0)))
+    (hi' : Tendsto (fun n : ℕ =>
+        (∏ k ∈ Finset.range i, (Matrix.toEuclideanLin (M ^ n)).singularValues k) ^ (1 / n : ℝ))
+      atTop (𝓝 (∏ k ∈ Finset.range i, (eigenvalueModuli M).getD k 0))) :
+    Tendsto (fun n : ℕ => (n : ℝ)⁻¹ *
+        Real.log ((Matrix.toEuclideanLin (M ^ n)).singularValues i))
+      atTop (𝓝 (Real.log ((eigenvalueModuli M).getD i 0))) :=
+  sorry
+
+/-! ## Yamamoto's theorem (assembled from the two residual leaves, sorry-free glue) -/
 
 /-- **Yamamoto's theorem (the singular-value / eigenvalue-modulus limit).**
 For every real `d × d` matrix `M` and every sorted index `i`, the normalized log of the `i`-th
@@ -111,26 +230,44 @@ singular value of the power `Mⁿ` converges to `log` of the `i`-th largest eige
 Equivalently `(σᵢ(Mⁿ))^{1/n} → |λᵢ(M)|`. This is the classical theorem of Yamamoto (1967), in the
 logarithmic form consumed by the Oseledets spectrum.
 
-`BLOCKED`: Yamamoto's theorem is Mathlib-scale infrastructure not yet in Mathlib. Its proof
-requires the multiplicative Jordan–Chevalley decomposition, the conjugation trick
-`Wₙ = diag(1, n, …, n^{d-1})` collapsing the nilpotent part, the moment identities
-`∑ᵢ |λᵢ|^p = limₙ tr(|Mⁿ|^{p/n})` for the polar parts `|Mⁿ| = √((Mⁿ)ᴴ Mⁿ)`, compactness of the
-limit points of `{|Mⁿ|^{1/n}}` in the positive-semidefinite cone, and a multiset match of
-eigenvalue moduli through the moments `tr(Hᵖ)` (Dowla–Mukherjee et al., arXiv:2303.01252,
-Theorem 3.8 / Corollary 3.9). Mathlib currently lacks the polar decomposition of a matrix power,
-fractional Hermitian matrix powers `H^{p/n}`, and sorted complex-eigenvalue moduli with
-multiplicity, so this leaf is left as a precisely-stated assumption above which all the spectrum
-arithmetic is discharged sorry-free. -/
-theorem yamamoto_singularValues_tendsto (M : Matrix (Fin d) (Fin d) ℝ) (i : ℕ) :
+This is assembled by **Strategy C** (exterior-power / Gelfand): the product-form Gelfand limits
+`(∏_{k<j} σₖ(Mⁿ))^{1/n} → ρ(C_j(M))` (`tendsto_prod_singularValues_pow`, sorry-free) are rewritten
+through residual leaf 1 (`spectralRadius_compound_eq_prod_eigenvalueModuli`,
+`ρ(C_{i+1}(M)) = ∏_{k≤i}|λₖ|`) and telescoped through residual leaf 2 (`yamamoto_prod_to_index`) to
+the single index `i`. The glue here is sorry-free; the two residual matrix-analysis facts are the
+only `sorry`s in the module (see their docstrings).
+
+For the degenerate `d = 0` case (no `NeZero d`) the statement is handled by the constant-cocycle
+consumer directly, which always supplies `[NeZero d]`. -/
+theorem yamamoto_singularValues_tendsto [NeZero d] (M : Matrix (Fin d) (Fin d) ℝ) (i : ℕ) :
     Tendsto (fun n : ℕ => (n : ℝ)⁻¹ *
         Real.log ((Matrix.toEuclideanLin (M ^ n)).singularValues i))
-      atTop (𝓝 (Real.log ((eigenvalueModuli M).getD i 0))) :=
-  sorry
-  -- BLOCKED: Yamamoto's theorem (1967). Requires the multiplicative Jordan–Chevalley
-  -- decomposition, polar parts |Mⁿ| of matrix powers, fractional Hermitian powers H^{p/n}, the
-  -- trace-moment identities ∑ᵢ|λᵢ|^p = limₙ tr(|Mⁿ|^{p/n}), positive-semidefinite-cone
-  -- compactness of {|Mⁿ|^{1/n}}, and sorted complex eigenvalue moduli with multiplicity — none of
-  -- which is presently in Mathlib (Dowla–Mukherjee et al., arXiv:2303.01252, Thm 3.8 / Cor 3.9).
+      atTop (𝓝 (Real.log ((eigenvalueModuli M).getD i 0))) := by
+  rcases lt_or_ge i d with hid | hid
+  · -- Main range `i < d`: both compound dimensions `C_{i+1}`, `C_i` are nonempty, so the two
+    -- product-form Gelfand limits apply; rewrite each spectral radius via residual leaf 1 and
+    -- telescope via residual leaf 2.
+    haveI : NeZero (Module.finrank ℝ (⋀[ℝ]^(i + 1) (EuclideanSpace ℝ (Fin d)))) :=
+      neZero_finrank_exteriorPower_of_le hid
+    haveI : NeZero (Module.finrank ℝ (⋀[ℝ]^i (EuclideanSpace ℝ (Fin d)))) :=
+      neZero_finrank_exteriorPower_of_le hid.le
+    have hi := tendsto_prod_singularValues_pow M (i + 1)
+    rw [spectralRadius_compound_eq_prod_eigenvalueModuli M (i + 1)] at hi
+    have hi' := tendsto_prod_singularValues_pow M i
+    rw [spectralRadius_compound_eq_prod_eigenvalueModuli M i] at hi'
+    exact yamamoto_prod_to_index M i hi hi'
+  · -- Tail `i ≥ d`: the `i`-th singular value is `0` (`singularValues_of_finrank_le`) and the
+    -- `i`-th eigenvalue modulus is `0` (`getD` past the length-`d` list); both sides are the
+    -- constant `Real.log 0 = 0`. Sorry-free.
+    have hσ : ∀ n : ℕ, (Matrix.toEuclideanLin (M ^ n)).singularValues i = 0 := by
+      intro n
+      exact (Matrix.toEuclideanLin (M ^ n)).singularValues_of_finrank_le
+        (by rw [finrank_euclideanSpace, Fintype.card_fin]; exact hid)
+    have hlam : (eigenvalueModuli M).getD i 0 = 0 := by
+      rw [List.getD_eq_getElem?_getD, List.getElem?_eq_none, Option.getD_none]
+      rw [eigenvalueModuli_length]; exact hid
+    simp only [hσ, hlam, Real.log_zero, mul_zero]
+    exact tendsto_const_nhds
 
 /-! ## The full Lyapunov spectrum of a general constant cocycle (given Yamamoto) -/
 

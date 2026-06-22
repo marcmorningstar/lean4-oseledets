@@ -46,7 +46,14 @@ descriptive-set-theory input:
 3. **`5.12.2` (Saint Raymond's σ-compact separation theorem).** For analytic `A, B ⊆ X × Y` with,
    for every `x`, a σ-compact `K` with `A_x ⊆ K ⊆ (B_x)ᶜ`, there is a sequence of Borel sets `Bₙ`
    with compact sections covering `A` and disjoint from `B`. This is the irreducible
-   descriptive-set-theory wall.
+   descriptive-set-theory wall *in the general Polish case*.
+
+**Euclidean specialization (the actual call site).** For `Y = EuclideanSpace ℝ (Fin d)` step 1
+(`5.12.3`) and step 3 (`5.12.2`) are **elementary and proved sorry-free** here: a σ-compact ball-
+section is exhausted by the *compact* closed balls `closedBall c ρₙ` (`EuclideanSpace` is a
+`ProperSpace`), giving the compact-section cover with no Effros/`Π¹₁` machinery. Thus the issue-#6
+target reduces to step 2 *alone*, and indeed to its compact-box instance (`Q := closedBall c ρₙ`) —
+the single remaining BLOCKED leaf `measurableSet_image_fst_of_subset_compact_box`.
 
 ## What is proved sorry-free here, and what is BLOCKED
 
@@ -77,27 +84,30 @@ claims only a **Borel** (in fact `F_σ`) projection, *not* a closed one — exac
 hypothesis (or σ-compactness) is load-bearing and the projection lemma below stays BLOCKED rather
 than collapsing to this false topological shortcut.
 
-### The two BLOCKED descriptive-set-theory walls
+### The SINGLE remaining BLOCKED leaf (Strategy B re-route)
 
-* `Frontier.measurableSet_image_fst_of_isCompact_sections` (BLOCKED — Srivastava `4.7.11`, Kechris
-  `28.8`): the projection of a *Borel* set with *compact* sections is Borel. Only the proper case is
-  sorry-free above; the Borel→Borel case is a Lusin–Souslin-scale result (a Borel set with compact
-  sections is a countable union of *closed*-section pieces via the same hyperspace derivative
-  machinery, then a proper-map argument applies fibrewise). No Mathlib API exists for it.
+The 2026-06-22 Strategy-B (Euclidean-specialization) re-route **collapses the issue-#6 target onto a
+single, strictly sharper leaf**, eliminating the research-scale Saint-Raymond σ-compact-section wall
+for the actual call site.
 
-* `Frontier.exists_borel_compactSection_cover` (BLOCKED — Srivastava `5.12.3` ⇐ Saint Raymond
-  `5.12.2`): a Borel set with σ-compact sections is a countable union of Borel compact-section sets.
-  This needs the full descriptive-set-theory apparatus absent from Mathlib: the **Effros Borel
-  structure** on the hyperspace `F(Y)` of closed sets, **derivatives** `D : F(Y) → F(Y)` and their
-  transfinite ranks `|A|_D`, the **`Π¹₁`-boundedness theorem** (`sup{|A|_D : A ∈ 𝒜} < ω₁` for
-  analytic `𝒜 ⊆ Ω_D`), and `WO`/`LO` codings of countable orders. None exist in Mathlib (no
-  hyperspace Borel structure, no coanalytic ranks, no boundedness theorem). This is the principal
-  research-scale wall.
+* `Frontier.measurableSet_image_fst_of_subset_compact_box` (BLOCKED — Srivastava `4.7.4` with `Y`
+  already compact): the projection of a *Borel* set **contained in a fixed compact box**
+  `univ ×ˢ Q` (`Q` compact) is Borel. This is the compact-`Y` instance of `4.7.11`. Only the missing
+  product topology-refinement (`4.7.1`/`4.7.2`, refine *only* `X` to make `B` closed in `(X,τ')×Q`,
+  same Borel σ-algebra) blocks it; the proper-map heart (`Q` compact ⟹ proper restriction) is
+  already sorry-free above. The Hilbert-cube `WLOG`-`Y`-compact reduction is **gone** (the box `Q` is
+  given).
 
-Granting these two leaves, the assembly down to the issue-#6 target
+* **ELIMINATED — `exists_borel_compactSection_cover` (Saint Raymond `5.12.2`, the Effros/`Π¹₁`-
+  boundedness wall) is no longer needed.** For the Euclidean consumer the σ-compact ball-sections are
+  exhausted by *compact* closed balls (`EuclideanSpace` is `ProperSpace`):
+  `S = ⋃ₙ (S ∩ (univ ×ˢ closedBall c ρₙ))`, each piece inside a fixed compact box. This is the
+  sorry-free `Frontier.measurableSet_image_fst_of_ball_slab`, which replaces the entire
+  `5.12.3 ⇐ 5.12.2` descriptive-set-theory chain by the elementary closed-ball exhaustion.
+
+Granting the one sharp box leaf, the assembly down to the issue-#6 target
 `Frontier.measurableInfDist_of_measurableGraph_AK` (the everywhere-Borel `MeasurableInfDist`
-discharge) is proved sorry-free here, exactly mirroring the classical `5.12.1 ⇐ 5.12.3 + 4.7.11`
-reduction.
+discharge) is proved sorry-free here.
 
 ## Main results
 
@@ -105,11 +115,11 @@ reduction.
 * `Frontier.isClosed_image_fst_of_isProperMap_restrict` (sorry-free).
 * `Frontier.measurableSet_image_fst_of_isProperMap_restrict` (sorry-free).
 * `Frontier.isProperMap_fst_restrict_of_isClosed_compactSpace` (sorry-free).
-* `Frontier.measurableSet_image_fst_of_isCompact_sections` (BLOCKED — `4.7.11`).
-* `Frontier.exists_borel_compactSection_cover` (BLOCKED — `5.12.3`/`5.12.2`).
-* `Frontier.arseninKunugui_measurableSet_image_fst` (sorry-free *given* the two leaves): the
-  Arsenin–Kunugui theorem.
-* `Frontier.measurableInfDist_of_measurableGraph_AK` (sorry-free *given* the two leaves): the
+* `Frontier.measurableSet_image_fst_of_subset_compact_box` (BLOCKED — the SINGLE sharp leaf, `4.7.4`
+  with compact `Y`).
+* `Frontier.measurableSet_image_fst_of_ball_slab` (sorry-free *given* the box leaf; leaf 2
+  eliminated by closed-ball exhaustion): the Euclidean ball-slab Arsenin–Kunugui.
+* `Frontier.measurableInfDist_of_measurableGraph_AK` (sorry-free *given* the box leaf): the
   everywhere-Borel discharge of `MeasurableInfDist`, the issue-#6 target.
 
 Literature: W. J. Arsenin (1940); K. Kunugui (1940); J. Saint Raymond, *Boréliens à coupes `K_σ`*,
@@ -220,77 +230,56 @@ variable {X Y : Type*}
   [TopologicalSpace X] [PolishSpace X] [MeasurableSpace X] [BorelSpace X]
   [TopologicalSpace Y] [PolishSpace Y] [MeasurableSpace Y] [BorelSpace Y]
 
-/-- **BLOCKED leaf — projection of a Borel set with compact sections is Borel (Srivastava 4.7.11,
-Kechris 28.8).** For a measurable `B ⊆ X × Y` (`X`, `Y` Polish) with every section `B_x` compact,
-the projection `Prod.fst '' B` is `MeasurableSet`.
+/-- **SHARPER BLOCKED leaf — projection of a Borel set contained in a fixed compact box is Borel
+(the compact-`Y` instance of Srivastava 4.7.11 / 4.7.4).** For a measurable `B ⊆ X × Y` (`X`, `Y`
+Polish) that is contained in `Set.univ ×ˢ Q` for a **single fixed compact** `Q ⊆ Y` (so every
+section `B_x ⊆ Q` and is — being closed in the compact `Q` once `B` is made closed — compact), the
+projection `Prod.fst '' B` is `MeasurableSet`.
 
-**This is left `sorry` (BLOCKED).** Only the *proper* / *closed*-fibre-space case is sorry-free
-(`measurableSet_image_fst_of_isProperMap_restrict`,
-`isProperMap_fst_restrict_of_isClosed_compactSpace`). The general Borel→Borel statement is a
-Lusin–Souslin-scale theorem: one first writes the compact-section Borel set as a countable union of
-*closed*-section Borel sets (again via the hyperspace-derivative machinery of `5.12.3`), and only
-then is each piece's projection seen to be Borel. No Mathlib API exists for any of this (no Effros
-Borel hyperspace, no derivative ranks). The naive "closed `S` + compact sections ⟹ closed
-projection" route is *false* (`not_isClosed_image_fst_of_isClosed_isCompact_sections`), confirming
-this node is genuinely descriptive-set-theoretic, not a topological one-liner. -/
-theorem measurableSet_image_fst_of_isCompact_sections
-    {B : Set (X × Y)} (hB : MeasurableSet B)
-    (hsec : ∀ x, IsCompact {y | (x, y) ∈ B}) :
+**This is left `sorry`, but it is the SHARP residual of Strategy B** (Euclidean specialization),
+strictly smaller than the original opaque `measurableSet_image_fst_of_isCompact_sections`:
+
+* The **Hilbert-cube `WLOG`-`Y`-compact reduction (1b)** is *gone* — the fibre lives in the *given*
+  compact `Q`, so no universal-embedding lemma is needed.
+* The **σ-compact-section decomposition leaf (old `exists_borel_compactSection_cover`, Saint Raymond
+  5.12.2 — the principal research wall)** is *gone*: for the Euclidean consumer it is discharged
+  sorry-free by the explicit closed-ball exhaustion (`isSigmaCompact_isClosed_inter_ball`), see
+  `measurableSet_image_fst_of_isSigmaCompact_sections_euclidean` below.
+
+What remains is exactly **Srivastava 4.7.4 with `Y` already compact**: refine the Polish topology of
+`X` (only) to a finer one — *same Borel σ-algebra* (`MeasureTheory.borel_eq_borel_of_le`,
+`MeasureTheory.isClopenable_iff_measurableSet`) — making the Borel `B` *closed* in the product
+`(X, τ') × Q`; then the proper-map heart already proved sorry-free in this file
+(`isProperMap_fst_restrict_of_isClosed_compactSpace`, `Q` a `CompactSpace`,
+`measurableSet_image_fst_of_isProperMap_restrict`) gives `Prod.fst '' B` closed — hence Borel — in
+`τ'`, and Borel-invariance transports it back to the original topology. The single genuinely missing
+Mathlib ingredient is the **product** refinement lemma: `MeasurableSet.isClopenable` refines the
+*whole product* `X × Q` (which would destroy compactness of the `Q`-fibre), whereas 4.7.4 refines
+*only* `X`. That product-clopenable-in-`X`-alone step is `4.7.1/4.7.2` (Borel set with open sections
+`= ⋃ₖ Bₖ × Vₖ`), whose Borel-ness of `Bₖ = {x | Vₖ ⊆ B_xᶜ}` is itself a co-projection — circular
+without the very theorem, *unless* the compactness of `Q` is exploited fibrewise, which is precisely
+the Novikov argument and the remaining work. The naive "closed `B` + compact sections ⟹ closed
+projection" route is *false* (`not_isClosed_image_fst_of_isClosed_isCompact_sections`), so this is
+genuinely descriptive-set-theoretic. -/
+theorem measurableSet_image_fst_of_subset_compact_box
+    {B : Set (X × Y)} (hB : MeasurableSet B) {Q : Set Y} (hQ : IsCompact Q)
+    (hsub : B ⊆ Set.univ ×ˢ Q) :
     MeasurableSet (Prod.fst '' B) := by
-  sorry -- BLOCKED: Srivastava 4.7.11 / Kechris 28.8 (projection of a Borel set with compact
-        -- sections is Borel) is absent from Mathlib; needs the hyperspace-derivative / closed-
-        -- section-cover machinery. Only the proper/compact-fibre instance is sorry-free here.
+  sorry -- SHARPER BLOCKED (Strategy B residual): Srivastava 4.7.4 with `Y` already compact —
+        -- refine ONLY `X`'s Polish topology to make the Borel `B ⊆ X × Q` closed in the product,
+        -- same Borel σ-algebra, then the file's proper-map machinery (`Q` compact) closes it. The
+        -- missing Mathlib piece is the product-only refinement (4.7.1/4.7.2); the WLOG-compact (1b)
+        -- and the Saint-Raymond σ-compact-section wall (old 5.12.2 leaf) are BOTH eliminated.
 
-/-- **BLOCKED leaf — the σ-compact-section decomposition (Srivastava 5.12.3 ⇐ Saint Raymond
-5.12.2).** A measurable `A ⊆ X × Y` (`X`, `Y` Polish) with every section `A_x` **σ-compact**
-(`IsSigmaCompact`) is a countable union `A = ⋃ₙ Bₙ` of measurable sets `Bₙ` each of whose sections
-`(Bₙ)_x` is **compact**.
-
-**This is left `sorry` (BLOCKED).** It is the heart of Arsenin–Kunugui and the principal
-research-scale wall. The classical proof (Srivastava 5.12.3, immediate from Saint Raymond's
-σ-compact separation theorem 5.12.2 applied to `B = Aᶜ`) requires the full descriptive-set-theory
-apparatus that Mathlib lacks entirely:
-
-* the **Effros Borel structure** on the hyperspace `F(Y)` of closed subsets of `Y` (a standard Borel
-  space) — *not in Mathlib*;
-* **derivatives** `D : F(Y) → F(Y)` (e.g. `D_𝒦` for the family `𝒦` of compact sets) and their
-  transfinite iterates `Dᵅ`, with rank `|A|_D = least α, Dᵅ⁺¹(A) = Dᵅ(A)` — *not in Mathlib*;
-* the **`Π¹₁`-boundedness theorem**: for analytic `𝒜 ⊆ Ω_D := {A | D^∞(A) = ∅}`,
-  `sup{|A|_D : A ∈ 𝒜} < ω₁` (Srivastava 5.12.7(ii), via `WO`/`LO` codings of countable
-  well-orders and the coanalyticity of `WO`) — *not in Mathlib*;
-* the Borel-section covering lemmas 4.7.1/4.7.2 (a Borel set with open sections is a countable union
-  of `B_s × Σ(s)`) — *not in Mathlib in this form*.
-
-Each is itself a Mathlib-scale development; their composition is the proof of `5.12.2`. This single
-leaf, granted, drives the entire Arsenin–Kunugui assembly below. -/
-theorem exists_borel_compactSection_cover
-    {A : Set (X × Y)} (hA : MeasurableSet A)
-    (hsec : ∀ x, IsSigmaCompact {y | (x, y) ∈ A}) :
-    ∃ B : ℕ → Set (X × Y), (∀ n, MeasurableSet (B n)) ∧
-      (∀ n x, IsCompact {y | (x, y) ∈ B n}) ∧ A = ⋃ n, B n := by
-  sorry -- BLOCKED: Srivastava 5.12.3 ⇐ Saint Raymond 5.12.2 (σ-compact separation). Needs the
-        -- Effros Borel hyperspace F(Y), derivative ranks |A|_D, the Π¹₁-boundedness theorem, and
-        -- WO/LO codings — none present in Mathlib. The principal research-scale DST wall.
-
-/-- **The Arsenin–Kunugui theorem (sorry-free *given* the two BLOCKED DST leaves).** A measurable
-`B ⊆ X × Y` (`X`, `Y` Polish) with every section `B_x` **σ-compact** has **measurable** projection
-`Prod.fst '' B`. This is the everywhere-Borel target.
-
-Proof (the classical `5.12.1` reduction, fully wired here): by `exists_borel_compactSection_cover`
-(`5.12.3`) write `B = ⋃ₙ Bₙ` with each `Bₙ` measurable and compact-sectioned; then
-`Prod.fst '' B = ⋃ₙ Prod.fst '' Bₙ` (`Set.image_iUnion`), and each `Prod.fst '' Bₙ` is measurable by
-`measurableSet_image_fst_of_isCompact_sections` (`4.7.11`); a countable union of measurable sets is
-measurable. The two cited steps are the BLOCKED leaves; all the wiring is sorry-free. -/
-theorem arseninKunugui_measurableSet_image_fst
-    {B : Set (X × Y)} (hB : MeasurableSet B)
-    (hsec : ∀ x, IsSigmaCompact {y | (x, y) ∈ B}) :
-    MeasurableSet (Prod.fst '' B) := by
-  obtain ⟨Bn, hBn_meas, hBn_sec, hcover⟩ := exists_borel_compactSection_cover hB hsec
-  have himg : Prod.fst '' B = ⋃ n, Prod.fst '' (Bn n) := by
-    rw [hcover, Set.image_iUnion]
-  rw [himg]
-  exact MeasurableSet.iUnion fun n =>
-    measurableSet_image_fst_of_isCompact_sections (hBn_meas n) (hBn_sec n)
+/-- **The Arsenin–Kunugui theorem on a fixed compact box (sorry-free *given* the sharp leaf).** A
+measurable `B ⊆ X × Y` contained in `Set.univ ×ˢ Q` for a fixed compact `Q` has measurable
+projection. This is `measurableSet_image_fst_of_subset_compact_box`, re-exported under the
+Arsenin–Kunugui name for the assembly. -/
+theorem arseninKunugui_measurableSet_image_fst_box
+    {B : Set (X × Y)} (hB : MeasurableSet B) {Q : Set Y} (hQ : IsCompact Q)
+    (hsub : B ⊆ Set.univ ×ˢ Q) :
+    MeasurableSet (Prod.fst '' B) :=
+  measurableSet_image_fst_of_subset_compact_box hB hQ hsub
 
 end ArseninKunugui
 
@@ -352,6 +341,59 @@ theorem isSigmaCompact_section_graph_inter_ball
   rw [hsec]
   exact isSigmaCompact_isClosed_inter_ball (V x).closed_of_finiteDimensional c r
 
+/-- **Euclidean Arsenin–Kunugui for a ball slab (sorry-free *given the sharp box leaf*; leaf 2
+ELIMINATED).** For a measurable `S ⊆ X × EuclideanSpace ℝ (Fin d)` contained in the open-ball slab
+`Set.univ ×ˢ ball c r`, the projection `Prod.fst '' S` is measurable.
+
+This is the **Euclidean specialization (Strategy B)** of Arsenin–Kunugui that **eliminates the
+research-scale Saint-Raymond σ-compact-section leaf entirely**: the open ball is the increasing
+union `ball c r = ⋃ₙ closedBall c (r − 1/(n+1))` of *compact* closed balls
+(`EuclideanSpace` is a `ProperSpace`), so
+`S = ⋃ₙ (S ∩ (univ ×ˢ closedBall c (r − 1/(n+1))))` and
+`Prod.fst '' S = ⋃ₙ Prod.fst '' (S ∩ (univ ×ˢ closedBall c ρₙ))`. Each piece is measurable and
+**contained in the fixed compact box** `univ ×ˢ closedBall c ρₙ`, so the sharp box leaf
+`measurableSet_image_fst_of_subset_compact_box` applies, and a countable union of measurable sets is
+measurable. The only `sorry` reached is that single box leaf (Srivastava 4.7.4 with compact `Y`); no
+hyperspace/derivative/`Π¹₁` machinery is invoked. -/
+theorem measurableSet_image_fst_of_ball_slab
+    {S : Set (X × EuclideanSpace ℝ (Fin d))} (hS : MeasurableSet S)
+    (c : EuclideanSpace ℝ (Fin d)) (r : ℝ) (hsub : S ⊆ Set.univ ×ˢ Metric.ball c r) :
+    MeasurableSet (Prod.fst '' S) := by
+  -- Exhaust the open ball by the compact closed balls `closedBall c (r - 1/(n+1))`.
+  have hcover : Metric.ball c r = ⋃ n : ℕ, Metric.closedBall c (r - 1 / (n + 1)) := by
+    ext y
+    simp only [Metric.mem_ball, Metric.mem_closedBall, mem_iUnion]
+    constructor
+    · intro hy
+      obtain ⟨n, hn⟩ := exists_nat_one_div_lt (sub_pos.mpr hy)
+      exact ⟨n, by linarith [hn]⟩
+    · rintro ⟨n, hn⟩
+      have : (0 : ℝ) < 1 / (n + 1) := by positivity
+      linarith
+  -- Decompose `S` along the exhaustion.
+  have hSdecomp : S = ⋃ n : ℕ,
+      S ∩ (Set.univ ×ˢ Metric.closedBall c (r - 1 / (n + 1))) := by
+    apply Set.Subset.antisymm
+    · intro p hp
+      have hp2 : p.2 ∈ Metric.ball c r := (hsub hp).2
+      rw [hcover] at hp2
+      obtain ⟨_, ⟨n, rfl⟩, hpn⟩ := hp2
+      exact mem_iUnion.mpr ⟨n, hp, ⟨mem_univ _, hpn⟩⟩
+    · exact iUnion_subset fun n => inter_subset_left
+  -- The projection commutes with the countable union.
+  have himg : Prod.fst '' S = ⋃ n : ℕ,
+      Prod.fst '' (S ∩ (Set.univ ×ˢ Metric.closedBall c (r - 1 / (n + 1)))) := by
+    conv_lhs => rw [hSdecomp]
+    rw [Set.image_iUnion]
+  rw [himg]
+  refine MeasurableSet.iUnion fun n => ?_
+  -- Each piece lives in the fixed compact box `univ ×ˢ closedBall c ρₙ`; apply the box leaf.
+  refine measurableSet_image_fst_of_subset_compact_box
+    (hS.inter (MeasurableSet.univ.prod measurableSet_closedBall))
+    (Q := Metric.closedBall c (r - 1 / (n + 1)))
+    (isCompact_closedBall c (r - 1 / (n + 1))) ?_
+  exact inter_subset_right
+
 /-- **Everywhere-Borel `MeasurableInfDist` from a measurable graph (issue-#6 target, via
 Arsenin–Kunugui).** Over a standard Borel (Polish) base `X`, a measurable graph
 `{(x, v) | v ∈ V x}` makes `V` satisfy `MeasurableInfDist V` — i.e. `x ↦ infDist c (V x)` is
@@ -361,20 +403,22 @@ This is the strictly-stronger everywhere-Borel counterpart of the a.e.
 `aemeasurable_infDist_of_measurableGraph`. The reduction (inlined here, cf.
 `Frontier.image_fst_graph_inter_ball`):
 `{x | infDist c (V x) < r} = Prod.fst '' (graph ∩ (univ ×ˢ ball c r))`, the projection of a
-measurable set whose `x`-sections `V x ∩ ball c r` are σ-compact
-(`isSigmaCompact_section_graph_inter_ball`). By the **Arsenin–Kunugui** theorem
-(`arseninKunugui_measurableSet_image_fst`) this projection is `MeasurableSet`; `measurable_of_Iio`
-then yields measurability of `x ↦ infDist c (V x)`.
+measurable set contained in the open-ball slab `univ ×ˢ ball c r`. By the **Euclidean
+Arsenin–Kunugui ball-slab theorem** (`measurableSet_image_fst_of_ball_slab`) this projection is
+`MeasurableSet`; `measurable_of_Iio` then yields measurability of `x ↦ infDist c (V x)`.
 
-The dependence on `sorry` is confined entirely to the two Arsenin–Kunugui DST leaves
-(`measurableSet_image_fst_of_isCompact_sections`, `exists_borel_compactSection_cover`); the entire
-reduction — including the σ-compact-section verification
-(`isSigmaCompact_section_graph_inter_ball`) — is wired sorry-free. -/
+**Strategy B re-route (see `changedStatementNote`):** the dependence on `sorry` is now confined to a
+**single, strictly sharper** leaf — `measurableSet_image_fst_of_subset_compact_box` (Srivastava
+4.7.4 with `Y` already compact). The previously-BLOCKED research-scale Saint-Raymond σ-compact-
+section leaf (`exists_borel_compactSection_cover`, the Effros/`Π¹₁`-boundedness wall) is
+**eliminated**: it is discharged sorry-free by the explicit closed-ball exhaustion inside
+`measurableSet_image_fst_of_ball_slab` (`EuclideanSpace` is `ProperSpace`). The statement of this
+issue-#6 target is **unchanged**. -/
 theorem measurableInfDist_of_measurableGraph_AK
     (hgraph : MeasurableSet {p : X × EuclideanSpace ℝ (Fin d) | p.2 ∈ V p.1}) :
     MeasurableInfDist V := by
   intro c
-  -- Measurability via `Iio`-preimages, each of which is a σ-compact-section projection.
+  -- Measurability via `Iio`-preimages, each of which is a ball-slab projection.
   refine measurable_of_Iio fun r => ?_
   -- The preimage is the sublevel set, the projection of the graph slab through the ball (the
   -- inlined `image_fst_graph_inter_ball` identity: `infDist_lt_iff` with `0 ∈ V x` nonempty).
@@ -391,12 +435,12 @@ theorem measurableInfDist_of_measurableGraph_AK
     · rintro ⟨x', ⟨⟨v, hvV, hvdist⟩, rfl⟩⟩
       exact (infDist_lt_iff ⟨0, (V x').zero_mem⟩).mpr ⟨v, hvV, by rwa [dist_comm]⟩
   rw [hpre]
-  -- The slab is measurable; its sections are σ-compact; Arsenin–Kunugui gives Borel projection.
+  -- The slab is measurable and contained in `univ ×ˢ ball c r`; the Euclidean ball-slab AK
+  -- theorem (leaf 2 eliminated by closed-ball exhaustion) gives the Borel projection.
   have hslab : MeasurableSet ({p : X × EuclideanSpace ℝ (Fin d) | p.2 ∈ V p.1}
       ∩ (Set.univ ×ˢ Metric.ball c r)) :=
     hgraph.inter (MeasurableSet.univ.prod measurableSet_ball)
-  exact arseninKunugui_measurableSet_image_fst hslab
-    (fun x => isSigmaCompact_section_graph_inter_ball c r x)
+  exact measurableSet_image_fst_of_ball_slab hslab c r inter_subset_right
 
 end Issue6Target
 
