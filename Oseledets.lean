@@ -142,6 +142,19 @@ import Oseledets.Entropy.KSEntropyJoin
 import Oseledets.Entropy.KSEntropyMono
 import Oseledets.Entropy.MargulisRuelleAbstract
 import Oseledets.Entropy.MargulisRuelleSharpened
+-- Conditional / relative entropy + Abramov–Rokhlin (issue #13)
+import Oseledets.Entropy.CondPartition
+import Oseledets.Entropy.CondExpEquivariant
+import Oseledets.Entropy.CondPullback
+import Oseledets.Entropy.CondMono
+import Oseledets.Entropy.CondChainRule
+import Oseledets.Entropy.CondJointPullback
+import Oseledets.Entropy.CondKSEntropy
+import Oseledets.Entropy.CondKSEntropySystem
+import Oseledets.Entropy.FactorMap
+import Oseledets.Entropy.Generator
+import Oseledets.Entropy.FactorEntropy
+import Oseledets.Entropy.AbramovRokhlin
 import Oseledets.MeasureTheory.CoveringFromVolume
 import Oseledets.MeasureTheory.AnalyticUniversallyMeasurable
 import Oseledets.Entropy.Ruelle.AtomCount
