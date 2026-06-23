@@ -162,6 +162,8 @@ import Oseledets.Entropy.AbramovRokhlin
 import Oseledets.Entropy.AbramovRokhlinDefect
 import Oseledets.Entropy.CondBlockSubadditive
 import Oseledets.Entropy.JoinSigmaAlgebra
+import Oseledets.Entropy.CondKSMovingLimit
+import Oseledets.Entropy.AbramovRokhlinGenerator
 import Oseledets.MeasureTheory.CoveringFromVolume
 import Oseledets.MeasureTheory.AnalyticUniversallyMeasurable
 import Oseledets.Entropy.Ruelle.AtomCount
