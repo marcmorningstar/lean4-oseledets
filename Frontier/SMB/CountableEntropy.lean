@@ -288,42 +288,280 @@ lemma CountablePartition.measure_eq_tsum_inter {μ : Measure α} [IsProbabilityM
     _ ≤ μ (A ∩ U) + μ Uᶜ := measure_union_le _ _
     _ = μ (A ∩ U) := by rw [Q.ae_cover, add_zero]
 
-/-! ### Subadditivity under joins (the node-2 boundary)
+/-! ### Countable Jensen for `negMulLog` (the analytic core of subadditivity)
 
-The key nontrivial property `H(P ⊔ Q) ≤ H(P) + H(Q)` is stated here but **left as the first task of
-node 2** (its proof is genuinely larger than the rest of node 1). The honest route is the
-**conditional-entropy chain rule**:
+Subadditivity `H(P ⊔ Q) ≤ H(P) + H(Q)` is the conditional-entropy chain rule
+`H(P ⊔ Q) = H(P) + ∑'ᵢ μ(Aᵢ)·H(Q|Aᵢ)` together with `∑'ᵢ μ(Aᵢ)·H(Q|Aᵢ) ≤ H(Q)`, which is a
+**Jensen inequality for the concave `negMulLog` over a countable convex combination**. Mathlib has
+only the *finite* Jensen `ConcaveOn.le_map_sum`; the countable version below is proved directly from
+the supporting-line (tangent) bound `negMulLog p ≤ negMulLog q + (-log q - 1)(p - q)`, summed against
+the weights — the linear term cancels because the weights sum to `1` and the points average to `q`.
+This avoids any convexity-via-limit machinery. -/
 
-* `H(P ⊔ Q) = H(P) + ∑'ᵢ μ(Aᵢ) · H(Q | Aᵢ)` where `H(Q | Aᵢ) = ∑'ⱼ negMulLog(μ(Aᵢ∩Bⱼ)/μ(Aᵢ))` is
-  the conditional entropy of `Q` given the cell `Aᵢ`. This is the per-row expansion via
-  `Real.negMulLog_mul`: `negMulLog(μ(Aᵢ)·r) = r·negMulLog(μ Aᵢ) + μ(Aᵢ)·negMulLog(r)` with
-  `r = μ(Aᵢ∩Bⱼ)/μ(Aᵢ)`, summed over `j` using the marginal identity `measure_eq_tsum_inter`
-  (`∑'ⱼ μ(Aᵢ∩Bⱼ) = μ(Aᵢ)`, so `∑'ⱼ r = 1`).
-* `∑'ᵢ μ(Aᵢ) · H(Q | Aᵢ) ≤ H(Q)` by **concavity of `negMulLog`** (`concaveOn_negMulLog`): the
-  conditional distributions `j ↦ μ(Aᵢ∩Bⱼ)/μ(Aᵢ)` average (with weights `μ(Aᵢ)`) to the marginal
-  `j ↦ μ(Bⱼ)`, and `negMulLog` is concave, so the weighted average of the conditional entropies is
-  at most the entropy of the average distribution `= H(Q)`. This step needs a **Jensen inequality
-  for `tsum`** (an infinite-index version of `ConcaveOn.le_map_sum`), which Mathlib does **not**
-  currently have — building it (or the equivalent log-sum inequality for countable families) is the
-  substance of node 2.
+/-- **Supporting-line (tangent) bound** for the concave `negMulLog` at a point `q > 0`:
+`negMulLog p ≤ negMulLog q + (-log q - 1)·(p - q)` for every `p ≥ 0`. Proved directly from
+`Real.log_le_sub_one_of_pos` (`log t ≤ t - 1`), no convexity API. -/
+lemma negMulLog_le_tangent {q : ℝ} (hq : 0 < q) {p : ℝ} (hp : 0 ≤ p) :
+    Real.negMulLog p ≤ Real.negMulLog q + (-Real.log q - 1) * (p - q) := by
+  rcases eq_or_lt_of_le hp with rfl | hp'
+  · simp only [Real.negMulLog_zero]
+    have h : Real.negMulLog q + (-Real.log q - 1) * (0 - q) = q := by
+      simp only [Real.negMulLog]; ring
+    rw [h]; exact le_of_lt hq
+  · have hlog : Real.log (q / p) ≤ q / p - 1 := Real.log_le_sub_one_of_pos (by positivity)
+    rw [Real.log_div (ne_of_gt hq) (ne_of_gt hp')] at hlog
+    have hmul : p * (Real.log q - Real.log p) ≤ p * (q / p - 1) :=
+      mul_le_mul_of_nonneg_left (by linarith) (le_of_lt hp')
+    have hpdiv : p * (q / p - 1) = q - p := by field_simp
+    rw [hpdiv] at hmul
+    simp only [Real.negMulLog]
+    nlinarith [hmul]
 
-A finite-restriction / sup-of-finite-sums route does **not** work here: the partial Gibbs bound over
-a product finset `Sᵢ × Sⱼ` carries a slack `(∑_{Sᵢ}μ Aᵢ)(∑_{Sⱼ}μ Bⱼ) − ∑ μ(Aᵢ∩Bⱼ)` that is only
-zero in the full limit, so it cannot be discharged term-by-term against the fixed bound
-`H(P) + H(Q)`. (It *does* work for `entropy_le_log_card`, which is a single Jensen, not a difference.)
--/
+/-- **Countable Jensen / log-sum inequality for `negMulLog`.** For a probability weight vector
+`w` (`w i ≥ 0`, `∑' w = 1`) and points `p i ∈ [0,1]`, the weighted average of `negMulLog (p i)` is at
+most `negMulLog` of the weighted average `q = ∑' wᵢ pᵢ`. This is concave Jensen for a (possibly)
+countably-infinite convex combination, the analytic core of entropy subadditivity. The proof sums
+the supporting-line bound `negMulLog_le_tangent` against `w`: the linear term cancels since
+`∑' w = 1` and `∑' w·p = q`. (No `[Countable ι]` is needed — summability comes from the hypotheses.) -/
+lemma negMulLog_tsum_le {ι : Type*} (w p : ι → ℝ)
+    (hw : ∀ i, 0 ≤ w i) (hp0 : ∀ i, 0 ≤ p i) (hp1 : ∀ i, p i ≤ 1) (hwsum : ∑' i, w i = 1) :
+    (∑' i, w i * Real.negMulLog (p i)) ≤ Real.negMulLog (∑' i, w i * p i) := by
+  -- `w` is summable: otherwise `∑' w = 0 ≠ 1`.
+  have hsw : Summable w := by
+    by_contra h
+    rw [tsum_eq_zero_of_not_summable h] at hwsum
+    exact one_ne_zero hwsum.symm
+  -- `w·p` summable, by comparison `0 ≤ w·p ≤ w`.
+  have hswp : Summable (fun i => w i * p i) :=
+    Summable.of_nonneg_of_le (fun i => mul_nonneg (hw i) (hp0 i))
+      (fun i => by nlinarith [hw i, hp0 i, hp1 i]) hsw
+  -- `w·negMulLog p` summable, by comparison `0 ≤ w·negMulLog p ≤ w` (negMulLog p ≤ 1 - p ≤ 1).
+  have hsnml : Summable (fun i => w i * Real.negMulLog (p i)) :=
+    Summable.of_nonneg_of_le
+      (fun i => mul_nonneg (hw i) (Real.negMulLog_nonneg (hp0 i) (hp1 i)))
+      (fun i => by
+        have h1 : Real.negMulLog (p i) ≤ 1 - p i := Real.negMulLog_le_one_sub_self (hp0 i)
+        nlinarith [hw i, hp0 i, hp1 i, h1])
+      hsw
+  set q : ℝ := ∑' i, w i * p i with hq_def
+  have hq0 : 0 ≤ q := tsum_nonneg (fun i => mul_nonneg (hw i) (hp0 i))
+  rcases eq_or_lt_of_le hq0 with hq_eq | hq_pos
+  · -- `q = 0`: every `w i · p i = 0`, so every `w i · negMulLog (p i) = 0`; LHS = 0 = negMulLog 0.
+    rw [← hq_eq, Real.negMulLog_zero]
+    have hterms : ∀ i, w i * p i = 0 := by
+      intro i
+      refine le_antisymm ?_ (mul_nonneg (hw i) (hp0 i))
+      have hle : w i * p i ≤ q := by
+        rw [hq_def]; exact hswp.le_tsum i (fun j _ => mul_nonneg (hw j) (hp0 j))
+      rwa [← hq_eq] at hle
+    have hzero : ∀ i, w i * Real.negMulLog (p i) = 0 := by
+      intro i
+      rcases mul_eq_zero.mp (hterms i) with hwi | hpi
+      · rw [hwi, zero_mul]
+      · rw [hpi, Real.negMulLog_zero, mul_zero]
+    rw [tsum_congr hzero, tsum_zero]
+  · -- `q > 0`: supporting-line bound summed against `w`.
+    have htangent : ∀ i, w i * Real.negMulLog (p i)
+        ≤ w i * (Real.negMulLog q + (-Real.log q - 1) * (p i - q)) :=
+      fun i => mul_le_mul_of_nonneg_left (negMulLog_le_tangent hq_pos (hp0 i)) (hw i)
+    -- The supporting-line family as a linear combination of the summable `w` and `w·p`.
+    have hrw : (fun i => w i * (Real.negMulLog q + (-Real.log q - 1) * (p i - q)))
+        = (fun i => Real.negMulLog q * w i
+            + ((-Real.log q - 1) * (w i * p i) - (-Real.log q - 1) * q * w i)) := by
+      funext i; ring
+    have hsRHS : Summable (fun i => w i * (Real.negMulLog q + (-Real.log q - 1) * (p i - q))) := by
+      rw [hrw]; exact (hsw.mul_left _).add ((hswp.mul_left _).sub (hsw.mul_left _))
+    calc ∑' i, w i * Real.negMulLog (p i)
+        ≤ ∑' i, w i * (Real.negMulLog q + (-Real.log q - 1) * (p i - q)) :=
+          hsnml.tsum_le_tsum htangent hsRHS
+      _ = Real.negMulLog q := by
+          rw [hrw,
+            (hsw.mul_left _).tsum_add ((hswp.mul_left _).sub (hsw.mul_left _)),
+            (hswp.mul_left _).tsum_sub (hsw.mul_left _),
+            hsw.tsum_mul_left (Real.negMulLog q),
+            hswp.tsum_mul_left (-Real.log q - 1),
+            hsw.tsum_mul_left ((-Real.log q - 1) * q), hwsum, ← hq_def]
+          ring
 
-set_option linter.unusedVariables false in
-/-- **Subadditivity of Shannon entropy under joins** (the node-2 headline). For two countable
-measurable partitions `P` and `Q` of a probability space, `H(P ⊔ Q) ≤ H(P) + H(Q)`.
+/-! ### Subadditivity under joins
 
-Stated here; proved in node 2 via the conditional-entropy chain rule plus a `tsum`-Jensen step (see
-the module note above). This `sorry` is the **explicit boundary between node 1 and node 2**, not a
-gap in a node-1 deliverable. -/
+`H(P ⊔ Q) ≤ H(P) + H(Q)`. The whole argument lives in `ℝ≥0∞` (no finiteness assumption on the
+entropies). Writing `aᵢ = (μ Aᵢ).toReal`, `bⱼ = (μ Bⱼ).toReal`, `cᵢⱼ = (μ (Aᵢ ∩ Bⱼ)).toReal` and
+the conditional density `rᵢⱼ = cᵢⱼ / aᵢ` (with `aᵢ · rᵢⱼ = cᵢⱼ` even when `aᵢ = 0`, since then
+`cᵢⱼ = 0`), the per-cell chain rule `Real.negMulLog_mul` gives
+`negMulLog cᵢⱼ = rᵢⱼ·negMulLog aᵢ + aᵢ·negMulLog rᵢⱼ`, so
+`H(P ⊔ Q) = ∑'ᵢⱼ ofReal(rᵢⱼ·negMulLog aᵢ) + ∑'ᵢⱼ ofReal(aᵢ·negMulLog rᵢⱼ)`. The first double sum
+is `H(P)` (each row sums to `negMulLog aᵢ` because `∑'ⱼ rᵢⱼ = 1`); the second is bounded by `H(Q)`
+column-by-column through `negMulLog_tsum_le` (weights `aᵢ`, points `rᵢⱼ`, average `bⱼ`). -/
+
+/-- **Subadditivity of Shannon entropy under joins.** For two countable measurable partitions `P`
+and `Q` of a probability space, `H(P ⊔ Q) ≤ H(P) + H(Q)`. Proved via the conditional-entropy chain
+rule (`Real.negMulLog_mul`) and the countable Jensen inequality `negMulLog_tsum_le`. -/
 theorem entropy_join_le {μ : Measure α} [IsProbabilityMeasure μ] (P : CountablePartition μ ι)
     (Q : CountablePartition μ κ) :
     entropy μ (P.join Q).cells ≤ entropy μ P.cells + entropy μ Q.cells := by
-  sorry -- BLOCKED: node 2. Needs conditional-entropy chain rule + Jensen-for-`tsum`
-        -- (Mathlib lacks an infinite-index `ConcaveOn.le_map_sum`). See module note above.
+  classical
+  -- Abbreviations for the cell measures (as reals) and the conditional densities.
+  set a : ι → ℝ := fun i => (μ (P.cells i)).toReal with ha_def
+  set b : κ → ℝ := fun j => (μ (Q.cells j)).toReal with hb_def
+  set c : ι → κ → ℝ := fun i j => (μ (P.cells i ∩ Q.cells j)).toReal with hc_def
+  set r : ι → κ → ℝ := fun i j => c i j / a i with hr_def
+  -- Basic bounds.
+  have ha_nonneg : ∀ i, 0 ≤ a i := fun i => ENNReal.toReal_nonneg
+  have ha_le_one : ∀ i, a i ≤ 1 := fun i => by
+    have h : (μ (P.cells i)).toReal ≤ (1 : ℝ≥0∞).toReal :=
+      ENNReal.toReal_mono ENNReal.one_ne_top (prob_le_one (μ := μ) (s := P.cells i))
+    rwa [ENNReal.toReal_one] at h
+  have hb_nonneg : ∀ j, 0 ≤ b j := fun j => ENNReal.toReal_nonneg
+  have hc_nonneg : ∀ i j, 0 ≤ c i j := fun i j => ENNReal.toReal_nonneg
+  -- `cᵢⱼ ≤ aᵢ`, since `Aᵢ ∩ Bⱼ ⊆ Aᵢ`.
+  have hc_le_a : ∀ i j, c i j ≤ a i := fun i j =>
+    ENNReal.toReal_mono (measure_ne_top μ _) (measure_mono Set.inter_subset_left)
+  -- The key identity `aᵢ · rᵢⱼ = cᵢⱼ`, valid even at `aᵢ = 0` (then `cᵢⱼ = 0`).
+  have har : ∀ i j, a i * r i j = c i j := by
+    intro i j
+    rcases eq_or_lt_of_le (ha_nonneg i) with hai | hai
+    · have hcij : c i j = 0 := le_antisymm (hai ▸ hc_le_a i j) (hc_nonneg i j)
+      simp only [hr_def, ← hai, zero_mul, hcij]
+    · simp only [hr_def]
+      rw [mul_div_cancel₀ _ (ne_of_gt hai)]
+  have hr_nonneg : ∀ i j, 0 ≤ r i j := fun i j => div_nonneg (hc_nonneg i j) (ha_nonneg i)
+  have hr_le_one : ∀ i j, r i j ≤ 1 := by
+    intro i j
+    rcases eq_or_lt_of_le (ha_nonneg i) with hai | hai
+    · simp only [hr_def, ← hai, div_zero]; exact zero_le_one
+    · rw [hr_def, div_le_one hai]; exact hc_le_a i j
+  -- Row marginal: `∑'ⱼ cᵢⱼ = aᵢ`, from `measure_eq_tsum_inter`.
+  have hrow : ∀ i, ∑' j, c i j = a i := by
+    intro i
+    have hmeas : μ (P.cells i) = ∑' j, μ (P.cells i ∩ Q.cells j) :=
+      Q.measure_eq_tsum_inter (P.measurable i)
+    have hne : ∀ j, μ (P.cells i ∩ Q.cells j) ≠ ∞ := fun j => measure_ne_top μ _
+    calc ∑' j, c i j = ∑' j, (μ (P.cells i ∩ Q.cells j)).toReal := rfl
+      _ = (∑' j, μ (P.cells i ∩ Q.cells j)).toReal := (ENNReal.tsum_toReal_eq hne).symm
+      _ = (μ (P.cells i)).toReal := by rw [← hmeas]
+      _ = a i := rfl
+  -- Column marginal: `∑'ᵢ cᵢⱼ = bⱼ`.
+  have hcol : ∀ j, ∑' i, c i j = b j := by
+    intro j
+    have hmeas : μ (Q.cells j) = ∑' i, μ (Q.cells j ∩ P.cells i) :=
+      P.measure_eq_tsum_inter (Q.measurable j)
+    have hne : ∀ i, μ (Q.cells j ∩ P.cells i) ≠ ∞ := fun i => measure_ne_top μ _
+    have hcomm : ∀ i, μ (Q.cells j ∩ P.cells i) = μ (P.cells i ∩ Q.cells j) := fun i => by
+      rw [Set.inter_comm]
+    calc ∑' i, c i j = ∑' i, (μ (P.cells i ∩ Q.cells j)).toReal := rfl
+      _ = ∑' i, (μ (Q.cells j ∩ P.cells i)).toReal := by simp_rw [hcomm]
+      _ = (∑' i, μ (Q.cells j ∩ P.cells i)).toReal := (ENNReal.tsum_toReal_eq hne).symm
+      _ = (μ (Q.cells j)).toReal := by rw [← hmeas]
+      _ = b j := rfl
+  -- Weights `a` sum to `1`.
+  have hsum_a : ∑' i, a i = 1 := by
+    have h := P.tsum_measure_eq_one
+    have hne : ∀ i, μ (P.cells i) ≠ ∞ := fun i => measure_ne_top μ _
+    calc ∑' i, a i = ∑' i, (μ (P.cells i)).toReal := rfl
+      _ = (∑' i, μ (P.cells i)).toReal := (ENNReal.tsum_toReal_eq hne).symm
+      _ = (1 : ℝ≥0∞).toReal := by rw [h]
+      _ = 1 := ENNReal.toReal_one
+  -- `c i ·` summable (its `ℝ≥0∞`-tsum is `μ Aᵢ ≠ ⊤`), hence `r i ·` summable.
+  have hcsum : ∀ i, Summable (fun j => c i j) := by
+    intro i
+    have hfin : ∑' j, μ (P.cells i ∩ Q.cells j) ≠ ∞ := by
+      rw [← Q.measure_eq_tsum_inter (P.measurable i)]; exact measure_ne_top μ _
+    exact ENNReal.summable_toReal hfin
+  have hsr : ∀ i, Summable (fun j => r i j) := fun i => (hcsum i).div_const (a i)
+  -- Each summand is nonnegative, so the `ℝ≥0∞` rewrites are clean.
+  -- === The chain-rule decomposition of the join entropy ===
+  -- `H(P ⊔ Q) = ∑'ᵢⱼ ofReal(negMulLog cᵢⱼ)`.
+  have hjoin_eq : entropy μ (P.join Q).cells
+      = ∑' p : ι × κ, ENNReal.ofReal (Real.negMulLog (c p.1 p.2)) := by
+    rw [entropy_def]
+    refine tsum_congr fun p => ?_
+    simp only [CountablePartition.join_cells, joinCells_apply, hc_def]
+  -- Per-cell chain rule in `ℝ≥0∞`.
+  have hchain : ∀ i j, ENNReal.ofReal (Real.negMulLog (c i j))
+      = ENNReal.ofReal (r i j * Real.negMulLog (a i))
+        + ENNReal.ofReal (a i * Real.negMulLog (r i j)) := by
+    intro i j
+    have hmul : Real.negMulLog (c i j)
+        = r i j * Real.negMulLog (a i) + a i * Real.negMulLog (r i j) := by
+      rw [← har i j, Real.negMulLog_mul]
+    rw [hmul, ENNReal.ofReal_add]
+    · exact mul_nonneg (hr_nonneg i j) (Real.negMulLog_nonneg (ha_nonneg i) (ha_le_one i))
+    · exact mul_nonneg (ha_nonneg i) (Real.negMulLog_nonneg (hr_nonneg i j) (hr_le_one i j))
+  -- `a` is summable (`∑' a = 1`).
+  have hsa : Summable a := by
+    by_contra h
+    rw [tsum_eq_zero_of_not_summable h] at hsum_a
+    exact one_ne_zero hsum_a.symm
+  -- === Term `T1`: the first double sum reconstructs `H(P)`. ===
+  -- For each row `i`, `∑'ⱼ ofReal(rᵢⱼ·negMulLog aᵢ) = ofReal(negMulLog aᵢ)` (since `∑'ⱼ rᵢⱼ = 1`).
+  have hT1row : ∀ i, (∑' j, ENNReal.ofReal (r i j * Real.negMulLog (a i)))
+      = ENNReal.ofReal (Real.negMulLog (a i)) := by
+    intro i
+    rcases eq_or_lt_of_le (ha_nonneg i) with hai | hai
+    · -- `aᵢ = 0`: both sides are `0`.
+      have hnml0 : Real.negMulLog (a i) = 0 := by rw [← hai, Real.negMulLog_zero]
+      simp only [hnml0, mul_zero, ENNReal.ofReal_zero, tsum_zero]
+    · -- `aᵢ > 0`: factor out the constant and use `∑'ⱼ rᵢⱼ = 1`.
+      have hrsum : ∑' j, r i j = 1 := by
+        have hrmul : ∀ j, r i j = c i j * (a i)⁻¹ := fun j => by
+          simp only [hr_def, div_eq_mul_inv]
+        rw [tsum_congr hrmul, (hcsum i).tsum_mul_right, hrow i, mul_inv_cancel₀ (ne_of_gt hai)]
+      calc (∑' j, ENNReal.ofReal (r i j * Real.negMulLog (a i)))
+          = ∑' j, ENNReal.ofReal (r i j) * ENNReal.ofReal (Real.negMulLog (a i)) := by
+            refine tsum_congr fun j => ?_
+            rw [ENNReal.ofReal_mul (hr_nonneg i j)]
+        _ = (∑' j, ENNReal.ofReal (r i j)) * ENNReal.ofReal (Real.negMulLog (a i)) :=
+            ENNReal.tsum_mul_right
+        _ = ENNReal.ofReal (∑' j, r i j) * ENNReal.ofReal (Real.negMulLog (a i)) := by
+            rw [ENNReal.ofReal_tsum_of_nonneg (fun j => hr_nonneg i j) (hsr i)]
+        _ = ENNReal.ofReal (Real.negMulLog (a i)) := by
+            rw [hrsum, ENNReal.ofReal_one, one_mul]
+  -- === Term `T2`: the second double sum is bounded by `H(Q)` column-by-column. ===
+  -- For each column `j`, `∑'ᵢ ofReal(aᵢ·negMulLog rᵢⱼ) ≤ ofReal(negMulLog bⱼ)` (countable Jensen).
+  have hT2col : ∀ j, (∑' i, ENNReal.ofReal (a i * Real.negMulLog (r i j)))
+      ≤ ENNReal.ofReal (Real.negMulLog (b j)) := by
+    intro j
+    -- Summability of `i ↦ aᵢ·negMulLog rᵢⱼ` by comparison `0 ≤ · ≤ aᵢ`.
+    have hsum_col : Summable (fun i => a i * Real.negMulLog (r i j)) :=
+      Summable.of_nonneg_of_le
+        (fun i => mul_nonneg (ha_nonneg i) (Real.negMulLog_nonneg (hr_nonneg i j) (hr_le_one i j)))
+        (fun i => by
+          have h1 : Real.negMulLog (r i j) ≤ 1 - r i j := Real.negMulLog_le_one_sub_self (hr_nonneg i j)
+          nlinarith [ha_nonneg i, hr_nonneg i j, hr_le_one i j, h1])
+        hsa
+    -- The average `∑'ᵢ aᵢ·rᵢⱼ = ∑'ᵢ cᵢⱼ = bⱼ`.
+    have havg : ∑' i, a i * r i j = b j := by
+      rw [tsum_congr (fun i => har i j), hcol j]
+    rw [← ENNReal.ofReal_tsum_of_nonneg
+      (fun i => mul_nonneg (ha_nonneg i) (Real.negMulLog_nonneg (hr_nonneg i j) (hr_le_one i j)))
+      hsum_col]
+    refine ENNReal.ofReal_le_ofReal ?_
+    have hjensen := negMulLog_tsum_le a (fun i => r i j) ha_nonneg
+      (fun i => hr_nonneg i j) (fun i => hr_le_one i j) hsum_a
+    rwa [havg] at hjensen
+  -- The first double sum reconstructs `H(P)` (sum the per-row identity over `i`).
+  have hT1 : (∑' p : ι × κ, ENNReal.ofReal (r p.1 p.2 * Real.negMulLog (a p.1)))
+      = entropy μ P.cells := by
+    rw [ENNReal.tsum_prod (f := fun i j => ENNReal.ofReal (r i j * Real.negMulLog (a i))),
+      entropy_def]
+    exact tsum_congr hT1row
+  -- The second double sum is bounded by `H(Q)` (sum the per-column bound over `j`).
+  have hT2 : (∑' p : ι × κ, ENNReal.ofReal (a p.1 * Real.negMulLog (r p.1 p.2)))
+      ≤ entropy μ Q.cells := by
+    rw [ENNReal.tsum_prod (f := fun i j => ENNReal.ofReal (a i * Real.negMulLog (r i j))),
+      ENNReal.tsum_comm, entropy_def]
+    exact ENNReal.tsum_le_tsum hT2col
+  -- === Assemble. ===
+  rw [hjoin_eq]
+  calc (∑' p : ι × κ, ENNReal.ofReal (Real.negMulLog (c p.1 p.2)))
+      = ∑' p : ι × κ, (ENNReal.ofReal (r p.1 p.2 * Real.negMulLog (a p.1))
+          + ENNReal.ofReal (a p.1 * Real.negMulLog (r p.1 p.2))) :=
+        tsum_congr fun p => hchain p.1 p.2
+    _ = (∑' p : ι × κ, ENNReal.ofReal (r p.1 p.2 * Real.negMulLog (a p.1)))
+          + ∑' p : ι × κ, ENNReal.ofReal (a p.1 * Real.negMulLog (r p.1 p.2)) :=
+        ENNReal.tsum_add
+    _ ≤ entropy μ P.cells + entropy μ Q.cells := by
+        rw [hT1]; exact add_le_add le_rfl hT2
 
 end Frontier.SMB
