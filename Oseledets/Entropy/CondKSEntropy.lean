@@ -3,7 +3,8 @@ Copyright (c) 2026 Marcel Morgenstern. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Marcel Morgenstern
 -/
-import Oseledets.Entropy.CondPullback
+import Oseledets.Entropy.CondJointPullback
+import Oseledets.Entropy.CondMono
 import Oseledets.Entropy.KSEntropyBounds
 
 /-!
@@ -19,11 +20,16 @@ conditional iterated-join entropy sequence.
 The construction reuses the flat `Fin n`-indexed iterated join `ksJoin` verbatim; only the entropy
 functional changes from `entropy` to `condEntropy μ 𝒜`. Subadditivity is the conditional mirror of
 `ksEntropySeq_subadditive`: the `(n + m)`-join reindexes (via `ksJoinCells_append`) to the join of
-the `n`-fold join with the `Tⁿ`-pullback of the `m`-fold join, the conditional join subadditivity
-`condEntropy_join_le` bounds it by the sum, and the conditional pullback invariance
-`condEntropy_pullback_iterate` identifies the second summand. The pullback invariance requires the
-**two-sided** invariance hypotheses on `T` (`𝒜/𝒜`-measurability and the `T`-preimage pull-back
-property), which are therefore threaded through everything from subadditivity onward.
+the `n`-fold join with the `Tⁿ`-pullback of the `m`-fold join, and the conditional join
+subadditivity `condEntropy_join_le` bounds it by the sum of the two conditional entropies. The
+second summand `H(T⁻ⁿ(m-join) | 𝒜)` is identified with `H(m-join | 𝒜)` by conditioning monotonicity
+(`condEntropy_mono_of_le`, conditioning on the finer `𝒜 ≥ comap (Tⁿ) 𝒜` only decreases entropy)
+followed by the joint pull-back `condEntropy_comap_pullback`, which evaluates
+`H(T⁻ⁿ(m-join) | comap (Tⁿ) 𝒜) = H(m-join | 𝒜)`. This route needs only the **one-sided
+forward-invariance** hypothesis `comap T 𝒜 ≤ 𝒜` (iterated to `comap (Tⁿ) 𝒜 ≤ 𝒜` via
+`comap_iterate_le`), which is therefore the single invariance hypothesis threaded through everything
+from subadditivity onward — strictly weaker than the two-sided hypotheses of
+`condEntropy_pullback_iterate`.
 
 ## Main definitions
 
@@ -119,18 +125,34 @@ lemma condKsEntropySeq_one [Fintype ι] {μ : Measure α} [IsProbabilityMeasure 
 
 variable {𝒜}
 
+omit mα [StandardBorelSpace α] in
+/-- **One-sided forward-invariance iterates.** If `comap T 𝒜 ≤ 𝒜` (every `𝒜`-set is, as a set, a
+`T`-preimage of an `𝒜`-set), then `comap (T^[n]) 𝒜 ≤ 𝒜` for every `n`. The base case is
+`comap id 𝒜 = 𝒜` (`MeasurableSpace.comap_id`); the inductive step writes `T^[n+1] = T ∘ T^[n]`
+(`Function.iterate_succ'`), factors the comap as `comap (T^[n]) (comap T 𝒜)`
+(`MeasurableSpace.comap_comp`), and chains `comap_mono hinv` with the inductive hypothesis. -/
+lemma comap_iterate_le {T : α → α} (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜) (n : ℕ) :
+    MeasurableSpace.comap (T^[n]) 𝒜 ≤ 𝒜 := by
+  induction n with
+  | zero =>
+    simp only [Function.iterate_zero, MeasurableSpace.comap_id, le_refl]
+  | succ k IH =>
+    rw [Function.iterate_succ', ← MeasurableSpace.comap_comp]
+    exact (MeasurableSpace.comap_mono hinv).trans IH
+
 /-- **Subadditivity of the conditional iterated-join entropy** (the Fekete inequality):
 `H(⋁ₖ₌₀ⁿ⁺ᵐ⁻¹ T⁻ᵏ α | 𝒜) ≤ H(⋁ₖ₌₀ⁿ⁻¹ T⁻ᵏ α | 𝒜) + H(⋁ₖ₌₀ᵐ⁻¹ T⁻ᵏ α | 𝒜)`. Reindexing the
 `(n + m)`-fold join by `Fin.appendEquiv` exhibits it as the join of the `n`-fold join with the
 `Tⁿ`-pullback of the `m`-fold join (`ksJoinCells_append`); the conditional join subadditivity
-`condEntropy_join_le` bounds it by the sum of the two conditional entropies, and the conditional
-pullback invariance `condEntropy_pullback_iterate` (which is exactly why the two-sided hypotheses
-are needed) identifies the second summand as the `m`-fold join conditional entropy. -/
+`condEntropy_join_le` bounds it by the sum of the two conditional entropies. The second summand
+`H(T⁻ⁿ(m-join) | 𝒜)` is identified with `H(m-join | 𝒜)` in two steps: conditioning monotonicity
+`condEntropy_mono_of_le` against the finer `𝒜 ≥ comap (Tⁿ) 𝒜` (using `comap_iterate_le hinv`) only
+decreases entropy, and the joint pull-back `condEntropy_comap_pullback` then evaluates
+`H(T⁻ⁿ(m-join) | comap (Tⁿ) 𝒜) = H(m-join | 𝒜)`. This needs only the one-sided forward-invariance
+hypothesis `hinv : comap T 𝒜 ≤ 𝒜`. -/
 lemma condKsEntropySeq_subadditive [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ] {T : α → α}
     (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) (n m : ℕ) :
     condKsEntropySeq 𝒜 hT P (n + m)
       ≤ condKsEntropySeq 𝒜 hT P n + condKsEntropySeq 𝒜 hT P m := by
@@ -152,24 +174,28 @@ lemma condKsEntropySeq_subadditive [Fintype ι] {μ : Measure α} [IsProbability
       (fun g => Real.negMulLog
         (@condExpKernel α mα _ μ _ 𝒜 ω ((ksJoin hT P (n + m)).cells g)).toReal)).symm.trans ?_
     exact Finset.sum_congr rfl fun p _ => by rw [hcell p]
+  -- `comap (Tⁿ) 𝒜 ≤ 𝒜` from the one-sided forward-invariance, iterated.
+  have hcomap : MeasurableSpace.comap (T^[n]) 𝒜 ≤ 𝒜 := comap_iterate_le hinv n
   rw [hreindex, condKsEntropySeq, condKsEntropySeq]
   calc condEntropy μ 𝒜 (joinCells (ksJoin hT P n).cells Q.cells)
       ≤ condEntropy μ 𝒜 (ksJoin hT P n).cells + condEntropy μ 𝒜 Q.cells :=
         condEntropy_join_le hm (ksJoin hT P n) Q
+    _ ≤ condEntropy μ 𝒜 (ksJoin hT P n).cells
+          + condEntropy μ (MeasurableSpace.comap (T^[n]) 𝒜) Q.cells := by
+        gcongr
+        exact condEntropy_mono_of_le hcomap hm Q
     _ = condEntropy μ 𝒜 (ksJoin hT P n).cells + condEntropy μ 𝒜 (ksJoin hT P m).cells := by
         rw [hQ, MeasurePartition.pullback_cells,
-          condEntropy_pullback_iterate hm hT hTA hpull n (ksJoin hT P m)]
+          condEntropy_comap_pullback hm hT n (ksJoin hT P m)]
 
 /-- The conditional iterated-join entropy sequence is a **`Subadditive` sequence** in the sense of
 Fekete's lemma: `u (k + l) ≤ u k + u l`. This is `condKsEntropySeq_subadditive` repackaged. -/
 lemma condKsSubadditive [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ] {T : α → α}
     (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) :
     Subadditive (condKsEntropySeq 𝒜 hT P) :=
-  fun k l => condKsEntropySeq_subadditive hm hT hTA hpull P k l
+  fun k l => condKsEntropySeq_subadditive hm hT hinv P k l
 
 /-- The **relative Kolmogorov–Sinai entropy** `h(α, T | 𝒜)` of a measure-preserving transformation
 `T` relative to a finite measurable partition `α` and a sub-σ-algebra `𝒜`, defined as the Fekete
@@ -177,11 +203,9 @@ limit `limₙ (1 / n) · H(⋁ₖ₌₀ⁿ⁻¹ T⁻ᵏ α | 𝒜)` of the subad
 sequence. -/
 noncomputable def condKsEntropyPartition [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ]
     {T : α → α} (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) : ℝ :=
-  (condKsSubadditive hm hT hTA hpull P).lim
+  (condKsSubadditive hm hT hinv P).lim
 
 /-- **Fekete convergence to the relative Kolmogorov–Sinai entropy.** The averaged conditional
 iterated-join entropies `(1 / n) · H(⋁ₖ₌₀ⁿ⁻¹ T⁻ᵏ α | 𝒜)` converge to `h(α, T | 𝒜)`. The
@@ -189,13 +213,11 @@ boundedness-below hypothesis of Fekete's lemma is discharged from the nonnegativ
 conditional entropies: each `condKsEntropySeq n / n` is at least `0`. -/
 lemma tendsto_condKsEntropySeq [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ] {T : α → α}
     (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) :
     Tendsto (fun n => condKsEntropySeq 𝒜 hT P n / n) atTop
-      (𝓝 (condKsEntropyPartition hm hT hTA hpull P)) := by
-  refine (condKsSubadditive hm hT hTA hpull P).tendsto_lim ?_
+      (𝓝 (condKsEntropyPartition hm hT hinv P)) := by
+  refine (condKsSubadditive hm hT hinv P).tendsto_lim ?_
   refine ⟨0, ?_⟩
   rintro x ⟨n, rfl⟩
   exact div_nonneg (condKsEntropySeq_nonneg 𝒜 hT P n) (Nat.cast_nonneg n)
@@ -206,9 +228,7 @@ n • H(α | 𝒜)`. This is the subadditive estimate `u n ≤ n • u 1`, prove
 `condKsEntropySeq_one`. -/
 lemma condKsEntropySeq_le_nsmul [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ] {T : α → α}
     (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) (n : ℕ) :
     condKsEntropySeq 𝒜 hT P n ≤ n • condEntropy μ 𝒜 P.cells := by
   induction n with
@@ -216,7 +236,7 @@ lemma condKsEntropySeq_le_nsmul [Fintype ι] {μ : Measure α} [IsProbabilityMea
   | succ k IH =>
     calc condKsEntropySeq 𝒜 hT P (k + 1)
         ≤ condKsEntropySeq 𝒜 hT P k + condKsEntropySeq 𝒜 hT P 1 :=
-          condKsEntropySeq_subadditive hm hT hTA hpull P k 1
+          condKsEntropySeq_subadditive hm hT hinv P k 1
       _ ≤ k • condEntropy μ 𝒜 P.cells + condEntropy μ 𝒜 P.cells := by
           rw [condKsEntropySeq_one]; gcongr
       _ = (k + 1) • condEntropy μ 𝒜 P.cells := by rw [succ_nsmul]
@@ -226,12 +246,10 @@ conditional iterated-join entropy `condKsEntropySeq n / n` is nonnegative, and t
 the Fekete limit. -/
 lemma condKsEntropyPartition_nonneg [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ]
     {T : α → α} (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) :
-    0 ≤ condKsEntropyPartition hm hT hTA hpull P := by
-  refine ge_of_tendsto (tendsto_condKsEntropySeq hm hT hTA hpull P) ?_
+    0 ≤ condKsEntropyPartition hm hT hinv P := by
+  refine ge_of_tendsto (tendsto_condKsEntropySeq hm hT hinv P) ?_
   filter_upwards with n
   exact div_nonneg (condKsEntropySeq_nonneg 𝒜 hT P n) (Nat.cast_nonneg n)
 
@@ -241,17 +259,15 @@ lemma condKsEntropyPartition_nonneg [Fintype ι] {μ : Measure α} [IsProbabilit
 eventually; this passes to the Fekete limit. -/
 lemma condKsEntropyPartition_le_condEntropy [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ]
     {T : α → α} (hm : 𝒜 ≤ mα) (hT : @MeasurePreserving α α mα mα T μ μ)
-    (hTA : @Measurable α α 𝒜 𝒜 T)
-    (hpull : ∀ A : Set α, MeasurableSet[𝒜] A →
-      ∃ A' : Set α, MeasurableSet[𝒜] A' ∧ A =ᵐ[μ] T ⁻¹' A')
+    (hinv : MeasurableSpace.comap T 𝒜 ≤ 𝒜)
     (P : MeasurePartition μ ι) :
-    condKsEntropyPartition hm hT hTA hpull P ≤ condEntropy μ 𝒜 P.cells := by
-  refine le_of_tendsto (tendsto_condKsEntropySeq hm hT hTA hpull P) ?_
+    condKsEntropyPartition hm hT hinv P ≤ condEntropy μ 𝒜 P.cells := by
+  refine le_of_tendsto (tendsto_condKsEntropySeq hm hT hinv P) ?_
   filter_upwards [eventually_ge_atTop 1] with n hn
   have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
   rw [div_le_iff₀ hn0]
   calc condKsEntropySeq 𝒜 hT P n ≤ n • condEntropy μ 𝒜 P.cells :=
-        condKsEntropySeq_le_nsmul hm hT hTA hpull P n
+        condKsEntropySeq_le_nsmul hm hT hinv P n
     _ = condEntropy μ 𝒜 P.cells * (n : ℝ) := by rw [nsmul_eq_mul, mul_comm]
 
 section Bot
@@ -269,15 +285,12 @@ lemma condKsEntropySeq_bot [Fintype ι] {μ : Measure α} [IsProbabilityMeasure 
 /-- **The relative entropy at `⊥` recovers the absolute entropy:**
 `h(α, T | ⊥) = h(α, T)`. The two iterated-join entropy sequences agree as functions of `n`
 (`condKsEntropySeq_bot`), so the two subadditive sequences are equal and hence have equal Fekete
-limits (`Subadditive.lim_congr`). The trivial measurability and pull-back hypotheses for `⊥` are
-discharged: any map is `⊥/⊥`-measurable, and every `⊥`-set `A ∈ {∅, univ}` is its own
-`T`-preimage (`T⁻¹∅ = ∅`, `T⁻¹univ = univ`). -/
+limits (`Subadditive.lim_congr`). The one-sided forward-invariance hypothesis for `⊥` is discharged
+internally: `comap T ⊥ = ⊥` (`MeasurableSpace.comap_bot`), so `comap T ⊥ ≤ ⊥` holds reflexively. -/
 lemma condKsEntropyPartition_bot [Fintype ι] {μ : Measure α} [IsProbabilityMeasure μ]
-    (hT : @MeasurePreserving α α mα mα T μ μ) (hTA : @Measurable α α ⊥ ⊥ T)
-    (hpull : ∀ A : Set α, MeasurableSet[⊥] A →
-      ∃ A' : Set α, MeasurableSet[⊥] A' ∧ A =ᵐ[μ] T ⁻¹' A')
-    (P : MeasurePartition μ ι) :
-    condKsEntropyPartition (𝒜 := ⊥) bot_le hT hTA hpull P = ksEntropyPartition hT P := by
+    (hT : @MeasurePreserving α α mα mα T μ μ) (P : MeasurePartition μ ι) :
+    condKsEntropyPartition (𝒜 := ⊥) bot_le hT MeasurableSpace.comap_bot.le P
+      = ksEntropyPartition hT P := by
   rw [condKsEntropyPartition, ksEntropyPartition]
   exact Subadditive.lim_congr _ _ (funext fun n => condKsEntropySeq_bot hT P n)
 
