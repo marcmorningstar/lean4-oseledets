@@ -121,6 +121,8 @@ import Oseledets.Examples.CatMapToral
 import Oseledets.Examples.Rokhlin.AbstractEqui
 import Oseledets.Examples.Rokhlin.DoublingCrux
 import Oseledets.Examples.Rokhlin.DoublingEquality
+import Oseledets.Lyapunov.Extensions.Yamamoto
+import Oseledets.Smooth.UnconditionalMET
 
 /-!
 # Axiom audit
@@ -1670,3 +1672,41 @@ info: 'Oseledets.Examples.Rokhlin.ksEntropyPartition_doublingMap_eq_log_two' dep
 /-- info: 'Oseledets.Examples.Rokhlin.volume_binJoinCell' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Oseledets.Examples.Rokhlin.volume_binJoinCell
+
+/-! ## Issue #8 — Yamamoto's theorem (migrated from `Frontier.Issue1`, sorry-free in the linted lib).
+The compound/exterior-power spectral identities and Yamamoto's singular-value limit, now first-class
+results depending only on the standard axiom triple (Schur triangulation via the vendored
+`Oseledets.Mathlib.SchurTriangulation` shim contributes no extra axioms). -/
+
+/-- info: 'Oseledets.compoundMatrix_charpoly_roots_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.compoundMatrix_charpoly_roots_eq
+
+/-- info: 'Oseledets.spectralRadius_compound_eq_prod_eigenvalueModuli' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.spectralRadius_compound_eq_prod_eigenvalueModuli
+
+/-- info: 'Oseledets.yamamoto_singularValues_tendsto' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.yamamoto_singularValues_tendsto
+
+/-- info: 'Oseledets.exponents_const_general' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exponents_const_general
+
+/-! ## Issue #9 — unconditional measurable manifold-derivative cocycle (migrated from `Frontier.Issue2`,
+sorry-free in the linted lib). The measurable-framing existence + the framed-tangent-cocycle Oseledets
+MET, both with NO `LocallyConstantChartAt` (the chart-regularity wall is discharged via piecewise
+fixed-reference charts), depending only on the standard axiom triple. -/
+
+/-- info: 'Oseledets.exists_measurableFraming_of_sigmaCompact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exists_measurableFraming_of_sigmaCompact
+
+/-- info: 'Oseledets.oseledets_filtration_framedTangentCocycle' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.oseledets_filtration_framedTangentCocycle
+
+/-- info: 'Oseledets.exists_oseledets_filtration_framedTangentCocycle' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Oseledets.exists_oseledets_filtration_framedTangentCocycle

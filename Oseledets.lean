@@ -128,6 +128,7 @@ import Oseledets.Continuous.SuspensionExponentSetEquiv
 import Oseledets.Continuous.SuspensionExponentSetMeasurable
 import Oseledets.Continuous.SuspensionFlowExponentFinal
 import Oseledets.Smooth.DerivativeCocycle
+import Oseledets.Smooth.UnconditionalMET
 import Oseledets.Examples.Elementary
 import Oseledets.Entropy.Partition
 import Oseledets.Entropy.Join
@@ -166,6 +167,8 @@ import Oseledets.Examples.CatMapToral
 import Oseledets.Examples.Rokhlin.AbstractEqui
 import Oseledets.Examples.Rokhlin.DoublingCrux
 import Oseledets.Examples.Rokhlin.DoublingEquality
+import Oseledets.Mathlib.SchurTriangulation
+import Oseledets.Lyapunov.Extensions.Yamamoto
 
 /-!
 # Oseledets
