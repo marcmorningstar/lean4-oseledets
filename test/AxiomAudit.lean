@@ -143,6 +143,8 @@ import Oseledets.Krieger.CountableEntropy
 import Oseledets.Krieger.SMB
 import Oseledets.Krieger.Generator
 import Oseledets.Krieger.PrefixCode
+import Oseledets.Krieger.SMBSharp
+import Oseledets.Krieger.CodeMap
 
 /-!
 # Axiom audit
@@ -1923,3 +1925,30 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Krieger.pow_le_pow_iff_log
+
+-- Issue #15 (unconditional drive): sharp SMB integral-level identity h = H(P | strict future)
+-- via Breiman telescoping + the #13 Lévy theorem (unconditional; pointwise residual = R5).
+
+/-- info: 'Oseledets.Krieger.ksEntropySeq_eq_sum_condEntropy' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.ksEntropySeq_eq_sum_condEntropy
+
+/-- info: 'Oseledets.Krieger.ksEntropyPartition_eq_condEntropy_iSup' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.ksEntropyPartition_eq_condEntropy_iSup
+
+-- Issue #15 (unconditional drive): the symbolic code-map measurable backbone — the itinerary map
+-- x ↦ (n ↦ code(eⁿx)) is twoSidedSat-measurable (automatic, no new symbolic-dynamics infra), so a
+-- measurable decoder with a.e. recovery (CodeMapData) discharges the mod-0 coding hypothesis.
+
+/-- info: 'Oseledets.Krieger.measurable_itin' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.measurable_itin
+
+/-- info: 'Oseledets.Krieger.codesTwoSidedMod0_of_codeMapData' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.codesTwoSidedMod0_of_codeMapData
