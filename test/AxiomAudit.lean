@@ -143,6 +143,7 @@ import Oseledets.Krieger.CountableEntropy
 import Oseledets.Krieger.SMB
 import Oseledets.Krieger.Generator
 import Oseledets.Krieger.PrefixCode
+import Oseledets.Krieger.SMBSharp
 
 /-!
 # Axiom audit
@@ -1898,3 +1899,17 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Krieger.pow_le_pow_iff_log
+
+-- Issue #15 (unconditional drive): sharp SMB integral-level identity h(P,T) = H(P | strict future),
+-- via Breiman telescoping + the #13 Lévy theorem (unconditional; no Birkhoff/Chung at integral level).
+-- The pointwise a.e. (1/n)·infoFun → h residual is R5 (Chung L¹ maximal domination) + Birkhoff assembly.
+
+/-- info: 'Oseledets.Krieger.ksEntropySeq_eq_sum_condEntropy' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.ksEntropySeq_eq_sum_condEntropy
+
+/-- info: 'Oseledets.Krieger.ksEntropyPartition_eq_condEntropy_iSup' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.ksEntropyPartition_eq_condEntropy_iSup
