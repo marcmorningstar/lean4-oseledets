@@ -149,6 +149,7 @@ import Oseledets.Krieger.NameCountSharp
 import Oseledets.Krieger.KeaneSerafin
 import Oseledets.Krieger.Recovery
 import Oseledets.Krieger.SMBPointwise
+import Oseledets.Krieger.ColumnCode
 
 /-!
 # Axiom audit
@@ -2034,3 +2035,23 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Krieger.ae_tendsto_div_infoFun_of_tail
+
+-- Issue #15 (unconditional drive): the measurable bi-infinite sentinel parser — the gap diagnosed
+-- as "multi-week, no Mathlib analogue" is CLOSED (measurable_find of a totalized forward search +
+-- measurable_to_countable'). The decoder is constructed, not hypothesized; sub-problem B's residual
+-- reduces to the (moderate, no-Mathlib-gap) tower-column code symbol + a.e. recovery.
+
+/-- info: 'Oseledets.Krieger.measurable_fwdSentinel' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.measurable_fwdSentinel
+
+/-- info: 'Oseledets.Krieger.measurable_sentinelParse' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.measurable_sentinelParse
+
+/-- info: 'Oseledets.Krieger.SentinelColumnCode.codes' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.SentinelColumnCode.codes

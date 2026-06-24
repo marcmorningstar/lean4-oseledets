@@ -209,6 +209,7 @@ import Oseledets.Krieger.NameCountSharp
 import Oseledets.Krieger.KeaneSerafin
 import Oseledets.Krieger.Recovery
 import Oseledets.Krieger.SMBPointwise
+import Oseledets.Krieger.ColumnCode
 
 /-!
 # Oseledets
