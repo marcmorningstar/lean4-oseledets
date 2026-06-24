@@ -146,6 +146,7 @@ import Oseledets.Krieger.PrefixCode
 import Oseledets.Krieger.SMBSharp
 import Oseledets.Krieger.CodeMap
 import Oseledets.Krieger.NameCountSharp
+import Oseledets.Krieger.KeaneSerafin
 
 /-!
 # Axiom audit
@@ -1972,3 +1973,17 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Krieger.exists_cover_names_card_le
+
+-- Issue #15 (unconditional drive): Keane–Serafin generator construction (sub-problem A) — the
+-- structural reduction to a per-level KeaneSerafinLevels bundle is unconditional; the dynamical
+-- per-step lemma is blocked by the SAME in-probability SMB equipartition as the SMBSharp R5 leaf.
+
+/-- info: 'Oseledets.Krieger.exists_countable_twoSided_generator_of_step' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.exists_countable_twoSided_generator_of_step
+
+/-- info: 'Oseledets.Krieger.exists_countable_twoSided_generator_of_levels' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.exists_countable_twoSided_generator_of_levels
