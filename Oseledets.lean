@@ -204,6 +204,7 @@ import Oseledets.Krieger.SMB
 import Oseledets.Krieger.Generator
 import Oseledets.Krieger.PrefixCode
 import Oseledets.Krieger.SMBSharp
+import Oseledets.Krieger.CodeMap
 
 /-!
 # Oseledets
