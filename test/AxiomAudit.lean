@@ -145,6 +145,7 @@ import Oseledets.Krieger.Generator
 import Oseledets.Krieger.PrefixCode
 import Oseledets.Krieger.SMBSharp
 import Oseledets.Krieger.CodeMap
+import Oseledets.Krieger.NameCountSharp
 
 /-!
 # Axiom audit
@@ -1952,3 +1953,22 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Krieger.codesTwoSidedMod0_of_codeMapData
+
+-- Issue #15 (unconditional drive): asymptotic-equipartition name count (C2) — the pigeonhole +
+-- covering content are unconditional; the C3-facing cover ≤ exp(N(h+ε)) names ≥ 1-ε is modulo the
+-- in-measure upper-SMB hypothesis UpperSMBInMeasure (strictly lighter than the pointwise R5).
+
+/-- info: 'Oseledets.Krieger.card_goodNames_le_exp' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.card_goodNames_le_exp
+
+/-- info: 'Oseledets.Krieger.measure_iUnion_goodNames_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.measure_iUnion_goodNames_ge
+
+/-- info: 'Oseledets.Krieger.exists_cover_names_card_le' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Krieger.exists_cover_names_card_le

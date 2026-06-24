@@ -205,6 +205,7 @@ import Oseledets.Krieger.Generator
 import Oseledets.Krieger.PrefixCode
 import Oseledets.Krieger.SMBSharp
 import Oseledets.Krieger.CodeMap
+import Oseledets.Krieger.NameCountSharp
 
 /-!
 # Oseledets
