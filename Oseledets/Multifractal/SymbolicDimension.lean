@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Marcel Morgenstern
 -/
 import Oseledets.Krieger.UpperSMB
+import Oseledets.Multifractal.HausdorffDimension
+import Oseledets.Entropy.GeneratorTheorem
 import Mathlib.Topology.MetricSpace.PiNat
 
 /-!
@@ -49,7 +51,7 @@ The dimension assembly (A5/A6) and the Bernoulli witness (A7) are separate, late
 -/
 
 open MeasureTheory Filter Topology Function Set
-open scoped ENNReal
+open scoped ENNReal NNReal
 
 namespace Oseledets.Multifractal
 
@@ -420,5 +422,209 @@ theorem ae_tendsto_logMass_div_continuum (hσ : Ergodic (shiftMap (α₀ := α�
     exact (logMass_div_continuum_bounds x hr.1 hr.2.1 hr.2.2).1
   · filter_upwards [hev] with r hr
     exact (logMass_div_continuum_bounds x hr.1 hr.2.1 hr.2.2).2
+
+/-! ### A5 — the conditional, per-partition entropy = Hausdorff-dimension headline
+
+Feeding the `μ`-a.e. pointwise dimension limit (A3) into the metric-space Billingsley/Frostman
+bridge `dimH_eq_of_localDimension_eq` (`Oseledets/Multifractal/HausdorffDimension.lean`) yields the
+**symbolic entropy = dimension identity** on the explicit conull carrier set: the Hausdorff
+dimension of the full-measure set on which the pointwise dimension exists equals `h / log 2`, with
+`h` the Kolmogorov–Sinai entropy of the coordinate partition.
+
+The hypotheses are honest **conditionals**: `hσ : Ergodic shiftMap μ` and `hpos : 0 < h`. Both are
+genuinely satisfiable — any non-degenerate Bernoulli (i.i.d.) measure on the full shift is ergodic
+shift-invariant with strictly positive entropy — so the result is non-vacuous (the shift is a
+*compact* phase space, unlike the non-compact `EuclideanSpace` expanding case). No formalized
+Bernoulli instance is claimed here; that witness is the separate later node A7. The dimension base
+is `log 2`, fixed by the `PiNat` ultrametric (`dist x y = (1/2) ^ firstDiff x y`); it is never a
+free `log β`. -/
+
+/-- **A5 (per-partition entropy = Hausdorff dimension).** For an ergodic shift-invariant probability
+measure `μ` on the full shift with *positive* Kolmogorov–Sinai entropy `h` of the coordinate
+partition, there is a full-measure carrier set `s` whose Hausdorff dimension is exactly `h / log 2`.
+
+The set `s` is the conull set on which the pointwise dimension exists (from A3,
+`ae_tendsto_logMass_div_continuum`); the bridge `dimH_eq_of_localDimension_eq` converts the
+everywhere-on-`s` pointwise limit `α := h / log 2 > 0` into `dimH s = α`. -/
+theorem dimH_eq_ksEntropyPartition_div_log_two (hσ : Ergodic (shiftMap (α₀ := α₀)) μ)
+    (hpos : 0 < ksEntropyPartition hσ.toMeasurePreserving (coordPartition μ)) :
+    ∃ s : Set (Shift α₀), μ sᶜ = 0 ∧
+      dimH s
+        = ENNReal.ofReal (ksEntropyPartition hσ.toMeasurePreserving (coordPartition μ)
+          / Real.log 2) := by
+  set h : ℝ := ksEntropyPartition hσ.toMeasurePreserving (coordPartition μ) with hh
+  set L : ℝ := h / Real.log 2 with hLdef
+  -- The conull carrier: where the continuum pointwise dimension exists and equals `L`.
+  set s : Set (Shift α₀) :=
+    {x | Tendsto (fun r => Real.log (μ.real (Metric.closedBall x r)) / Real.log r)
+      (𝓝[>] (0 : ℝ)) (𝓝 L)} with hsdef
+  refine ⟨s, ?_, ?_⟩
+  · -- `s` is conull: the a.e. limit (A3) lands exactly in `s`.
+    have hae := ae_tendsto_logMass_div_continuum hσ
+    rw [ae_iff] at hae
+    rwa [show sᶜ = {x : Shift α₀ | ¬ Tendsto
+        (fun r => Real.log (μ.real (Metric.closedBall x r)) / Real.log r)
+        (𝓝[>] (0 : ℝ)) (𝓝 L)} from rfl]
+  · -- Positivity of `L = h / log 2` packaged as a positive `ℝ≥0`.
+    have hlog2 : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+    have hLpos : 0 < L := by rw [hLdef]; exact div_pos hpos hlog2
+    set α : ℝ≥0 := L.toNNReal with hαdef
+    have hαpos : 0 < α := by rw [hαdef]; exact Real.toNNReal_pos.mpr hLpos
+    have hαL : (α : ℝ) = L := by rw [hαdef, Real.coe_toNNReal L hLpos.le]
+    -- Apply the metric bridge with positive exponent `α` on the conull `s`.
+    have hbridge := dimH_eq_of_localDimension_eq (μ := μ) (α := α) hαpos
+      (s := s) (by
+        have hae := ae_tendsto_logMass_div_continuum hσ
+        rw [ae_iff] at hae
+        rwa [show sᶜ = {x : Shift α₀ | ¬ Tendsto
+            (fun r => Real.log (μ.real (Metric.closedBall x r)) / Real.log r)
+            (𝓝[>] (0 : ℝ)) (𝓝 L)} from rfl])
+      (fun x hx => by rw [hαL]; exact hx)
+    rw [hbridge, ← ENNReal.ofReal_coe_nnreal, hαL]
+
+/-! ### A6 — partition independence ⇒ the genuine entropy = dimension headline
+
+The coordinate partition is a **generator** for the shift: its forward-`shiftMap`-saturated
+σ-algebra is the whole product σ-algebra. The Kolmogorov–Sinai generator theorem then upgrades A5
+to the partition-*independent* identity `h_μ(σ) = ksEntropy = dimension · log 2`. -/
+
+open Oseledets.Entropy MeasurableSpace
+
+omit [Nonempty α₀] [TopologicalSpace α₀] [DiscreteTopology α₀] [IsProbabilityMeasure μ] in
+/-- The σ-algebra generated by the coordinate partition is the `0`-th coordinate σ-algebra
+`comap (eval 0) m_{α₀}`: the cells `{x | x 0 = i}` are exactly the singleton preimages of the `0`-th
+projection, and over a finite alphabet a measurable subset of `α₀` is a finite union of singletons,
+so the two generated σ-algebras coincide. -/
+theorem generatedSigmaAlgebra_coordPartition_eq :
+    generatedSigmaAlgebra μ (coordPartition μ)
+      = MeasurableSpace.comap (fun x : Shift α₀ => x 0) inferInstance := by
+  refine le_antisymm ?_ ?_
+  · -- `σ(cells) ≤ comap (eval 0) m`: each cell is a singleton preimage, hence comap-measurable.
+    refine generateFrom_le ?_
+    rintro _ ⟨i, rfl⟩
+    exact ⟨{i}, measurableSet_singleton i, rfl⟩
+  · -- `comap (eval 0) m ≤ σ(cells)`: a measurable `s ⊆ α₀` is `⋃ i ∈ s, {i}`, so its preimage is a
+    -- finite union of cells.
+    rw [comap_eq_generateFrom]
+    refine generateFrom_le ?_
+    rintro _ ⟨s, _, rfl⟩
+    have hpre : (fun x : Shift α₀ => x 0) ⁻¹' s
+        = ⋃ i ∈ s, (coordPartition μ).cells i := by
+      ext x
+      simp only [coordPartition, Set.mem_preimage, Set.mem_iUnion, Set.mem_setOf_eq,
+        exists_prop]
+      constructor
+      · intro hx; exact ⟨x 0, hx, rfl⟩
+      · rintro ⟨i, hi, rfl⟩; exact hi
+    rw [hpre]
+    refine Set.Finite.measurableSet_biUnion s.toFinite (fun i _ => ?_)
+    exact measurableSet_generateFrom ⟨i, rfl⟩
+
+omit [Nonempty α₀] [TopologicalSpace α₀] [DiscreteTopology α₀] [IsProbabilityMeasure μ] in
+/-- **A6 generator fact.** The coordinate partition is a generating partition for the shift:
+`⨆ n, comap (shiftMap^[n]) σ(coordPartition) = MeasurableSpace.pi`. The pullback of the `0`-th
+coordinate σ-algebra along `shiftMap^[n]` is the `n`-th coordinate σ-algebra (since
+`(shiftMap^[n] x) 0 = x n`), and the product σ-algebra is, by definition, the supremum of all the
+coordinate σ-algebras. -/
+theorem coordPartition_isGenerating (_hσmp : MeasurePreserving (shiftMap (α₀ := α₀)) μ μ) :
+    IsGenerating μ (shiftMap (α₀ := α₀)) (coordPartition μ) := by
+  -- Per-`n` pullback identity: `comap (shiftMap^[n]) σ(P) = comap (eval n) m`.
+  have hcoord : ∀ n : ℕ, MeasurableSpace.comap (shiftMap^[n])
+      (generatedSigmaAlgebra μ (coordPartition μ))
+      = MeasurableSpace.comap (fun x : Shift α₀ => x n) inferInstance := by
+    intro n
+    rw [generatedSigmaAlgebra_coordPartition_eq, comap_comp]
+    congr 1
+    funext x
+    exact (shiftMap_iterate_apply n x 0).trans (by rw [Nat.zero_add])
+  -- Unfold `IsGenerating` and rewrite each pullback; the supremum is `MeasurableSpace.pi = mα`.
+  unfold IsGenerating
+  simp_rw [hcoord]
+  rfl
+
+/-- The coordinate partition reindexed onto `Fin (card α₀)` via `(Fintype.equivFin α₀).symm`. This
+is the canonical `Fin`-indexed presentation needed to feed `coordPartition` into the
+`Fin n`-indexed Kolmogorov–Sinai generator theorem. -/
+def coordPartitionFin (μ : Measure (Shift α₀)) :
+    MeasurePartition μ (Fin (Fintype.card α₀)) where
+  cells := fun j => (coordPartition μ).cells ((Fintype.equivFin α₀).symm j)
+  measurable := fun j => (coordPartition μ).measurable _
+  aedisjoint := fun j k hjk =>
+    (coordPartition μ).aedisjoint (fun he => hjk ((Fintype.equivFin α₀).symm.injective he))
+  cover := by
+    rw [← (coordPartition μ).cover]
+    exact (Fintype.equivFin α₀).symm.surjective.iUnion_comp (coordPartition μ).cells
+
+omit [Nonempty α₀] [TopologicalSpace α₀] [DiscreteTopology α₀] [IsProbabilityMeasure μ] in
+/-- The σ-algebra generated by the reindexed coordinate partition equals that of the original: a
+bijective reindexing leaves the *range* of cells unchanged. -/
+theorem generatedSigmaAlgebra_coordPartitionFin_eq :
+    generatedSigmaAlgebra μ (coordPartitionFin μ)
+      = generatedSigmaAlgebra μ (coordPartition μ) := by
+  unfold generatedSigmaAlgebra
+  congr 1
+  rw [coordPartitionFin]
+  exact (Fintype.equivFin α₀).symm.surjective.range_comp (coordPartition μ).cells
+
+omit [Nonempty α₀] [TopologicalSpace α₀] [DiscreteTopology α₀] in
+/-- **Reindexing invariance of the partition-relative entropy.** The reindexed coordinate partition
+has the same Kolmogorov–Sinai entropy as the original: the iterated-join entropy sequences agree
+(`entropy_reindex` along `f ↦ e ∘ f`), and the Fekete limit is determined by that sequence. -/
+theorem ksEntropyPartition_coordPartitionFin_eq
+    (hσmp : MeasurePreserving (shiftMap (α₀ := α₀)) μ μ) :
+    ksEntropyPartition hσmp (coordPartitionFin μ)
+      = ksEntropyPartition hσmp (coordPartition μ) := by
+  -- The two iterated-join entropy sequences coincide.
+  have hseq : ksEntropySeq hσmp (coordPartitionFin μ)
+      = ksEntropySeq hσmp (coordPartition μ) := by
+    funext n
+    rw [ksEntropySeq, ksEntropySeq, ksJoin_cells, ksJoin_cells]
+    rw [← entropy_reindex μ (Equiv.piCongrRight (fun _ : Fin n => (Fintype.equivFin α₀).symm))
+      (ksJoinCells (coordPartition μ).cells (shiftMap (α₀ := α₀)) n)]
+    refine Finset.sum_congr rfl (fun f _ => ?_)
+    have hcell : ksJoinCells (coordPartitionFin μ).cells (shiftMap (α₀ := α₀)) n f
+        = ksJoinCells (coordPartition μ).cells (shiftMap (α₀ := α₀)) n
+            (Equiv.piCongrRight (fun _ : Fin n => (Fintype.equivFin α₀).symm) f) := by
+      rw [ksJoinCells_apply, ksJoinCells_apply]
+      refine Set.iInter_congr (fun k => ?_)
+      simp only [Equiv.piCongrRight_apply, Pi.map_apply]
+      rfl
+    rw [hcell]
+  -- The Fekete limit is determined by the entropy sequence (uniqueness of limits).
+  have h1 := tendsto_ksEntropySeq hσmp (coordPartitionFin μ)
+  rw [hseq] at h1
+  exact tendsto_nhds_unique h1 (tendsto_ksEntropySeq hσmp (coordPartition μ))
+
+/-- **A6 headline — the entropy = Hausdorff-dimension identity.** For an ergodic shift-invariant
+probability measure `μ` on the full shift with *positive* Kolmogorov–Sinai entropy, there is a
+full-measure carrier set `s` whose Hausdorff dimension equals `h_μ(σ) / log 2`, with `h_μ(σ)` the
+**partition-independent** Kolmogorov–Sinai entropy of the system (`ksEntropy`).
+
+This is the genuine `h_μ(σ) = dimension · log 2` identity: the coordinate partition is a generator
+(`coordPartition_isGenerating`), so the Kolmogorov–Sinai generator theorem
+(`ksEntropy_eq_ksEntropyPartition_of_generating`) identifies the system entropy `ksEntropy` with the
+coordinate partition's entropy, which A5 ties to the dimension. The hypotheses (`Ergodic shiftMap`,
+positive entropy) are honest conditionals, satisfiable by any non-degenerate Bernoulli measure —
+the shift is compact, so the statement is non-vacuous (the Bernoulli witness is the later node A7);
+no instance is claimed here. The base `log 2` is fixed by the `PiNat` ultrametric. -/
+theorem dimH_eq_ksEntropy_div_log_two (hσ : Ergodic (shiftMap (α₀ := α₀)) μ)
+    (hpos : 0 < ksEntropyPartition hσ.toMeasurePreserving (coordPartition μ)) :
+    ∃ s : Set (Shift α₀), μ sᶜ = 0 ∧
+      dimH s
+        = ENNReal.ofReal ((Oseledets.Entropy.ksEntropy hσ.toMeasurePreserving).toReal
+          / Real.log 2) := by
+  -- The generator theorem on the `Fin`-reindexed coordinate partition: `ksEntropy = h(P, σ)`.
+  have hgenFin : IsGenerating μ (shiftMap (α₀ := α₀)) (coordPartitionFin μ) := by
+    unfold IsGenerating
+    rw [generatedSigmaAlgebra_coordPartitionFin_eq]
+    exact coordPartition_isGenerating hσ.toMeasurePreserving
+  have hred := ksEntropy_eq_ksEntropyPartition_of_generating hσ.toMeasurePreserving
+    (coordPartitionFin μ) hgenFin
+  -- `(ksEntropy).toReal = h(coordPartition, σ)` via the reindexing equality and `EReal.toReal_coe`.
+  have htoReal : (Oseledets.Entropy.ksEntropy hσ.toMeasurePreserving).toReal
+      = ksEntropyPartition hσ.toMeasurePreserving (coordPartition μ) := by
+    rw [hred, EReal.toReal_coe, ksEntropyPartition_coordPartitionFin_eq hσ.toMeasurePreserving]
+  rw [htoReal]
+  exact dimH_eq_ksEntropyPartition_div_log_two hσ hpos
 
 end Oseledets.Multifractal
