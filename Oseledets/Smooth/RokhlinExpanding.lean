@@ -840,4 +840,54 @@ theorem ksEntropyPartition_eq_integral_log_abs_det {d : ℕ}
 
 end Assembly
 
+/-! ### Pesin — the unconditional expanding-map entropy formula -/
+
+section Pesin
+
+open Oseledets.Entropy
+
+/-- **Pesin's entropy formula for an absolutely-continuous uniformly-expanding map.** For an
+ergodic, absolutely-continuous (`μ ≪ volume`), differentiable, uniformly expanding self-map `T` of
+`EuclideanSpace ℝ (Fin d)` with everywhere-nonsingular derivative and `μ`-integrable log-norm data,
+together with a one-sided generating injectivity partition `ξ` and `μ`-integrable `log ρ` and
+`log|det DT|`, the Kolmogorov–Sinai entropy equals the sum of the (all positive) Lyapunov exponents:
+`h_μ(T) = ∑ λ⁺ = ∫ log |det Df| dμ`.
+
+This is the honest, **placeholder-free** instance of the Pesin/Margulis–Ruelle entropy formula: the
+SRB property is supplied by the genuine absolute-continuity hypothesis `μ ≪ volume`, not an opaque
+SRB axiom. The proof composes three on-branch theorems:
+`ksEntropy_eq_ksEntropyPartition_of_generating` (the Kolmogorov–Sinai generator theorem),
+`ksEntropyPartition_eq_integral_log_abs_det` (Rokhlin's per-partition formula, N5.5), and
+`sumPosExp_eq_integral_log_abs_det_of_expanding` (the Pesin = Rokhlin right-hand-side identity);
+the two `det` hypotheses are aligned by the bridge `det_fderiv_eq_det_derivativeCocycle`. The
+`StandardBorelSpace (EuclideanSpace ℝ (Fin d))` instance needed by the first two is the derived
+`standardBorel_of_polish` instance — it is not assumed. -/
+theorem pesin_formula_expanding {d : ℕ} [NeZero d]
+    {μ : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure μ]
+    {T : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)}
+    (hErg : Ergodic T μ) (hac : μ ≪ volume) (hdiff : Differentiable ℝ T)
+    {K : ℝ} (hK : 1 < K) (hexp : ∀ x v, K * ‖v‖ ≤ ‖fderiv ℝ T x v‖)
+    (hdet : ∀ x, (Oseledets.derivativeCocycle T x).det ≠ 0)
+    (hint : Oseledets.IntegrableLogNorm (Oseledets.derivativeCocycle T) μ)
+    (hint' : Oseledets.IntegrableLogNorm (fun x => (Oseledets.derivativeCocycle T x)⁻¹) μ)
+    {m : ℕ} [Nonempty (Fin m)] {ξ : Oseledets.Entropy.MeasurePartition μ (Fin m)}
+    (hξ : Oseledets.IsInjectivityPartition μ T ξ) (hgen : Oseledets.Entropy.IsGenerating μ T ξ)
+    (hlogρ : Integrable (fun x => Real.log ((μ.rnDeriv volume) x).toReal) μ)
+    (hlogdet : Integrable (fun x => Real.log |(fderiv ℝ T x).det|) μ) :
+    Oseledets.Entropy.ksEntropy hErg.toMeasurePreserving
+      = ((Oseledets.sumPosExp hErg hdet (Oseledets.measurable_derivativeCocycle T) hint hint'
+          : ℝ) : EReal) := by
+  -- The `fderiv` form of the nonsingularity hypothesis, aligned via the determinant bridge.
+  have hdet' : ∀ x, (fderiv ℝ T x).det ≠ 0 := fun x => by
+    rw [det_fderiv_eq_det_derivativeCocycle]; exact hdet x
+  -- Generator theorem: `h(T) = h(T, ξ)`; reduce to the `ℝ`-level equality.
+  rw [ksEntropy_eq_ksEntropyPartition_of_generating hErg.toMeasurePreserving ξ hgen,
+    EReal.coe_eq_coe_iff]
+  -- Chain Rokhlin's per-partition formula (N5.5) with the Pesin = Rokhlin RHS identity.
+  rw [ksEntropyPartition_eq_integral_log_abs_det hErg.toMeasurePreserving hac hdiff hξ hdet' hgen
+      hlogρ hlogdet,
+    sumPosExp_eq_integral_log_abs_det_of_expanding hErg hdet hint hint' hdiff hK hexp]
+
+end Pesin
+
 end Oseledets

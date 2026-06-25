@@ -2351,3 +2351,8 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.ksEntropyPartition_eq_integral_log_abs_det
+
+/-- info: 'Oseledets.pesin_formula_expanding' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.pesin_formula_expanding
