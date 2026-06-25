@@ -134,6 +134,7 @@ import Oseledets.Entropy.CondGivenPartitionBridge
 import Oseledets.Entropy.AbramovRokhlin
 import Oseledets.Entropy.CondKSMovingLimit
 import Oseledets.Entropy.AbramovRokhlinGenerator
+import Oseledets.Entropy.GeneratorTheorem
 import Oseledets.Krieger.ZIterate
 import Oseledets.Krieger.InfoFunction
 import Oseledets.Krieger.NameCount
@@ -2319,3 +2320,8 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.sumPosExp_eq_integral_log_abs_det_of_expanding
+
+/-- info: 'Oseledets.Entropy.ksEntropy_eq_ksEntropyPartition_of_generating' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Entropy.ksEntropy_eq_ksEntropyPartition_of_generating
