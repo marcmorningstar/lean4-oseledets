@@ -2391,3 +2391,36 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Multifractal.refiningLimitConvergesProp_of_uniform
+
+/-! ### Issue #19 — the chaotic Bernoulli-suspension flow object
+(positive metric entropy + a non-uniform ergodic invariant measure on which `D_q` is `q`-dependent) -/
+
+/-- info: 'Oseledets.Multifractal.suspensionFlow_bernZ_ksEntropy_pos' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.suspensionFlow_bernZ_ksEntropy_pos
+
+/-- info: 'Oseledets.Multifractal.renyiDimFlow_bernSuspension_q_dependent' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.renyiDimFlow_bernSuspension_q_dependent
+
+/-- info: 'Oseledets.Multifractal.isHeterogeneous_bernSuspensionWitness' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.isHeterogeneous_bernSuspensionWitness
+
+/-- info: 'Oseledets.Multifractal.measurePreserving_suspensionBaseProj' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.measurePreserving_suspensionBaseProj
+
+/-- info: 'Oseledets.Multifractal.ergodic_shiftMap_bern' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.ergodic_shiftMap_bern
+
+/-- info: 'Oseledets.Multifractal.ksEntropy_bern_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.ksEntropy_bern_eq

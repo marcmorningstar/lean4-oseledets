@@ -16,6 +16,13 @@ import Oseledets.Multifractal.SymbolicDimension
 import Oseledets.Multifractal.SymbolicDimensionBernoulli
 import Oseledets.Multifractal.Source.FlowEmpirical
 import Oseledets.Multifractal.Source.FlowPartition
+import Oseledets.Multifractal.BernoulliErgodic
+import Oseledets.Multifractal.BernoulliEntropy
+import Oseledets.Multifractal.BernoulliTwoSided
+import Oseledets.Multifractal.BernoulliTwoSidedEntropy
+import Oseledets.Multifractal.BernoulliHeterogeneous
+import Oseledets.Multifractal.BernoulliSuspensionFlow
+import Oseledets.Multifractal.BernoulliSuspensionWitness
 
 /-!
 # Coarse-grained multifractal analysis of an invariant measure
