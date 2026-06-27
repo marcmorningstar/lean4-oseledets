@@ -2511,3 +2511,8 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.standardBorelSpace_suspensionSpace_const_roof
+
+/-- info: 'Oseledets.Multifractal.instStandardBorelSpace_suspensionSpace_bern' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.instStandardBorelSpace_suspensionSpace_bern

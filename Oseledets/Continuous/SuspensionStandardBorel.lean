@@ -118,7 +118,7 @@ theorem suspensionUnitCoord_gen (hτ1 : τ = fun _ => (1 : ℝ)) (p : X × ℝ) 
     exact Int.fract_sub_one s
 
 /-- The same invariance under the inverse generator, obtained from `suspensionUnitCoord_gen`. -/
-theorem suspensionUnitCoord_gensymm (hτ1 : τ = fun _ => (1 : ℝ)) (p : X × ℝ) :
+theorem suspensionUnitCoord_gen_symm (hτ1 : τ = fun _ => (1 : ℝ)) (p : X × ℝ) :
     suspensionUnitCoord T hτ ((suspensionGen T hτ).symm p) = suspensionUnitCoord T hτ p := by
   have h := suspensionUnitCoord_gen T hτ hτ1 ((suspensionGen T hτ).symm p)
   rw [MeasurableEquiv.apply_symm_apply] at h
@@ -134,7 +134,7 @@ theorem suspensionUnitCoord_act (hτ1 : τ = fun _ => (1 : ℝ)) (n : ℤ) (p : 
     rw [add_comm, suspensionAct_add, suspensionAct_one, suspensionUnitCoord_gen T hτ hτ1, ih]
   | pred k ih =>
     rw [sub_eq_add_neg, add_comm, suspensionAct_add, suspensionAct_neg_one,
-      suspensionUnitCoord_gensymm T hτ hτ1, ih]
+      suspensionUnitCoord_gen_symm T hτ hτ1, ih]
 
 /-- The quotient projection identifies a point with each of its translates along the action:
 `[suspensionAct n p] = [p]`. -/

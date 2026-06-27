@@ -167,7 +167,7 @@ is injective, the measures match on the image (`μ (s (ψ j)) = μ (t j)`), and 
 image is `μ`-null, then `entropy μ s = entropy μ t`. (The over-counted window-join cells are exactly
 the off-image null cells; the consistent ones are the image, in measure-preserving bijection with
 the forward-join cells.) -/
-lemma entropy_eq_of_injOn_of_ae_null {I J : Type*} [Fintype I] [Fintype J]
+lemma entropy_eq_of_injective_of_ae_null {I J : Type*} [Fintype I] [Fintype J]
     (s : I → Set α) (t : J → Set α) (ψ : J → I) (hψ : Function.Injective ψ)
     (hmeas : ∀ j, μ (s (ψ j)) = μ (t j))
     (hnull : ∀ i, i ∉ Set.range ψ → μ (s i) = 0) :
@@ -242,13 +242,13 @@ def blockEncode (m K : ℕ) (h : Fin (m + K) → ι) (j : Fin m) (i : Fin (K + 1
 length-`(K+1)` block partition `⋁₀^K e⁻ⁱP` equals the `(m+K)`-fold dynamical-join entropy of `P`:
 `H(⋁₀^{m-1} e⁻ʲ(⋁₀^K e⁻ⁱP)) = H(⋁₀^{m+K-1} e⁻ˡP)`. The over-counted block-join cells are reindexed
 by `blockEncode` onto the forward-join cells (an injection whose image is the *consistent* cells,
-their measures matching, the inconsistent cells being `μ`-null); `entropy_eq_of_injOn_of_ae_null`
-then identifies the two entropies. -/
+their measures matching, the inconsistent cells being `μ`-null);
+`entropy_eq_of_injective_of_ae_null` then identifies the two entropies. -/
 lemma ksEntropySeq_ksJoin_succ (e : α ≃ᵐ α) (he : MeasurePreserving (⇑e) μ μ)
     [IsProbabilityMeasure μ] (P : MeasurePartition μ ι) (K : ℕ) {m : ℕ} (hm : 1 ≤ m) :
     ksEntropySeq he (ksJoin he P (K + 1)) m = ksEntropySeq he P (m + K) := by
   rw [ksEntropySeq, ksEntropySeq]
-  refine entropy_eq_of_injOn_of_ae_null
+  refine entropy_eq_of_injective_of_ae_null
     (ksJoin he (ksJoin he P (K + 1)) m).cells (ksJoin he P (m + K)).cells (blockEncode m K)
     ?_ ?_ ?_
   · -- `blockEncode m K` is injective: each forward index is recovered via the block decomposition.
