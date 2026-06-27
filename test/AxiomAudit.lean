@@ -165,6 +165,8 @@ import Oseledets.Krieger.StageBuild
 import Oseledets.Krieger.Weave
 import Oseledets.Krieger.Bracket
 import Oseledets.Multifractal
+import Oseledets.Entropy.GeneratorTheoremTwoSided
+import Oseledets.Continuous.SuspensionStandardBorel
 
 /-!
 # Axiom audit
@@ -2485,3 +2487,27 @@ axioms: [propext, Classical.choice, Quot.sound] -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Multifractal.ergodic_bernSuspensionFlow_uncond
+
+/-! ### Issue #20 — two-sided / invertible Kolmogorov–Sinai generator theorem
+(keystone), the two-sided-generating Bernoulli partition, the system-entropy unlock
+`ksEntropy(bernZ) = Hnu`, and the constant-roof suspension `StandardBorelSpace`. -/
+
+/-- info: 'Oseledets.Entropy.ksEntropy_eq_ksEntropyPartition_of_isGeneratingTwoSided' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Entropy.ksEntropy_eq_ksEntropyPartition_of_isGeneratingTwoSided
+
+/-- info: 'Oseledets.Multifractal.coordPartitionZFin_isGeneratingTwoSided' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.coordPartitionZFin_isGeneratingTwoSided
+
+/-- info: 'Oseledets.Multifractal.ksEntropy_biShiftEquiv_bernZ_eq' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.Multifractal.ksEntropy_biShiftEquiv_bernZ_eq
+
+/-- info: 'Oseledets.standardBorelSpace_suspensionSpace_const_roof' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.standardBorelSpace_suspensionSpace_const_roof

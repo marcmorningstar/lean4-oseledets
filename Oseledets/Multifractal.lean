@@ -25,6 +25,8 @@ import Oseledets.Multifractal.BernoulliHeterogeneous
 import Oseledets.Multifractal.BernoulliSuspensionFlow
 import Oseledets.Multifractal.BernoulliSuspensionFlowErgodic
 import Oseledets.Multifractal.BernoulliSuspensionWitness
+import Oseledets.Multifractal.BernoulliTwoSidedGenerating
+import Oseledets.Multifractal.BernoulliTwoSidedSystemEntropy
 
 /-!
 # Coarse-grained multifractal analysis of an invariant measure
