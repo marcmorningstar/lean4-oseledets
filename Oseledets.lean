@@ -233,6 +233,7 @@ import Oseledets.Krieger.StageBuild
 import Oseledets.Krieger.Weave
 import Oseledets.Krieger.Bracket
 import Oseledets.Multifractal
+import Oseledets.OperatorEntropy
 
 /-!
 # Oseledets

@@ -169,6 +169,7 @@ import Oseledets.Entropy.GeneratorTheoremTwoSided
 import Oseledets.Continuous.SuspensionStandardBorel
 import Oseledets.Entropy.ProductIdEntropy
 import Oseledets.Multifractal.BernoulliSuspensionEntropy
+import Oseledets.OperatorEntropy
 
 /-!
 # Axiom audit
@@ -2537,3 +2538,32 @@ metric entropy `Hnu`. -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.Multifractal.bernSuspensionFlow_ksEntropy_eq_Hnu
+
+/-! ### Issue #23 — finite-dimensional operator entropy (foundations)
+`DensityMatrix` / `vonNeumannEntropy`, the partial trace as a positive trace-preserving map,
+the Kronecker spectrum, and the scalar Klein inequality. -/
+
+/-- info: 'Oseledets.OperatorEntropy.vonNeumannEntropy_nonneg' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.vonNeumannEntropy_nonneg
+
+/-- info: 'Oseledets.OperatorEntropy.trace_partialTraceRight' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.trace_partialTraceRight
+
+/-- info: 'Oseledets.OperatorEntropy.PosSemidef.partialTraceRight' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.PosSemidef.partialTraceRight
+
+/-- info: 'Oseledets.OperatorEntropy.eigenvalues_kronecker_multiset' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.eigenvalues_kronecker_multiset
+
+/-- info: 'Oseledets.OperatorEntropy.klein_scalar' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.klein_scalar
