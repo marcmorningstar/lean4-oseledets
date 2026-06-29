@@ -32,14 +32,6 @@ theorem _root_.Matrix.IsHermitian.kronecker {nA nB : Type*}
   unfold Matrix.IsHermitian
   rw [conjTranspose_kronecker, hA.eq, hB.eq]
 
-/-- The Kronecker product of two positive semidefinite matrices is positive
-semidefinite.  Writing `A = aᴴ a` and `B = bᴴ b` gives
-`A ⊗ₖ B = (a ⊗ₖ b)ᴴ (a ⊗ₖ b)`. -/
-theorem PosSemidef.kronecker {nA nB : Type*} [Finite nA] [Finite nB]
-    {A : Matrix nA nA ℂ} {B : Matrix nB nB ℂ}
-    (hA : A.PosSemidef) (hB : B.PosSemidef) : (A ⊗ₖ B).PosSemidef :=
-  Matrix.PosSemidef.kronecker hA hB
-
 /-- The multiset of roots of `∏ i, (X - C (d i))` over a finite index type is the
 image multiset of `d`. -/
 theorem roots_prod_X_sub_C_comp {ι : Type*} [Fintype ι] (d : ι → ℂ) :

@@ -45,4 +45,20 @@ theorem vonNeumannEntropy_nonneg (ρ : DensityMatrix n) : 0 ≤ vonNeumannEntrop
   Finset.sum_nonneg fun i _ =>
     Real.negMulLog_nonneg (ρ.eigenvalues_nonneg i) (ρ.eigenvalues_le_one i)
 
+/-- The maximally mixed state `(dim)⁻¹ • I`: a canonical inhabitant of `DensityMatrix n` for
+nonempty `n`, witnessing that the density-matrix API and the entropy bounds are non-vacuous. -/
+def DensityMatrix.maximallyMixed [Nonempty n] : DensityMatrix n where
+  val := ((Fintype.card n : ℝ)⁻¹ : ℝ) • (1 : Matrix n n ℂ)
+  posSemidef := (Matrix.PosSemidef.one).smul (by positivity)
+  trace_one := by
+    have : 0 < Fintype.card n := Fintype.card_pos
+    rw [Matrix.trace_smul, Matrix.trace_one, Complex.real_smul]; push_cast; field_simp
+
+instance : Inhabited (DensityMatrix (Fin 1)) := ⟨DensityMatrix.maximallyMixed⟩
+
+/-- Non-vacuity certificate: the von Neumann entropy nonnegativity bound fires on a concrete
+state (the maximally mixed state of a two-level system). -/
+example : 0 ≤ vonNeumannEntropy (DensityMatrix.maximallyMixed : DensityMatrix (Fin 2)) :=
+  vonNeumannEntropy_nonneg _
+
 end Oseledets.OperatorEntropy

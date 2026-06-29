@@ -7,6 +7,8 @@ import Oseledets.OperatorEntropy.Basic
 import Oseledets.OperatorEntropy.PartialTrace
 import Oseledets.OperatorEntropy.KroneckerSpectrum
 import Oseledets.OperatorEntropy.Klein
+import Oseledets.OperatorEntropy.Additivity
+import Oseledets.OperatorEntropy.Subadditivity
 
 /-!
 # Finite-dimensional operator entropy

@@ -2567,3 +2567,43 @@ the Kronecker spectrum, and the scalar Klein inequality. -/
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.klein_scalar
+
+/-! Issue #23 assembly — von Neumann entropy additivity & subadditivity, and the
+`DensityMatrix`-level Kronecker / partial-trace maps. -/
+
+/-- info: 'Oseledets.OperatorEntropy.DensityMatrix.kron' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.DensityMatrix.kron
+
+/-- info: 'Oseledets.OperatorEntropy.DensityMatrix.partialTraceRight' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.DensityMatrix.partialTraceRight
+
+/-- info: 'Oseledets.OperatorEntropy.vonNeumannEntropy_additive_kronecker' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.vonNeumannEntropy_additive_kronecker
+
+/-- info: 'Oseledets.OperatorEntropy.vonNeumannEntropy_subadditive' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.vonNeumannEntropy_subadditive
+
+/-! Issue #23 — Left-handed partial-trace mirror guards (symmetry with the Right-handed ones). -/
+
+/-- info: 'Oseledets.OperatorEntropy.trace_partialTraceLeft' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.trace_partialTraceLeft
+
+/-- info: 'Oseledets.OperatorEntropy.PosSemidef.partialTraceLeft' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.PosSemidef.partialTraceLeft
+
+/-- info: 'Oseledets.OperatorEntropy.DensityMatrix.partialTraceLeft' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.DensityMatrix.partialTraceLeft
