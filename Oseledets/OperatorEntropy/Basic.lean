@@ -10,6 +10,7 @@ namespace Oseledets.OperatorEntropy
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-- A finite-dimensional density matrix over `ℂ`: a positive-semidefinite, unit-trace matrix. -/
+@[ext]
 structure DensityMatrix (n : Type*) [Fintype n] [DecidableEq n] where
   val : Matrix n n ℂ
   posSemidef : val.PosSemidef

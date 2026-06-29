@@ -57,36 +57,6 @@ structure OperationalPartition (d k : ℕ) where
 
 namespace UnitalStarEndo
 
-/-- The `l`-fold iterate of the dynamics, i.e. `Φˡ`. -/
-def iterate (Φ : UnitalStarEndo d) (l : ℕ) :
-    Matrix (Fin d) (Fin d) ℂ → Matrix (Fin d) (Fin d) ℂ :=
-  Φ.toFun^[l]
-
-@[simp]
-theorem iterate_eq (Φ : UnitalStarEndo d) (l : ℕ) : Φ.iterate l = Φ.toFun^[l] := rfl
-
-/-- Each iterate `Φˡ` preserves the identity. -/
-theorem iterate_map_one (Φ : UnitalStarEndo d) (l : ℕ) : Φ.toFun^[l] 1 = 1 := by
-  induction l with
-  | zero => rfl
-  | succ l ih => rw [Function.iterate_succ_apply', ih, Φ.map_one]
-
-/-- Each iterate `Φˡ` is multiplicative. -/
-theorem iterate_map_mul (Φ : UnitalStarEndo d) (l : ℕ)
-    (x y : Matrix (Fin d) (Fin d) ℂ) :
-    Φ.toFun^[l] (x * y) = Φ.toFun^[l] x * Φ.toFun^[l] y := by
-  induction l with
-  | zero => rfl
-  | succ l ih => simp only [Function.iterate_succ_apply']; rw [ih, Φ.map_mul]
-
-/-- Each iterate `Φˡ` commutes with the adjoint. -/
-theorem iterate_map_star (Φ : UnitalStarEndo d) (l : ℕ)
-    (x : Matrix (Fin d) (Fin d) ℂ) :
-    Φ.toFun^[l] xᴴ = (Φ.toFun^[l] x)ᴴ := by
-  induction l with
-  | zero => rfl
-  | succ l ih => simp only [Function.iterate_succ_apply']; rw [ih, Φ.map_star]
-
 /-- `Φ` commutes with finite sums (it is additive). -/
 theorem map_sum (Φ : UnitalStarEndo d) {ι : Type*} (s : Finset ι)
     (h : ι → Matrix (Fin d) (Fin d) ℂ) :

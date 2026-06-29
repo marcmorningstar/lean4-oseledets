@@ -2650,3 +2650,10 @@ Kolmogorov–Sinai entropy of the induced measure-preserving permutation system.
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.CNT.ksEntropy_le_cntDynamicalEntropy
+
+-- The substantive per-resolution identity behind the abelian-corner collapse (non-vacuous:
+-- positive at finite `n`, unlike the rate equality which is `0` for a finite permutation).
+/-- info: 'Oseledets.OperatorEntropy.CNT.vonNeumannEntropy_corrMatrix_eq_ksEntropySeq' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.CNT.vonNeumannEntropy_corrMatrix_eq_ksEntropySeq

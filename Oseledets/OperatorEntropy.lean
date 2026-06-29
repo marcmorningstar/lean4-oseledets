@@ -38,4 +38,12 @@ Lieb-concavity layer.
 * `Oseledets.OperatorEntropy.eigenvalues_kronecker_multiset` — the spectrum of `A ⊗ₖ B`.
 * `Oseledets.OperatorEntropy.vonNeumannEntropy_additive_kronecker` — `S(ρ ⊗ σ) = S(ρ) + S(σ)`.
 * `Oseledets.OperatorEntropy.vonNeumannEntropy_subadditive` — `S(ρ_AB) ≤ S(ρ_A) + S(ρ_B)`.
+* `Oseledets.OperatorEntropy.CNT.cntDynamicalEntropy` / `cntDynamicalEntropyAbelian` — the
+  Connes–Narnhofer–Thirring / Alicki–Fannes quantum dynamical entropy (supremum of the
+  per-partition entropy rate over all, resp. all projection, operational partitions).
+* `Oseledets.OperatorEntropy.CNT.cntDynamicalEntropyAbelian_eq_ksEntropy` — on the abelian
+  (diagonal-subalgebra) corner the CNT dynamical entropy of `adPerm σ` equals the classical
+  Kolmogorov–Sinai entropy `h(⇑σ)`.
+* `Oseledets.OperatorEntropy.CNT.vonNeumannEntropy_corrMatrix_eq_ksEntropySeq` — the substantive
+  per-resolution identity `S(corrMatrix n) = ksEntropySeq n` underlying that collapse.
 -/

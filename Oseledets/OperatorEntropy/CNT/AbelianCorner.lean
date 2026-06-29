@@ -35,15 +35,7 @@ open scoped ComplexOrder ENNReal
 
 noncomputable section
 
-namespace Oseledets.OperatorEntropy
-
-variable {n : Type*} [Fintype n] [DecidableEq n]
-
-/-- Two density matrices with equal underlying matrix are equal (proof-irrelevant fields). -/
-private theorem DensityMatrix.ext' {ρ τ : DensityMatrix n} (h : ρ.val = τ.val) : ρ = τ := by
-  cases ρ; cases τ; subst h; rfl
-
-namespace CNT
+namespace Oseledets.OperatorEntropy.CNT
 
 variable {d k : ℕ}
 
@@ -218,6 +210,78 @@ theorem adPerm_refine (σ : Equiv.Perm (Fin d)) (c : Fin d → Fin k) :
       rw [refine_succ, adPerm_refine σ c n (Fin.tail f), projPartition_op, adPerm_diagonal,
         Matrix.diagonal_mul_diagonal, hfun]
 
+/-- **The per-resolution diagonal collapse (the substantive content).** On the abelian corner the
+CNT correlation matrix `corrMatrix (adPerm σ) ρ_μ (projPartition c) n` is diagonal with the
+classical join-cell masses on the diagonal, so its von Neumann entropy equals the `n`-fold
+iterated-join Shannon entropy `ksEntropySeq n` of the classical system. (On a finite state space
+the classical entropy `h(⇑σ)` of a permutation is `0`, so the system-level equality
+`cntDynamicalEntropyAbelian = ksEntropy` holds only at value `0`; this per-resolution identity
+`S(corrMatrix n) = ksEntropySeq n` is what carries the genuinely non-vacuous content.) -/
+theorem vonNeumannEntropy_corrMatrix_eq_ksEntropySeq
+    (μ : Fin d → ℝ≥0∞) (hμ : ∑ i, μ i = 1) (σ : Equiv.Perm (Fin d))
+    (hinv : ∀ i, μ (σ i) = μ i) (c : Fin d → Fin k) (nn : ℕ) :
+    haveI := probMeasure_isProb μ hμ
+    vonNeumannEntropy (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn)
+      = Oseledets.Entropy.ksEntropySeq (measurePreserving_perm μ σ hinv)
+          (projMeasurePartition μ c) nn := by
+  haveI := probMeasure_isProb μ hμ
+  classical
+  set mreal : (Fin nn → Fin k) → ℝ := fun f =>
+    ((probMeasure μ) (Oseledets.Entropy.ksJoinCells
+      (projMeasurePartition μ c).cells (⇑σ) nn f)).toReal with hmreal
+  have hcorr : (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).val
+      = Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ)) := by
+    ext g f
+    rw [corrMatrix_val, corrVal_apply, adPerm_refine, adPerm_refine, densityOfPMF_val,
+      Matrix.diagonal_conjTranspose, Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal,
+      Matrix.trace_diagonal, Matrix.diagonal_apply]
+    simp only [Pi.star_apply]
+    have hfin : ∀ i, μ i ≠ ⊤ := by
+      intro i
+      have hle : μ i ≤ 1 := hμ ▸ Finset.single_le_sum (fun j _ => zero_le') (Finset.mem_univ i)
+      exact (lt_of_le_of_lt hle ENNReal.one_lt_top).ne
+    by_cases hgf : g = f
+    · subst hgf
+      rw [if_pos rfl]
+      have hmf0 : mreal g = ((probMeasure μ) (Oseledets.Entropy.ksJoinCells
+          (projMeasurePartition μ c).cells (⇑σ) nn g)).toReal := by rw [hmreal]
+      have hfin2 : ∀ i ∈ (Finset.univ : Finset (Fin d)),
+          μ i * (Oseledets.Entropy.ksJoinCells (projMeasurePartition μ c).cells (⇑σ) nn
+            g).indicator (1 : Fin d → ℝ≥0∞) i ≠ ⊤ := by
+        intro i _
+        refine ENNReal.mul_ne_top (hfin i) ?_
+        rw [Set.indicator_apply]; split <;> simp
+      rw [hmf0, probMeasure_apply, ENNReal.toReal_sum hfin2, Complex.ofReal_sum]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [joinInd_eq_indicator μ]
+      by_cases hi : i ∈ Oseledets.Entropy.ksJoinCells (projMeasurePartition μ c).cells (⇑σ) nn g
+      · rw [Set.indicator_of_mem hi, Set.indicator_of_mem hi]
+        simp only [stateVec, Pi.one_apply, star_one, mul_one]
+      · rw [Set.indicator_of_notMem hi, Set.indicator_of_notMem hi]
+        simp
+    · rw [if_neg hgf]
+      refine Finset.sum_eq_zero fun i _ => ?_
+      obtain ⟨l, hl⟩ : ∃ l, g l ≠ f l := by
+        by_contra h
+        exact hgf (funext fun l => not_not.mp fun hh => h ⟨l, hh⟩)
+      by_cases hcg : c ((σ ^ (l : ℕ)) i) = g l
+      · have hzero : joinInd σ c nn f i = 0 :=
+          Finset.prod_eq_zero (Finset.mem_univ l) (if_neg fun hcf => hl (hcg ▸ hcf))
+        rw [hzero, mul_zero]
+      · have hzero : joinInd σ c nn g i = 0 :=
+          Finset.prod_eq_zero (Finset.mem_univ l) (if_neg hcg)
+        rw [hzero, star_zero, mul_zero, zero_mul]
+  have hpsd : (Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ))).PosSemidef :=
+    hcorr ▸ (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).posSemidef
+  have htr : (Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ))).trace = 1 :=
+    hcorr ▸ (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).trace_one
+  have hρτ : corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn
+      = (⟨Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ)), hpsd, htr⟩ :
+        DensityMatrix (Fin nn → Fin k)) := DensityMatrix.ext hcorr
+  rw [hρτ, vonNeumannEntropy_diagonal]
+  rw [Oseledets.Entropy.ksEntropySeq, Oseledets.Entropy.ksJoin_cells,
+    Oseledets.Entropy.entropy_def]
+
 /-- **Per-partition collapse (the deliverable core).** -/
 theorem cntEntropyPartition_eq_ksEntropyPartition
     (μ : Fin d → ℝ≥0∞) (hμ : ∑ i, μ i = 1)
@@ -228,71 +292,12 @@ theorem cntEntropyPartition_eq_ksEntropyPartition
       = Oseledets.Entropy.ksEntropyPartition (measurePreserving_perm μ σ hinv)
           (projMeasurePartition μ c) := by
   haveI := probMeasure_isProb μ hμ
-  classical
   rw [cntEntropyPartition_eq]
   unfold Oseledets.Entropy.ksEntropyPartition
   rw [Subadditive.lim]
   congr 1
   refine Set.image_congr fun nn _ => ?_
-  have hseq : vonNeumannEntropy (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn)
-      = Oseledets.Entropy.ksEntropySeq (measurePreserving_perm μ σ hinv)
-          (projMeasurePartition μ c) nn := by
-    set mreal : (Fin nn → Fin k) → ℝ := fun f =>
-      ((probMeasure μ) (Oseledets.Entropy.ksJoinCells
-        (projMeasurePartition μ c).cells (⇑σ) nn f)).toReal with hmreal
-    have hcorr : (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).val
-        = Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ)) := by
-      ext g f
-      rw [corrMatrix_val, corrVal_apply, adPerm_refine, adPerm_refine, densityOfPMF_val,
-        Matrix.diagonal_conjTranspose, Matrix.diagonal_mul_diagonal, Matrix.diagonal_mul_diagonal,
-        Matrix.trace_diagonal, Matrix.diagonal_apply]
-      simp only [Pi.star_apply]
-      have hfin : ∀ i, μ i ≠ ⊤ := by
-        intro i
-        have hle : μ i ≤ 1 := hμ ▸ Finset.single_le_sum (fun j _ => zero_le') (Finset.mem_univ i)
-        exact (lt_of_le_of_lt hle ENNReal.one_lt_top).ne
-      by_cases hgf : g = f
-      · subst hgf
-        rw [if_pos rfl]
-        have hmf0 : mreal g = ((probMeasure μ) (Oseledets.Entropy.ksJoinCells
-            (projMeasurePartition μ c).cells (⇑σ) nn g)).toReal := by rw [hmreal]
-        have hfin2 : ∀ i ∈ (Finset.univ : Finset (Fin d)),
-            μ i * (Oseledets.Entropy.ksJoinCells (projMeasurePartition μ c).cells (⇑σ) nn
-              g).indicator (1 : Fin d → ℝ≥0∞) i ≠ ⊤ := by
-          intro i _
-          refine ENNReal.mul_ne_top (hfin i) ?_
-          rw [Set.indicator_apply]; split <;> simp
-        rw [hmf0, probMeasure_apply, ENNReal.toReal_sum hfin2, Complex.ofReal_sum]
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [joinInd_eq_indicator μ]
-        by_cases hi : i ∈ Oseledets.Entropy.ksJoinCells (projMeasurePartition μ c).cells (⇑σ) nn g
-        · rw [Set.indicator_of_mem hi, Set.indicator_of_mem hi]
-          simp only [stateVec, Pi.one_apply, star_one, mul_one]
-        · rw [Set.indicator_of_notMem hi, Set.indicator_of_notMem hi]
-          simp
-      · rw [if_neg hgf]
-        refine Finset.sum_eq_zero fun i _ => ?_
-        obtain ⟨l, hl⟩ : ∃ l, g l ≠ f l := by
-          by_contra h
-          exact hgf (funext fun l => not_not.mp fun hh => h ⟨l, hh⟩)
-        by_cases hcg : c ((σ ^ (l : ℕ)) i) = g l
-        · have hzero : joinInd σ c nn f i = 0 :=
-            Finset.prod_eq_zero (Finset.mem_univ l) (if_neg fun hcf => hl (hcg ▸ hcf))
-          rw [hzero, mul_zero]
-        · have hzero : joinInd σ c nn g i = 0 :=
-            Finset.prod_eq_zero (Finset.mem_univ l) (if_neg hcg)
-          rw [hzero, star_zero, mul_zero, zero_mul]
-    have hpsd : (Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ))).PosSemidef :=
-      hcorr ▸ (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).posSemidef
-    have htr : (Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ))).trace = 1 :=
-      hcorr ▸ (corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn).trace_one
-    have hρτ : corrMatrix (adPerm σ) (densityOfPMF μ hμ) (projPartition c) nn
-        = (⟨Matrix.diagonal (fun f => ((mreal f : ℝ) : ℂ)), hpsd, htr⟩ :
-          DensityMatrix (Fin nn → Fin k)) := DensityMatrix.ext' hcorr
-    rw [hρτ, vonNeumannEntropy_diagonal]
-    rw [Oseledets.Entropy.ksEntropySeq, Oseledets.Entropy.ksJoin_cells,
-      Oseledets.Entropy.entropy_def]
-  rw [hseq]
+  rw [vonNeumannEntropy_corrMatrix_eq_ksEntropySeq μ hμ σ hinv c nn]
 
 /-! ## 5. System-level statement -/
 
@@ -373,5 +378,38 @@ theorem ksEntropy_le_cntDynamicalEntropy
   rw [← cntDynamicalEntropyAbelian_eq_ksEntropy μ hμ σ hinv hpos]
   exact hle
 
-end CNT
-end Oseledets.OperatorEntropy
+/-! ## 6. Non-vacuity of the per-resolution collapse -/
+
+/-- The uniform probability vector on two states sums to `1`. -/
+private theorem half_sum_eq_one : ∑ _i : Fin 2, (1 / 2 : ℝ≥0∞) = 1 := by
+  rw [Fin.sum_univ_two]; exact ENNReal.add_halves 1
+
+/-- **Non-vacuity certificate for the per-resolution collapse.** On the two-level uniform diagonal
+state, with the identity dynamics and the identity cell map, the von Neumann entropy of the CNT
+correlation matrix at resolution `1` is strictly positive (it equals `log 2 > 0`). Hence the
+identity `vonNeumannEntropy_corrMatrix_eq_ksEntropySeq` is genuinely non-vacuous: it relates a
+positive quantum entropy to a positive classical join entropy, not the trivial `0 = 0`. -/
+example : 0 < vonNeumannEntropy (corrMatrix (adPerm (1 : Equiv.Perm (Fin 2)))
+    (densityOfPMF (fun _ : Fin 2 => (1 / 2 : ℝ≥0∞)) half_sum_eq_one)
+    (projPartition (id : Fin 2 → Fin 2)) 1) := by
+  rw [vonNeumannEntropy_corrMatrix_eq_ksEntropySeq (fun _ : Fin 2 => (1 / 2 : ℝ≥0∞))
+      half_sum_eq_one 1 (fun _ => rfl) id 1, Oseledets.Entropy.ksEntropySeq,
+    Oseledets.Entropy.ksJoin_cells, Oseledets.Entropy.entropy_def]
+  apply Finset.sum_pos
+  · intro f _
+    have hcell : Oseledets.Entropy.ksJoinCells
+        (projMeasurePartition (fun _ : Fin 2 => (1 / 2 : ℝ≥0∞)) id).cells
+        (⇑(1 : Equiv.Perm (Fin 2))) 1 f = {f 0} := by
+      ext x
+      simp only [Oseledets.Entropy.ksJoinCells_apply, Set.mem_iInter, Fin.forall_fin_one,
+        Fin.val_zero, Function.iterate_zero, id_eq, Set.mem_preimage, projMeasurePartition_cells,
+        Set.mem_singleton_iff]
+    rw [hcell, probMeasure_singleton]
+    simp only [ENNReal.toReal_div, ENNReal.toReal_one, ENNReal.toReal_ofNat]
+    have hlog : 0 < Real.log 2 := Real.log_pos one_lt_two
+    rw [Real.negMulLog_def]
+    simp only [one_div, Real.log_inv]
+    nlinarith [hlog]
+  · exact ⟨fun _ => 0, Finset.mem_univ _⟩
+
+end Oseledets.OperatorEntropy.CNT
