@@ -179,6 +179,10 @@ import Oseledets.OperatorEntropy.PetzRecovery
 import Oseledets.OperatorEntropy.Lieb.OperatorConvex
 import Oseledets.OperatorEntropy.RelEntropyAdditivity
 import Oseledets.OperatorEntropy.StinespringReduction
+import Oseledets.OperatorEntropy.Lieb.DilationProto
+import Oseledets.OperatorEntropy.Lieb.Dilation
+import Oseledets.OperatorEntropy.Lieb.Perspective
+import Oseledets.OperatorEntropy.Lieb.JointConvexity
 
 /-!
 # Axiom audit
@@ -2756,3 +2760,28 @@ data-processing input is an explicit hypothesis, the Lieb-gated piece staying ou
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.KrausChannel.adj_hsAdjoint
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.exists_unitary_firstBlockCol' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.exists_unitary_firstBlockCol
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.hpj_affine' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.hpj_affine
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.hpj_isometry' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.hpj_isometry
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.operatorPerspective_jointly_convex' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.operatorPerspective_jointly_convex
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.relEntropyMat_jointly_convex' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.relEntropyMat_jointly_convex

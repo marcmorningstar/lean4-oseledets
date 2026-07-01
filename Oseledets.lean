@@ -239,6 +239,10 @@ import Oseledets.OperatorEntropy.PetzRecovery
 import Oseledets.OperatorEntropy.Lieb.OperatorConvex
 import Oseledets.OperatorEntropy.RelEntropyAdditivity
 import Oseledets.OperatorEntropy.StinespringReduction
+import Oseledets.OperatorEntropy.Lieb.DilationProto
+import Oseledets.OperatorEntropy.Lieb.Dilation
+import Oseledets.OperatorEntropy.Lieb.Perspective
+import Oseledets.OperatorEntropy.Lieb.JointConvexity
 
 /-!
 # Oseledets
