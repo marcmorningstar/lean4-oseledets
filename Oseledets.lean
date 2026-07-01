@@ -235,6 +235,8 @@ import Oseledets.Krieger.Bracket
 import Oseledets.Multifractal
 import Oseledets.OperatorEntropy
 import Oseledets.OperatorEntropy.RelativeEntropy
+import Oseledets.OperatorEntropy.PetzRecovery
+import Oseledets.OperatorEntropy.Lieb.OperatorConvex
 
 /-!
 # Oseledets

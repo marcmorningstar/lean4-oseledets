@@ -175,6 +175,8 @@ import Oseledets.Entropy.CondChainRuleSup
 import Oseledets.Entropy.CondKSEntropyConjugacy
 import Oseledets.OperatorEntropy
 import Oseledets.OperatorEntropy.RelativeEntropy
+import Oseledets.OperatorEntropy.PetzRecovery
+import Oseledets.OperatorEntropy.Lieb.OperatorConvex
 
 /-!
 # Axiom audit
@@ -2712,3 +2714,13 @@ data-processing input is an explicit hypothesis, the Lieb-gated piece staying ou
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.no_monotone_section_of_strict_drop
+
+/-- info: 'Oseledets.OperatorEntropy.petz_recovery' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.petz_recovery
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.operatorConvexOn_neg_log' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.operatorConvexOn_neg_log
