@@ -244,6 +244,7 @@ import Oseledets.OperatorEntropy.Lieb.Dilation
 import Oseledets.OperatorEntropy.Lieb.Perspective
 import Oseledets.OperatorEntropy.Lieb.JointConvexity
 import Oseledets.OperatorEntropy.Lieb.DataProcessing
+import Oseledets.OperatorEntropy.Lieb.DataProcessingGeneral
 
 /-!
 # Oseledets

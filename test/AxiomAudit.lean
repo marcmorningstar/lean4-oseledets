@@ -184,6 +184,7 @@ import Oseledets.OperatorEntropy.Lieb.Dilation
 import Oseledets.OperatorEntropy.Lieb.Perspective
 import Oseledets.OperatorEntropy.Lieb.JointConvexity
 import Oseledets.OperatorEntropy.Lieb.DataProcessing
+import Oseledets.OperatorEntropy.Lieb.DataProcessingGeneral
 
 /-!
 # Axiom audit
@@ -2796,3 +2797,8 @@ data-processing input is an explicit hypothesis, the Lieb-gated piece staying ou
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.Lieb.twirl_sum
+
+/-- info: 'Oseledets.OperatorEntropy.Lieb.relEntropyMonotone_partialTrace' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.Lieb.relEntropyMonotone_partialTrace
