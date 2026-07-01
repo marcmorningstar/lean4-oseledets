@@ -177,6 +177,8 @@ import Oseledets.OperatorEntropy
 import Oseledets.OperatorEntropy.RelativeEntropy
 import Oseledets.OperatorEntropy.PetzRecovery
 import Oseledets.OperatorEntropy.Lieb.OperatorConvex
+import Oseledets.OperatorEntropy.RelEntropyAdditivity
+import Oseledets.OperatorEntropy.StinespringReduction
 
 /-!
 # Axiom audit
@@ -2724,3 +2726,23 @@ data-processing input is an explicit hypothesis, the Lieb-gated piece staying ou
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Oseledets.OperatorEntropy.Lieb.operatorConvexOn_neg_log
+
+/-- info: 'Oseledets.OperatorEntropy.relEntropy_additive_kronecker' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.relEntropy_additive_kronecker
+
+/-- info: 'Oseledets.OperatorEntropy.relEntropy_ancilla_invariant' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.relEntropy_ancilla_invariant
+
+/-- info: 'Oseledets.OperatorEntropy.relEntropy_embed_invariant' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.relEntropy_embed_invariant
+
+/-- info: 'Oseledets.OperatorEntropy.stinespring_relEntropy_monotone' depends on axioms:
+[propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Oseledets.OperatorEntropy.stinespring_relEntropy_monotone

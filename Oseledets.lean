@@ -237,6 +237,8 @@ import Oseledets.OperatorEntropy
 import Oseledets.OperatorEntropy.RelativeEntropy
 import Oseledets.OperatorEntropy.PetzRecovery
 import Oseledets.OperatorEntropy.Lieb.OperatorConvex
+import Oseledets.OperatorEntropy.RelEntropyAdditivity
+import Oseledets.OperatorEntropy.StinespringReduction
 
 /-!
 # Oseledets
